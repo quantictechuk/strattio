@@ -246,7 +246,7 @@ async def generate_plan(plan_id: str, user_id: str = Depends(get_current_user_id
 async def get_generation_status(plan_id: str, user_id: str = Depends(get_current_user_id)):
     """Get plan generation status"""
     
-    plan = await db.plans.find_one({"_id": plan_id, "user_id": user_id})
+    plan = await db.plans.find_one({"_id": to_object_id(plan_id), "user_id": user_id})
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
     
