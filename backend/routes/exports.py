@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, HTTPException, Depends, Header
 from fastapi.responses import FileResponse
+from pydantic import BaseModel
 from typing import Optional
 import logging
 from datetime import datetime
