@@ -21,7 +21,7 @@ function PlanEditorPage({ navigate, user, planId }) {
   const loadPlan = async () => {
     setLoading(true);
     try {
-      const planData = await api.plans.get(planId, user.id);
+      const planData = await api.plans.get(planId);
       setPlan(planData);
 
       // If plan is generating, start polling
@@ -44,7 +44,7 @@ function PlanEditorPage({ navigate, user, planId }) {
 
     const interval = setInterval(async () => {
       try {
-        const statusData = await api.plans.status(planId, user.id);
+        const statusData = await api.plans.status(planId);
         
         if (statusData.status === 'complete') {
           clearInterval(interval);
@@ -71,9 +71,9 @@ function PlanEditorPage({ navigate, user, planId }) {
   const loadPlanContent = async () => {
     try {
       const [sectionsData, financialsData, complianceData] = await Promise.all([
-        api.sections.list(planId, user.id),
-        api.financials.get(planId, user.id).catch(() => null),
-        api.compliance.get(planId, user.id).catch(() => null)
+        api.sections.list(planId),
+        api.financials.get(planId).catch(() => null),
+        api.compliance.get(planId).catch(() => null)
       ]);
 
       setSections(sectionsData.sections || []);
@@ -95,7 +95,7 @@ function PlanEditorPage({ navigate, user, planId }) {
 
   const handleUpdateSection = async (sectionId, newContent) => {
     try {
-      const updated = await api.sections.update(planId, sectionId, { content: newContent }, user.id);
+      const updated = await api.sections.update(planId, sectionId, { content: newContent });
       setSections(sections.map(s => s.id === sectionId ? updated : s));
       setSelectedSection(updated);
     } catch (err) {
@@ -105,7 +105,7 @@ function PlanEditorPage({ navigate, user, planId }) {
 
   const handleExportPDF = async () => {
     try {
-      const exportJob = await api.exports.create(planId, 'pdf', user.id);
+      const exportJob = await api.exports.create(planId, 'pdf');
       alert('PDF export created! Check exports tab.');
     } catch (err) {
       if (err.message.includes('Upgrade')) {
