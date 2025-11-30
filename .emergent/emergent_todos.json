@@ -1,42 +1,34 @@
 [
   {
-    "content": "Get Stripe integration playbook",
-    "status": "completed"
-  },
-  {
-    "content": "Ask user for Stripe API keys (test/production)",
-    "status": "completed"
-  },
-  {
     "content": "Backend: Implement Stripe checkout session creation",
-    "status": "in_progress"
+    "status": "completed"
   },
   {
     "content": "Backend: Implement Stripe webhook handler for subscription events",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "Backend: Add subscription upgrade/downgrade endpoints",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "Frontend: Create pricing page with tier comparison",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "Frontend: Implement Stripe checkout redirect flow",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "Frontend: Handle successful payment redirects",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "Frontend: Update upgrade modal to redirect to checkout",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "Test complete subscription flow end-to-end",
-    "status": "pending"
+    "status": "in_progress"
   }
 ]
