@@ -162,7 +162,7 @@ function PlanEditorPage({ navigate, user, planId }) {
     <div style={{ minHeight: '100vh', background: 'var(--bg-secondary)' }}>
       {/* Header */}
       <header style={{ padding: '1.5rem 0', borderBottom: '1px solid #E4E9EF', background: 'white' }}>
-        <div className=\"container\" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1A85FF', fontFamily: 'IBM Plex Sans' }}>
               STRATTIO
@@ -195,7 +195,7 @@ function PlanEditorPage({ navigate, user, planId }) {
       )}
 
       {/* Main Content */}
-      <div className=\"container\" style={{ padding: '2rem 0' }}>
+      <div className="container" style={{ padding: '2rem 0' }}>
         {/* Tabs */}
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '2px solid #E4E9EF' }}>
           <button
