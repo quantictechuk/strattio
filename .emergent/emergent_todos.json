@@ -1,6 +1,30 @@
 [
   {
-    "content": "Test complete subscription flow end-to-end",
-    "status": "completed"
+    "content": "1. Add user-defined operating expenses to intake wizard",
+    "status": "in_progress"
+  },
+  {
+    "content": "2. Update financial engine to use user OPEX instead of benchmarks",
+    "status": "pending"
+  },
+  {
+    "content": "3. Implement plan-type specialization in writer agent",
+    "status": "pending"
+  },
+  {
+    "content": "4. Add placeholder token removal from all outputs",
+    "status": "pending"
+  },
+  {
+    "content": "5. Implement graceful error handling with retries",
+    "status": "pending"
+  },
+  {
+    "content": "6. Ensure numerical consistency between narrative and financials",
+    "status": "pending"
+  },
+  {
+    "content": "7. Test all improvements end-to-end",
+    "status": "pending"
   }
 ]
