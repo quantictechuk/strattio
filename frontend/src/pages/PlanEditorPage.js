@@ -11,12 +11,24 @@ function PlanEditorPage({ navigate, user, planId }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [polling, setPolling] = useState(false);
+  const [subscription, setSubscription] = useState(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
     if (planId) {
       loadPlan();
+      loadSubscription();
     }
   }, [planId]);
+
+  const loadSubscription = async () => {
+    try {
+      const subData = await api.subscriptions.current();
+      setSubscription(subData);
+    } catch (err) {
+      console.error('Error loading subscription:', err);
+    }
+  };
 
   const loadPlan = async () => {
     setLoading(true);
