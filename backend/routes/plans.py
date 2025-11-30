@@ -183,7 +183,7 @@ async def generate_plan(plan_id: str, user_id: str = Depends(get_current_user_id
         
         if result["status"] == "failed":
             await db.plans.update_one(
-                {"_id": plan_id},
+                {"_id": to_object_id(plan_id)},
                 {"$set": {"status": "failed", "error": result.get("error")}}
             )
             raise HTTPException(status_code=500, detail=result.get("error", "Generation failed"))
