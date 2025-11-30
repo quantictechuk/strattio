@@ -1,8 +1,9 @@
-"""Compliance Agent - Validates plans against compliance templates"""
+"""Compliance Agent - Validates plans and generates compliance sections"""
 
 from typing import Dict, List
 from datetime import datetime
 import logging
+from .templates import TemplateFactory
 
 logger = logging.getLogger(__name__)
 
