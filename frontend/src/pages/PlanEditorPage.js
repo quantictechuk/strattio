@@ -327,7 +327,7 @@ function PlanEditorPage({ navigate, user, planId }) {
 
         {/* Financials Tab */}
         {activeTab === 'financials' && (
-          <div className=\"card\">
+          <div className="card">
             <h3 style={{ marginBottom: '1.5rem' }}>Financial Projections</h3>
             
             {!financials && (
@@ -338,19 +338,19 @@ function PlanEditorPage({ navigate, user, planId }) {
               <div>
                 {/* KPIs */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
-                  <div className=\"card\" style={{ background: 'var(--bg-secondary)', textAlign: 'center' }}>
+                  <div className="card" style={{ background: 'var(--bg-secondary)', textAlign: 'center' }}>
                     <div style={{ fontSize: '0.875rem', color: '#6B7A91', marginBottom: '0.5rem' }}>Gross Margin</div>
                     <div style={{ fontSize: '1.75rem', fontWeight: '700', color: '#1A85FF' }}>
                       {financials.data.kpis?.gross_margin_percent?.toFixed(1)}%
                     </div>
                   </div>
-                  <div className=\"card\" style={{ background: 'var(--bg-secondary)', textAlign: 'center' }}>
+                  <div className="card" style={{ background: 'var(--bg-secondary)', textAlign: 'center' }}>
                     <div style={{ fontSize: '0.875rem', color: '#6B7A91', marginBottom: '0.5rem' }}>Net Margin (Y1)</div>
                     <div style={{ fontSize: '1.75rem', fontWeight: '700', color: financials.data.kpis?.net_margin_percent >= 0 ? '#27AC85' : '#EF4444' }}>
                       {financials.data.kpis?.net_margin_percent?.toFixed(1)}%
                     </div>
                   </div>
-                  <div className=\"card\" style={{ background: 'var(--bg-secondary)', textAlign: 'center' }}>
+                  <div className="card" style={{ background: 'var(--bg-secondary)', textAlign: 'center' }}>
                     <div style={{ fontSize: '0.875rem', color: '#6B7A91', marginBottom: '0.5rem' }}>ROI Year 1</div>
                     <div style={{ fontSize: '1.75rem', fontWeight: '700', color: financials.data.kpis?.roi_year1_percent >= 0 ? '#27AC85' : '#EF4444' }}>
                       {financials.data.kpis?.roi_year1_percent?.toFixed(1)}%
