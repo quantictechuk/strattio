@@ -3,8 +3,9 @@
 from fastapi import APIRouter, HTTPException, Depends, Header
 from typing import Optional
 import logging
+from bson import ObjectId
 
-from utils.serializers import serialize_doc
+from utils.serializers import serialize_doc, to_object_id
 from utils.auth import decode_token
 
 router = APIRouter()
@@ -32,7 +33,7 @@ async def get_financials(plan_id: str, user_id: str = Depends(get_current_user_i
     """Get financial model for a plan"""
     
     # Verify plan ownership
-    plan = await db.plans.find_one({"_id": plan_id, "user_id": user_id})
+    plan = await db.plans.find_one({"_id": to_object_id(plan_id), "user_id": user_id})
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
     

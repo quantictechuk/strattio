@@ -7,8 +7,9 @@ from typing import Optional
 import logging
 from datetime import datetime
 import os
+from bson import ObjectId
 
-from utils.serializers import serialize_doc
+from utils.serializers import serialize_doc, to_object_id
 from utils.auth import decode_token
 
 router = APIRouter()
@@ -43,7 +44,7 @@ async def create_export(export_data: ExportCreate, user_id: str = Depends(get_cu
     format = export_data.format
     
     # Verify plan ownership
-    plan = await db.plans.find_one({"_id": plan_id, "user_id": user_id})
+    plan = await db.plans.find_one({"_id": to_object_id(plan_id), "user_id": user_id})
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
     
@@ -82,7 +83,7 @@ async def create_export(export_data: ExportCreate, user_id: str = Depends(get_cu
 async def download_export(export_id: str, user_id: str = Depends(get_current_user_id)):
     """Download an export file"""
     
-    export = await db.exports.find_one({"_id": export_id, "user_id": user_id})
+    export = await db.exports.find_one({"_id": to_object_id(export_id), "user_id": user_id})
     if not export:
         raise HTTPException(status_code=404, detail="Export not found")
     
