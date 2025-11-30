@@ -249,9 +249,10 @@ function PlanEditorPage({ navigate, user, planId }) {
         </div>
 
         {/* Sections Tab */}
-        {activeTab === 'sections' && (\n          <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '2rem' }}>
+        {activeTab === 'sections' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '2rem' }}>
             {/* Sections List */}
-            <div className=\"card\" style={{ height: 'fit-content' }}>
+            <div className="card" style={{ height: 'fit-content' }}>
               <h4 style={{ marginBottom: '1rem' }}>Sections</h4>
               {sections.map((section, idx) => (
                 <div
@@ -279,10 +280,10 @@ function PlanEditorPage({ navigate, user, planId }) {
 
             {/* Section Content */}
             {selectedSection && (
-              <div className=\"card\">
+              <div className="card">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                   <h3>{selectedSection.title}</h3>
-                  <button className=\"btn btn-ghost\" data-testid=\"regenerate-section-btn\">
+                  <button className="btn btn-ghost" data-testid="regenerate-section-btn">
                     🔄 Regenerate
                   </button>
                 </div>
@@ -304,18 +305,18 @@ function PlanEditorPage({ navigate, user, planId }) {
                     const updated = { ...selectedSection, content: e.target.value };
                     setSelectedSection(updated);
                   }}
-                  data-testid=\"section-content-textarea\"
+                  data-testid="section-content-textarea"
                 />
                 
                 <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
                   <button 
-                    className=\"btn btn-primary\"
+                    className="btn btn-primary"
                     onClick={() => handleUpdateSection(selectedSection.id, selectedSection.content)}
-                    data-testid=\"save-section-btn\"
+                    data-testid="save-section-btn"
                   >
                     💾 Save Changes
                   </button>
-                  <button className=\"btn btn-ghost\" onClick={loadPlan}>
+                  <button className="btn btn-ghost" onClick={loadPlan}>
                     Cancel
                   </button>
                 </div>
