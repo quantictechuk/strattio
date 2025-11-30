@@ -1,4 +1,4 @@
-"""Enhanced Plan Writer Agent with plan-type specialization and placeholder removal"""
+"""Enhanced Plan Writer Agent with template-based section generation"""
 
 from typing import Dict, List
 from datetime import datetime
@@ -6,17 +6,9 @@ import os
 import logging
 import re
 from emergentintegrations.llm.chat import LlmChat, UserMessage
+from .templates import TemplateFactory
 
 logger = logging.getLogger(__name__)
-
-# Plan-type specific emphasis
-PLAN_TYPE_EMPHASIS = {
-    "loan": "repayment capacity, cash flow, break-even timeline, low risk",
-    "visa_startup": "innovation, UK market opportunity, scalability, job creation",
-    "visa_innovator": "significant innovation, scalability, viability, UK job creation",
-    "investor": "TAM/SAM/SOM, traction, competitive moat, returns, exit strategy",
-    "generic": "clear business model, market opportunity, realistic projections"
-}
 
 ZERO_HALLUCINATION_PROMPT = """You are a professional business plan writer.
 
