@@ -1,102 +1,42 @@
 [
   {
-    "content": "Phase 2 Backend: Setup FastAPI with load_dotenv, MongoDB connection, /api prefix, healthcheck endpoint",
+    "content": "Phase 2 Backend: Complete backend architecture with all models, routes, agents scaffolds",
     "status": "in_progress"
   },
   {
-    "content": "Phase 2 Backend: Implement Auth endpoints (register, login, refresh, me) with JWT and email/password",
+    "content": "Phase 2 Backend: Auth system with JWT (register, login, refresh, me)",
     "status": "pending"
   },
   {
-    "content": "Phase 2 Backend: Create MongoDB collections and models (users, plans, sections, research_packs, financial_models, compliance_reports, exports, subscriptions)",
+    "content": "Phase 2 Backend: Plan generation pipeline with simplified multi-agent flow",
     "status": "pending"
   },
   {
-    "content": "Phase 2 Backend: Implement serialize_doc helper for ObjectId/datetime JSON serialization",
+    "content": "Phase 2 Backend: Subscription tier checking and usage limits",
     "status": "pending"
   },
   {
-    "content": "Phase 2 Backend: Build Research Agent module with ONS/Eurostat/Google Trends/SERP/Companies House integrations",
+    "content": "Phase 2 Backend: PDF export with ReportLab",
     "status": "pending"
   },
   {
-    "content": "Phase 2 Backend: Build Validation Agent with freshness, source validity, logic/outlier, completeness checks",
+    "content": "Phase 2 Frontend: Core pages (Home, Auth, Dashboard, Intake Wizard, Plan Editor)",
     "status": "pending"
   },
   {
-    "content": "Phase 2 Backend: Build Financial Engine with deterministic formulas from PRD v3",
+    "content": "Phase 2 Frontend: Key components (PlanCard, SectionEditor, WizardSteps)",
     "status": "pending"
   },
   {
-    "content": "Phase 2 Backend: Build Plan Writer Agent with zero-hallucination prompt and citation enforcement",
+    "content": "Phase 2 Frontend: API integration layer with error handling",
     "status": "pending"
   },
   {
-    "content": "Phase 2 Backend: Build Compliance Agent with templates (UK_STARTUP_VISA, UK_INNOVATOR_VISA, UK_STARTUP_LOAN, INVESTOR_READY, GENERIC)",
+    "content": "Phase 2: Integration testing of critical path user journey",
     "status": "pending"
   },
   {
-    "content": "Phase 2 Backend: Create Multi-Agent Orchestrator endpoint POST /api/plans/{id}/generate with status polling",
-    "status": "pending"
-  },
-  {
-    "content": "Phase 2 Backend: Implement all Plan endpoints (list, create, get, update, delete, duplicate, generate, status)",
-    "status": "pending"
-  },
-  {
-    "content": "Phase 2 Backend: Implement Section endpoints (list, get, update, regenerate)",
-    "status": "pending"
-  },
-  {
-    "content": "Phase 2 Backend: Implement Financial endpoints (get, patch inputs, recalc)",
-    "status": "pending"
-  },
-  {
-    "content": "Phase 2 Backend: Implement Compliance endpoints (get, check, list templates)",
-    "status": "pending"
-  },
-  {
-    "content": "Phase 2 Backend: Implement Export endpoints (create, list, download) with PDF generation using ReportLab",
-    "status": "pending"
-  },
-  {
-    "content": "Phase 2 Backend: Implement Subscription endpoints (current, usage) with tier checking",
-    "status": "pending"
-  },
-  {
-    "content": "Phase 2 Frontend: Get design guidelines from design_agent",
-    "status": "completed"
-  },
-  {
-    "content": "Phase 2 Frontend: Build all pages (Home, Auth, Dashboard, Intake Wizard, Plan Editor, Financials, Compliance, Exports, Settings)",
-    "status": "pending"
-  },
-  {
-    "content": "Phase 2 Frontend: Build all components (ChatSteps, SectionCard, RichTextEditor, CitationsList, AssumptionsForm, Charts, ComplianceChecklist, ExportModal, PaywallModal)",
-    "status": "pending"
-  },
-  {
-    "content": "Phase 2 Frontend: Implement data layer with REACT_APP_BACKEND_URL + /api prefix, loading/error states, data-testid attributes",
-    "status": "pending"
-  },
-  {
-    "content": "Phase 2: Lint backend with ruff and frontend with eslint",
-    "status": "pending"
-  },
-  {
-    "content": "Phase 2: Run esbuild bundle check for frontend",
-    "status": "pending"
-  },
-  {
-    "content": "Phase 2: End to End Testing using Testing Agent",
-    "status": "pending"
-  },
-  {
-    "content": "Phase 2: Fix all issues found in testing and re-test until all tests pass",
-    "status": "pending"
-  },
-  {
-    "content": "Phase 2: Verify all 8 app user stories are working correctly",
+    "content": "Phase 2: Fix critical bugs and validate core flows",
     "status": "pending"
   }
 ]
