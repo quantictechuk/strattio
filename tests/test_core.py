@@ -758,7 +758,7 @@ async def test_citation_guardrails():
         financial_pack = artifact["financial_pack"]
     
     # Run citation validation
-    citation_check = validate_citations(generated_text, DATA_PACK, financial_pack)
+    citation_check = validate_citations(generated_text, DATA_PACK, financial_pack, INTAKE_DATA)
     
     print(f"\n✓ Citation validation complete")
     print(f"  - Numbers found in text: {citation_check['numbers_found']}")
