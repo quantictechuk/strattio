@@ -1,4 +1,4 @@
-"""PDF Generator for Business Plans"""
+"""PDF Generator for Business Plans with Template Support"""
 
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -9,6 +9,9 @@ from reportlab.lib import colors
 from datetime import datetime
 import os
 from pathlib import Path
+import sys
+sys.path.append('/app/backend')
+from agents.templates import TemplateFactory
 
 # Create exports directory
 EXPORTS_DIR = Path("/app/backend/exports")
