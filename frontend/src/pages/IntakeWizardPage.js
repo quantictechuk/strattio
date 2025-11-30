@@ -69,6 +69,56 @@ function IntakeWizardPage({ navigate, user, planId }) {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleOpexChange = (category, value) => {
+    setFormData(prev => ({
+      ...prev,
+      operating_expenses: {
+        ...prev.operating_expenses,
+        [category]: parseFloat(value) || 0
+      }
+    }));
+  };
+
+  const addCustomExpense = () => {
+    setFormData(prev => ({
+      ...prev,
+      operating_expenses: {
+        ...prev.operating_expenses,
+        custom: [...prev.operating_expenses.custom, { name: '', amount: 0 }]
+      }
+    }));
+  };
+
+  const updateCustomExpense = (index, field, value) => {
+    const updated = [...formData.operating_expenses.custom];
+    updated[index][field] = field === 'amount' ? (parseFloat(value) || 0) : value;
+    setFormData(prev => ({
+      ...prev,
+      operating_expenses: {
+        ...prev.operating_expenses,
+        custom: updated
+      }
+    }));
+  };
+
+  const removeCustomExpense = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      operating_expenses: {
+        ...prev.operating_expenses,
+        custom: prev.operating_expenses.custom.filter((_, i) => i !== index)
+      }
+    }));
+  };
+
+  const calculateTotalOpex = () => {
+    const opex = formData.operating_expenses;
+    const standard = opex.salaries + opex.software_tools + opex.hosting_domain + 
+                     opex.marketing + opex.workspace_utilities + opex.miscellaneous;
+    const custom = opex.custom.reduce((sum, item) => sum + (item.amount || 0), 0);
+    return standard + custom;
+  };
+
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
