@@ -52,6 +52,7 @@ try:
     from routes.compliance import router as compliance_router
     from routes.exports import router as exports_router
     from routes.subscriptions import router as subscriptions_router
+    from routes.stripe_routes import router as stripe_router
     
     api_router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
     api_router.include_router(plans_router, prefix="/plans", tags=["Plans"])
@@ -60,6 +61,7 @@ try:
     api_router.include_router(compliance_router, tags=["Compliance"])
     api_router.include_router(exports_router, prefix="/exports", tags=["Exports"])
     api_router.include_router(subscriptions_router, prefix="/subscriptions", tags=["Subscriptions"])
+    api_router.include_router(stripe_router, prefix="/stripe", tags=["Stripe Payments"])
 except ImportError as e:
     logger.warning(f"Some route modules not yet created: {e}")
 
