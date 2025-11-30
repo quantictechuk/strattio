@@ -24,47 +24,60 @@ export const authService = {
   }
 };
 
-// API request helper
+const refreshAccessToken = async () => {
+  const refreshToken = authService.getRefreshToken();
+  if (!refreshToken) return false;
+  
+  try {
+    const response = await fetch(`${API_URL}/api/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken })
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      authService.setTokens(data.access_token, refreshToken);
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('Token refresh error:', error);
+    return false;
+  }
+};
+
+// API request helper - SIMPLIFIED to avoid body consumption issues
 export const apiRequest = async (endpoint, options = {}) => {
-  const token = authService.getToken();
-  
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...options.headers
-  };
-  
-  // Store body separately to avoid consumption issues
-  const requestBody = options.body;
-  
-  const config = {
-    ...options,
-    headers,
-    body: requestBody
+  const makeRequest = async (token) => {
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options.headers
+    };
+    
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      ...options,
+      headers
+    });
+    
+    return response;
   };
   
   try {
-    const response = await fetch(`${API_URL}${endpoint}`, config);
+    // First attempt with current token
+    let response = await makeRequest(authService.getToken());
     
+    // If 401, try to refresh token and retry ONCE
     if (response.status === 401) {
-      // Token expired, try refresh
       const refreshed = await refreshAccessToken();
       if (refreshed) {
-        // Retry original request with new token and fresh body
-        const retryConfig = {
-          ...options,
-          headers: {
-            ...headers,
-            Authorization: `Bearer ${authService.getToken()}`
-          },
-          body: requestBody  // Use the stored body (not consumed)
-        };
-        
-        const retryResponse = await fetch(`${API_URL}${endpoint}`, retryConfig);
-        return handleResponse(retryResponse);
+        // Retry with new token
+        response = await makeRequest(authService.getToken());
       } else {
         authService.clearTokens();
-        window.location.href = '/login';
+        window.location.href = '/';
         throw new Error('Session expired');
       }
     }
@@ -95,30 +108,6 @@ const handleResponse = async (response) => {
   }
   
   return response;
-};
-
-const refreshAccessToken = async () => {
-  const refreshToken = authService.getRefreshToken();
-  if (!refreshToken) return false;
-  
-  try {
-    const response = await fetch(`${API_URL}/api/auth/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refresh_token: refreshToken })
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      authService.setTokens(data.access_token, refreshToken);
-      return true;
-    }
-    
-    return false;
-  } catch (error) {
-    console.error('Token refresh error:', error);
-    return false;
-  }
 };
 
 // API methods
