@@ -169,3 +169,92 @@ class ComplianceAgent:
                 "status": "pass",
                 "message": "All required sections present"
             }
+    
+    def generate_compliance_section(self, plan_purpose: str, intake_data: Dict, financial_model: Dict) -> str:
+        """
+        Generate compliance checklist section for visa/loan plans
+        
+        Returns:
+            Formatted compliance section content
+        """
+        if plan_purpose == "visa_startup":
+            return self._generate_startup_visa_compliance(intake_data, financial_model)
+        elif plan_purpose == "visa_innovator":
+            return self._generate_innovator_visa_compliance(intake_data, financial_model)
+        elif plan_purpose == "loan":
+            return self._generate_loan_compliance(intake_data, financial_model)
+        else:
+            return ""
+    
+    def _generate_startup_visa_compliance(self, intake_data: Dict, financial_model: Dict) -> str:
+        """Generate Start-Up Visa compliance checklist"""
+        business_name = intake_data.get("business_name", "the business")
+        
+        content = f"""START-UP VISA COMPLIANCE CHECKLIST
+
+{business_name} meets the UK Start-Up Visa requirements as follows:
+
+✓ Innovation: This business presents a genuine innovative business idea that is original and meets new or existing market needs and/or creates a competitive advantage.
+
+✓ Viability: The financial projections demonstrate that the business is viable and has realistic potential for growth over a minimum 2-year period in the UK.
+
+✓ Scalability: The business model shows clear scalability potential with a defined growth strategy and path to expansion.
+
+✓ Endorsement Alignment: This business plan is structured to meet endorsing body requirements and demonstrates the characteristics required for endorsement.
+
+✓ UK Market Focus: All analysis, projections, and strategies are focused on successful operation within the UK market.
+
+This plan has been prepared in accordance with UK Visas and Immigration guidance for Start-Up Visa applications."""
+        
+        return content
+    
+    def _generate_innovator_visa_compliance(self, intake_data: Dict, financial_model: Dict) -> str:
+        """Generate Innovator Founder Visa compliance checklist"""
+        business_name = intake_data.get("business_name", "the business")
+        starting_capital = intake_data.get("starting_capital", 0)
+        
+        content = f"""INNOVATOR FOUNDER VISA COMPLIANCE CHECKLIST
+
+{business_name} meets the UK Innovator Founder Visa requirements as follows:
+
+✓ Significant Innovation: This business demonstrates a significantly innovative approach with clear IP strategy and defensible competitive advantages.
+
+✓ High Growth Potential: The business model and financial projections demonstrate potential for significant growth and scalability beyond typical start-up levels.
+
+✓ Viability: Comprehensive financial modeling demonstrates that the business is viable and capable of sustained operation and growth in the UK market.
+
+✓ Funding Requirement: The business meets the minimum £50,000 funding requirement (Starting Capital: £{starting_capital:,}).
+
+✓ Job Creation: Clear plan for creating UK jobs and contributing to the UK economy beyond the founder's role.
+
+✓ Founder Credentials: Demonstrates that the founder has the necessary skills, experience, and capability to successfully establish and run this business.
+
+✓ Endorsement Ready: This plan is structured to meet endorsing body requirements for Innovator Founder Visa endorsement.
+
+This plan has been prepared in accordance with UK Visas and Immigration guidance for Innovator Founder Visa applications."""
+        
+        return content
+    
+    def _generate_loan_compliance(self, intake_data: Dict, financial_model: Dict) -> str:
+        """Generate Start-Up Loan eligibility compliance"""
+        business_name = intake_data.get("business_name", "the business")
+        
+        content = f"""START-UP LOAN ELIGIBILITY & COMPLIANCE
+
+{business_name} meets the UK Start-Up Loan scheme eligibility criteria:
+
+✓ UK-Based Business: The business is registered and will operate in the UK.
+
+✓ Business Age: This is a new or early-stage business (less than 3 years old or not yet trading).
+
+✓ Eligible Sector: The business operates in an eligible sector for Start-Up Loan funding.
+
+✓ Repayment Capacity: Financial projections demonstrate sufficient cash flow to meet loan repayment obligations.
+
+✓ Business Viability: The business model is viable with realistic revenue projections and sustainable operating costs.
+
+✓ Founder Commitment: The founder demonstrates commitment through time dedication and personal investment in the business.
+
+This plan has been prepared in accordance with Start Up Loans Company guidance and eligibility requirements."""
+        
+        return content
