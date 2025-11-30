@@ -116,15 +116,24 @@ function PlanEditorPage({ navigate, user, planId }) {
   };
 
   const handleExportPDF = async () => {
+    // Check subscription tier first
+    if (!subscription) {
+      setError('Loading subscription info...');
+      return;
+    }
+
+    // Free tier: Show upgrade modal
+    if (subscription.tier === 'free') {
+      setShowUpgradeModal(true);
+      return;
+    }
+
+    // Paid tiers: Proceed with export
     try {
       const exportJob = await api.exports.create(planId, 'pdf');
-      alert('PDF export created! Check exports tab.');
+      alert('PDF export created successfully! Download will be available shortly.');
     } catch (err) {
-      if (err.message.includes('Upgrade')) {
-        alert('PDF export requires Starter tier or higher. Please upgrade your plan.');
-      } else {
-        setError(err.message || 'Failed to create export');
-      }
+      setError(err.message || 'Failed to create export');
     }
   };
 
