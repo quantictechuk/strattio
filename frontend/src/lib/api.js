@@ -34,9 +34,13 @@ export const apiRequest = async (endpoint, options = {}) => {
     ...options.headers
   };
   
+  // Store body separately to avoid consumption issues
+  const requestBody = options.body;
+  
   const config = {
     ...options,
-    headers
+    headers,
+    body: requestBody
   };
   
   try {
@@ -46,16 +50,14 @@ export const apiRequest = async (endpoint, options = {}) => {
       // Token expired, try refresh
       const refreshed = await refreshAccessToken();
       if (refreshed) {
-        // Retry original request with new token
-        const retryHeaders = { 
-          ...headers, 
-          Authorization: `Bearer ${authService.getToken()}` 
-        };
-        
-        // Rebuild config for retry (important: don't reuse consumed body)
+        // Retry original request with new token and fresh body
         const retryConfig = {
           ...options,
-          headers: retryHeaders
+          headers: {
+            ...headers,
+            Authorization: `Bearer ${authService.getToken()}`
+          },
+          body: requestBody  // Use the stored body (not consumed)
         };
         
         const retryResponse = await fetch(`${API_URL}${endpoint}`, retryConfig);
