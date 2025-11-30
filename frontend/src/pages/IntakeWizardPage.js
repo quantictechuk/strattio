@@ -80,10 +80,10 @@ function IntakeWizardPage({ navigate, user, planId }) {
         name: `${formData.business_name} Business Plan`,
         intake_data: formData,
         plan_purpose: formData.plan_purpose
-      }, user.id);
+      });
 
       // Trigger generation
-      await api.plans.generate(plan.id, user.id);
+      await api.plans.generate(plan.id);
 
       // Navigate to plan editor
       navigate('plan-editor', { planId: plan.id });
