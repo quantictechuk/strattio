@@ -1,0 +1,130 @@
+[
+  {
+    "content": "Phase 1 POC: Get integration playbooks for OpenAI (text), ONS/Eurostat data, Companies House, SERP API",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 1 POC: Retrieve Emergent LLM key for OpenAI integration",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 1 POC: Create tests/test_core.py with all 5 test functions (LLM writer zero-halluc, financial engine formulas, market data fetch, citation guardrails, output shapes)",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 1 POC: Implement deterministic financial engine formulas (revenue, COGS, OpEx, P&L, CF, breakeven, KPIs) as pure Python functions",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 1 POC: Run test_core.py and fix until all tests pass with reproducible outputs",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 1 POC: Save artifacts to /app/tests/poc_artifacts/*.json for traceability",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 1: Verify all POC user stories are covered in testing",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2 Backend: Setup FastAPI with load_dotenv, MongoDB connection, /api prefix, healthcheck endpoint",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2 Backend: Implement Auth endpoints (register, login, refresh, me) with JWT and email/password",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2 Backend: Create MongoDB collections and models (users, plans, sections, research_packs, financial_models, compliance_reports, exports, subscriptions)",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2 Backend: Implement serialize_doc helper for ObjectId/datetime JSON serialization",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2 Backend: Build Research Agent module with ONS/Eurostat/Google Trends/SERP/Companies House integrations",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2 Backend: Build Validation Agent with freshness, source validity, logic/outlier, completeness checks",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2 Backend: Build Financial Engine with deterministic formulas from PRD v3",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2 Backend: Build Plan Writer Agent with zero-hallucination prompt and citation enforcement",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2 Backend: Build Compliance Agent with templates (UK_STARTUP_VISA, UK_INNOVATOR_VISA, UK_STARTUP_LOAN, INVESTOR_READY, GENERIC)",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2 Backend: Create Multi-Agent Orchestrator endpoint POST /api/plans/{id}/generate with status polling",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2 Backend: Implement all Plan endpoints (list, create, get, update, delete, duplicate, generate, status)",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2 Backend: Implement Section endpoints (list, get, update, regenerate)",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2 Backend: Implement Financial endpoints (get, patch inputs, recalc)",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2 Backend: Implement Compliance endpoints (get, check, list templates)",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2 Backend: Implement Export endpoints (create, list, download) with PDF generation using ReportLab",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2 Backend: Implement Subscription endpoints (current, usage) with tier checking",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2 Frontend: Get design guidelines from design_agent",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2 Frontend: Build all pages (Home, Auth, Dashboard, Intake Wizard, Plan Editor, Financials, Compliance, Exports, Settings)",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2 Frontend: Build all components (ChatSteps, SectionCard, RichTextEditor, CitationsList, AssumptionsForm, Charts, ComplianceChecklist, ExportModal, PaywallModal)",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2 Frontend: Implement data layer with REACT_APP_BACKEND_URL + /api prefix, loading/error states, data-testid attributes",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2: Lint backend with ruff and frontend with eslint",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2: Run esbuild bundle check for frontend",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2: End to End Testing using Testing Agent",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2: Fix all issues found in testing and re-test until all tests pass",
+    "status": "pending"
+  },
+  {
+    "content": "Phase 2: Verify all 8 app user stories are working correctly",
+    "status": "pending"
+  }
+]
