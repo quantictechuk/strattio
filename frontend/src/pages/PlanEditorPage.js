@@ -427,13 +427,13 @@ function PlanEditorPage({ navigate, user, planId }) {
                 <div style={{ marginTop: '2rem' }}>
                   <h4 style={{ marginBottom: '1rem' }}>Break-Even Analysis</h4>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
-                    <div className=\"card\" style={{ background: 'var(--bg-secondary)' }}>
+                    <div className="card" style={{ background: 'var(--bg-secondary)' }}>
                       <div style={{ fontSize: '0.875rem', color: '#6B7A91', marginBottom: '0.5rem' }}>Monthly Units Needed</div>
                       <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>
                         {financials.data.break_even?.break_even_units_monthly?.toLocaleString()}
                       </div>
                     </div>
-                    <div className=\"card\" style={{ background: 'var(--bg-secondary)' }}>
+                    <div className="card" style={{ background: 'var(--bg-secondary)' }}>
                       <div style={{ fontSize: '0.875rem', color: '#6B7A91', marginBottom: '0.5rem' }}>Monthly Revenue Needed</div>
                       <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>
                         £{financials.data.break_even?.break_even_revenue_monthly?.toLocaleString()}
