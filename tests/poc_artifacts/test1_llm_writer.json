@@ -1,0 +1,130 @@
+{
+  "test": "test_llm_writer_zero_halluc",
+  "timestamp": "2025-11-30T17:45:00.376021",
+  "prompt": "Write an Executive Summary section for this business plan.\n\nDATA_PACK:\n{\n  \"data_pack_id\": \"test_dp_001\",\n  \"created_at\": \"2025-11-30T17:44:56.167264\",\n  \"industry\": \"food_beverage_cafe\",\n  \"location\": \"UK\",\n  \"market_data\": {\n    \"market_size_gbp\": 4500000000,\n    \"market_size_source\": \"ONS\",\n    \"market_size_url\": \"https://www.ons.gov.uk/businessindustryandtrade/retailindustry\",\n    \"market_size_timestamp\": \"2024-09-15\",\n    \"growth_rate_percent\": 8.2,\n    \"growth_rate_source\": \"ONS\",\n    \"growth_rate_url\": \"https://www.ons.gov.uk/businessindustryandtrade/retailindustry\",\n    \"growth_rate_timestamp\": \"2024-09-15\"\n  },\n  \"competitor_data\": {\n    \"top_competitors\": [\n      {\n        \"name\": \"Costa Coffee\",\n        \"source\": \"Companies House\",\n        \"url\": \"https://find-and-update.company-information.service.gov.uk\"\n      },\n      {\n        \"name\": \"Pret A Manger\",\n        \"source\": \"Companies House\",\n        \"url\": \"https://find-and-update.company-information.service.gov.uk\"\n      }\n    ],\n    \"competitor_count_estimate\": 1250,\n    \"competitor_count_source\": \"SERP API\"\n  },\n  \"missing_data\": [],\n  \"stale_data\": [],\n  \"fetch_errors\": []\n}\n\nFINANCIAL_PACK:\n{\n  \"financial_model_id\": \"test_fm_001\",\n  \"created_at\": \"2025-11-30T17:44:56.167586\",\n  \"pnl_annual\": [\n    {\n      \"year\": 1,\n      \"revenue\": 180000,\n      \"cogs\": 63000.0,\n      \"gross_profit\": 117000.0,\n      \"total_opex\": 156400.0,\n      \"operating_profit\": -39400.0,\n      \"tax\": 0.0,\n      \"net_profit\": -39400.0\n    },\n    {\n      \"year\": 2,\n      \"revenue\": 207000.0,\n      \"cogs\": 72450.0,\n      \"gross_profit\": 134550.0,\n      \"total_opex\": 159910.0,\n      \"operating_profit\": -25360.0,\n      \"tax\": 0.0,\n      \"net_profit\": -25360.0\n    },\n    {\n      \"year\": 3,\n      \"revenue\": 238050.0,\n      \"cogs\": 83317.5,\n      \"gross_profit\": 154732.5,\n      \"total_opex\": 163946.5,\n      \"operating_profit\": -9214.0,\n      \"tax\": 0.0,\n      \"net_profit\": -9214.0\n    },\n    {\n      \"year\": 4,\n      \"revenue\": 273757.5,\n      \"cogs\": 95815.12,\n      \"gross_profit\": 177942.38,\n      \"total_opex\": 168588.48,\n      \"operating_profit\": 9353.9,\n      \"tax\": 1777.24,\n      \"net_profit\": 7576.66\n    },\n    {\n      \"year\": 5,\n      \"revenue\": 314821.12,\n      \"cogs\": 110187.39,\n      \"gross_profit\": 204633.73,\n      \"total_opex\": 173926.75,\n      \"operating_profit\": 30706.98,\n      \"tax\": 5834.33,\n      \"net_profit\": 24872.65\n    }\n  ],\n  \"break_even\": {\n    \"fixed_costs_monthly\": 11083.33,\n    \"contribution_margin_per_unit\": 2.92,\n    \"break_even_units_monthly\": 3789.0,\n    \"break_even_revenue_monthly\": 17051.28\n  },\n  \"kpis\": {\n    \"gross_margin_percent\": 65.0,\n    \"net_margin_percent\": -21.89,\n    \"roi_year1_percent\": -78.8\n  },\n  \"formulas_used\": [\n    {\n      \"metric\": \"revenue\",\n      \"formula\": \"Year(N) = Year(N-1) \\u00d7 (1 + growth_rate)\"\n    },\n    {\n      \"metric\": \"cogs\",\n      \"formula\": \"COGS = Revenue \\u00d7 cogs_percentage\"\n    },\n    {\n      \"metric\": \"gross_profit\",\n      \"formula\": \"Gross Profit = Revenue - COGS\"\n    },\n    {\n      \"metric\": \"net_profit\",\n      \"formula\": \"Net Profit = Operating Profit - Tax\"\n    },\n    {\n      \"metric\": \"break_even\",\n      \"formula\": \"Break Even = Fixed Costs / Contribution Margin\"\n    }\n  ]\n}\n\nINTAKE_DATA:\n{\n  \"business_name\": \"Sarah's Coffee House\",\n  \"industry\": \"food_beverage_cafe\",\n  \"location_country\": \"GB\",\n  \"location_city\": \"London\",\n  \"business_description\": \"A specialty coffee shop focusing on ethically sourced beans and artisanal pastries\",\n  \"unique_value_proposition\": \"Direct trade relationships with farmers, educational tastings, community space\",\n  \"target_customers\": \"Young professionals aged 25-40, students, remote workers\",\n  \"revenue_model\": [\n    \"product_sales\"\n  ],\n  \"starting_capital\": 50000,\n  \"currency\": \"GBP\",\n  \"monthly_revenue_estimate\": 15000,\n  \"price_per_unit\": 4.5,\n  \"units_per_month\": 3000,\n  \"team_size\": 3,\n  \"plan_purpose\": \"loan\"\n}\n\nWrite a 200-word executive summary that includes:\n1. Business description\n2. Market opportunity (cite ONS data)\n3. Financial highlights (cite financial projections)\n4. Key differentiators\n\nRemember: CITE all numbers with sources. Do NOT invent any statistics.\n",
+  "response": "**Executive Summary**\n\nSarah's Coffee House, located in the vibrant city of London, is a specialty coffee shop that emphasizes ethically sourced beans and artisanal pastries. Our unique value proposition lies in direct trade relationships with farmers, offering educational tastings and providing a community space for our customers.\n\nAccording to ONS data (2024), the UK cafe market is valued at \u00a34.5 billion, with a growth rate of 8.2%. This growing market presents significant opportunities for boutique coffee shops like Sarah's Coffee House to capture a share by focusing on quality and unique customer experiences.\n\nFinancially, our projections indicate progressive growth. In Year 1, revenue is projected to be \u00a3180,000, with a gross profit of \u00a3117,000 (Financial Projections, 2025). By Year 5, revenue is expected to reach \u00a3314,821.12, translating into a net profit of \u00a324,872.65 (Financial Projections, 2025). Initial challenges include operating losses in the first three years; however, profitability is anticipated by Year 4.\n\nOur key differentiators set us apart from competitors like Costa Coffee and Pret A Manger (Companies House). These include a community-centric approach, interactive coffee experiences, and dedication to sustainability. Sarah's Coffee House is poised to meet the demand of young professionals, students, and remote workers seeking high-quality, ethically produced coffee in a welcoming environment.",
+  "data_pack": {
+    "data_pack_id": "test_dp_001",
+    "created_at": "2025-11-30T17:44:56.167264",
+    "industry": "food_beverage_cafe",
+    "location": "UK",
+    "market_data": {
+      "market_size_gbp": 4500000000,
+      "market_size_source": "ONS",
+      "market_size_url": "https://www.ons.gov.uk/businessindustryandtrade/retailindustry",
+      "market_size_timestamp": "2024-09-15",
+      "growth_rate_percent": 8.2,
+      "growth_rate_source": "ONS",
+      "growth_rate_url": "https://www.ons.gov.uk/businessindustryandtrade/retailindustry",
+      "growth_rate_timestamp": "2024-09-15"
+    },
+    "competitor_data": {
+      "top_competitors": [
+        {
+          "name": "Costa Coffee",
+          "source": "Companies House",
+          "url": "https://find-and-update.company-information.service.gov.uk"
+        },
+        {
+          "name": "Pret A Manger",
+          "source": "Companies House",
+          "url": "https://find-and-update.company-information.service.gov.uk"
+        }
+      ],
+      "competitor_count_estimate": 1250,
+      "competitor_count_source": "SERP API"
+    },
+    "missing_data": [],
+    "stale_data": [],
+    "fetch_errors": []
+  },
+  "financial_pack": {
+    "financial_model_id": "test_fm_001",
+    "created_at": "2025-11-30T17:44:56.167586",
+    "pnl_annual": [
+      {
+        "year": 1,
+        "revenue": 180000,
+        "cogs": 63000.0,
+        "gross_profit": 117000.0,
+        "total_opex": 156400.0,
+        "operating_profit": -39400.0,
+        "tax": 0.0,
+        "net_profit": -39400.0
+      },
+      {
+        "year": 2,
+        "revenue": 207000.0,
+        "cogs": 72450.0,
+        "gross_profit": 134550.0,
+        "total_opex": 159910.0,
+        "operating_profit": -25360.0,
+        "tax": 0.0,
+        "net_profit": -25360.0
+      },
+      {
+        "year": 3,
+        "revenue": 238050.0,
+        "cogs": 83317.5,
+        "gross_profit": 154732.5,
+        "total_opex": 163946.5,
+        "operating_profit": -9214.0,
+        "tax": 0.0,
+        "net_profit": -9214.0
+      },
+      {
+        "year": 4,
+        "revenue": 273757.5,
+        "cogs": 95815.12,
+        "gross_profit": 177942.38,
+        "total_opex": 168588.48,
+        "operating_profit": 9353.9,
+        "tax": 1777.24,
+        "net_profit": 7576.66
+      },
+      {
+        "year": 5,
+        "revenue": 314821.12,
+        "cogs": 110187.39,
+        "gross_profit": 204633.73,
+        "total_opex": 173926.75,
+        "operating_profit": 30706.98,
+        "tax": 5834.33,
+        "net_profit": 24872.65
+      }
+    ],
+    "break_even": {
+      "fixed_costs_monthly": 11083.33,
+      "contribution_margin_per_unit": 2.92,
+      "break_even_units_monthly": 3789.0,
+      "break_even_revenue_monthly": 17051.28
+    },
+    "kpis": {
+      "gross_margin_percent": 65.0,
+      "net_margin_percent": -21.89,
+      "roi_year1_percent": -78.8
+    },
+    "formulas_used": [
+      {
+        "metric": "revenue",
+        "formula": "Year(N) = Year(N-1) \u00d7 (1 + growth_rate)"
+      },
+      {
+        "metric": "cogs",
+        "formula": "COGS = Revenue \u00d7 cogs_percentage"
+      },
+      {
+        "metric": "gross_profit",
+        "formula": "Gross Profit = Revenue - COGS"
+      },
+      {
+        "metric": "net_profit",
+        "formula": "Net Profit = Operating Profit - Tax"
+      },
+      {
+        "metric": "break_even",
+        "formula": "Break Even = Fixed Costs / Contribution Margin"
+      }
+    ]
+  }
+}
