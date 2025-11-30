@@ -581,7 +581,7 @@ Remember: CITE all numbers with sources. Do NOT invent any statistics.
         json.dump(artifact, f, indent=2)
     
     # Validate citations
-    citation_check = validate_citations(generated_text, DATA_PACK, financial_pack)
+    citation_check = validate_citations(generated_text, DATA_PACK, financial_pack, INTAKE_DATA)
     
     print(f"\n✓ Generated text ({len(generated_text)} chars)")
     print(f"✓ Citation check: {citation_check['passed']}")
