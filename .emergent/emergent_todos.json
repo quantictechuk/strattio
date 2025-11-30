@@ -1,15 +1,15 @@
 [
   {
     "content": "Get Stripe integration playbook",
-    "status": "in_progress"
+    "status": "completed"
   },
   {
     "content": "Ask user for Stripe API keys (test/production)",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "Backend: Implement Stripe checkout session creation",
-    "status": "pending"
+    "status": "in_progress"
   },
   {
     "content": "Backend: Implement Stripe webhook handler for subscription events",
