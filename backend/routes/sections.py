@@ -1,23 +1,39 @@
 """Sections routes - View and edit plan sections"""
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends, Header
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 import logging
 
 from utils.serializers import serialize_doc
+from utils.auth import decode_token
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
 from server import db
 
+async def get_current_user_id(authorization: Optional[str] = Header(None)):
+    """Extract user_id from JWT token"""
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Missing authorization header")
+    
+    try:
+        scheme, token = authorization.split()
+        payload = decode_token(token)
+        user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return user_id
+    except Exception:
+        raise HTTPException(status_code=401, detail="Authentication failed")
+
 class SectionUpdate(BaseModel):
     content: str
 
 @router.get("/{plan_id}/sections")
-async def get_sections(plan_id: str, user_id: str):
+async def get_sections(plan_id: str, user_id: str = Depends(get_current_user_id)):
     """Get all sections for a plan"""
     
     # Verify plan ownership
@@ -30,7 +46,7 @@ async def get_sections(plan_id: str, user_id: str):
     return {"sections": [serialize_doc(s) for s in sections]}
 
 @router.get("/{plan_id}/sections/{section_id}")
-async def get_section(plan_id: str, section_id: str, user_id: str):
+async def get_section(plan_id: str, section_id: str, user_id: str = Depends(get_current_user_id)):
     """Get a specific section"""
     
     # Verify plan ownership
@@ -45,7 +61,7 @@ async def get_section(plan_id: str, section_id: str, user_id: str):
     return serialize_doc(section)
 
 @router.patch("/{plan_id}/sections/{section_id}")
-async def update_section(plan_id: str, section_id: str, section_update: SectionUpdate, user_id: str):
+async def update_section(plan_id: str, section_id: str, section_update: SectionUpdate, user_id: str = Depends(get_current_user_id)):
     """Update section content"""
     
     # Verify plan ownership
@@ -69,7 +85,7 @@ async def update_section(plan_id: str, section_id: str, section_update: SectionU
     return serialize_doc(section)
 
 @router.post("/{plan_id}/sections/{section_id}/regenerate")
-async def regenerate_section(plan_id: str, section_id: str, user_id: str):
+async def regenerate_section(plan_id: str, section_id: str, user_id: str = Depends(get_current_user_id)):
     """Regenerate a section using AI (simplified for MVP)"""
     
     # Verify plan ownership
@@ -84,3 +100,4 @@ async def regenerate_section(plan_id: str, section_id: str, user_id: str):
         "message": "Section regeneration queued",
         "section_id": section_id
     }
+
