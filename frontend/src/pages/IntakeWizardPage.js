@@ -295,7 +295,7 @@ function IntakeWizardPage({ navigate, user, planId }) {
     if (step.id === 'financials') {
       return (
         <div>
-          <h3 style={{ marginBottom: '1.5rem' }}>Financial Details</h3>
+          <h3 style={{ marginBottom: '1.5rem' }}>Revenue Details</h3>
           
           <div className="form-group">
             <label className="form-label">Starting Capital (£) *</label>
@@ -347,6 +347,153 @@ function IntakeWizardPage({ navigate, user, planId }) {
                 data-testid="team-size-input"
                 min="1"
               />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (step.id === 'operating_expenses') {
+      const totalMonthly = calculateTotalOpex();
+      
+      return (
+        <div>
+          <h3 style={{ marginBottom: '0.5rem' }}>Monthly Operating Expenses</h3>
+          <p style={{ color: '#6B7A91', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
+            Enter your expected monthly costs. This will be used for accurate financial projections.
+          </p>
+          
+          <div className="form-group">
+            <label className="form-label">Salaries & Wages (£/month)</label>
+            <input
+              type="number"
+              className="form-input"
+              value={formData.operating_expenses.salaries}
+              onChange={(e) => handleOpexChange('salaries', e.target.value)}
+              data-testid="opex-salaries-input"
+              min="0"
+              step="100"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Software & Tools (£/month)</label>
+            <input
+              type="number"
+              className="form-input"
+              value={formData.operating_expenses.software_tools}
+              onChange={(e) => handleOpexChange('software_tools', e.target.value)}
+              data-testid="opex-software-input"
+              min="0"
+              step="10"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Hosting, Domain & Server (£/month)</label>
+            <input
+              type="number"
+              className="form-input"
+              value={formData.operating_expenses.hosting_domain}
+              onChange={(e) => handleOpexChange('hosting_domain', e.target.value)}
+              data-testid="opex-hosting-input"
+              min="0"
+              step="10"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Marketing & Advertising (£/month)</label>
+            <input
+              type="number"
+              className="form-input"
+              value={formData.operating_expenses.marketing}
+              onChange={(e) => handleOpexChange('marketing', e.target.value)}
+              data-testid="opex-marketing-input"
+              min="0"
+              step="50"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Workspace & Utilities (£/month)</label>
+            <input
+              type="number"
+              className="form-input"
+              value={formData.operating_expenses.workspace_utilities}
+              onChange={(e) => handleOpexChange('workspace_utilities', e.target.value)}
+              data-testid="opex-workspace-input"
+              min="0"
+              step="50"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Miscellaneous (£/month)</label>
+            <input
+              type="number"
+              className="form-input"
+              value={formData.operating_expenses.miscellaneous}
+              onChange={(e) => handleOpexChange('miscellaneous', e.target.value)}
+              data-testid="opex-misc-input"
+              min="0"
+              step="10"
+            />
+          </div>
+
+          {/* Custom Expenses */}
+          {formData.operating_expenses.custom.map((expense, idx) => (
+            <div key={idx} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr auto', gap: '0.5rem', marginBottom: '1rem' }}>
+              <input
+                type="text"
+                className="form-input"
+                value={expense.name}
+                onChange={(e) => updateCustomExpense(idx, 'name', e.target.value)}
+                placeholder="Expense name"
+                data-testid={`custom-expense-name-${idx}`}
+              />
+              <input
+                type="number"
+                className="form-input"
+                value={expense.amount}
+                onChange={(e) => updateCustomExpense(idx, 'amount', e.target.value)}
+                placeholder="Amount"
+                data-testid={`custom-expense-amount-${idx}`}
+                min="0"
+              />
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => removeCustomExpense(idx)}
+                style={{ padding: '0.75rem', color: '#EF4444' }}
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={addCustomExpense}
+            data-testid="add-custom-expense-btn"
+            style={{ width: '100%', marginBottom: '1rem' }}
+          >
+            + Add Custom Expense
+          </button>
+
+          {/* Total Summary */}
+          <div className="card" style={{ background: '#EBF5FF', border: '2px solid #1A85FF', marginTop: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <strong>Total Monthly Operating Expenses:</strong>
+              </div>
+              <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1A85FF' }}>
+                £{totalMonthly.toLocaleString()}
+              </div>
+            </div>
+            <div style={{ fontSize: '0.875rem', color: '#6B7A91', marginTop: '0.5rem' }}>
+              Annual: £{(totalMonthly * 12).toLocaleString()}
             </div>
           </div>
         </div>
