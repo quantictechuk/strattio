@@ -82,7 +82,7 @@ async def create_plan(plan_data: PlanCreate, user_id: str = Depends(get_current_
     if subscription["plans_created_this_month"] >= subscription["plan_limit"]:
         raise HTTPException(
             status_code=403,
-            detail=f"Plan limit reached. Upgrade to create more plans."
+            detail="Plan limit reached. Upgrade to create more plans."
         )
     
     # Create plan document
