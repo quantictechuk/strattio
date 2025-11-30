@@ -109,7 +109,11 @@ function DashboardPage({ navigate, user, onLogout }) {
                 </p>
               </div>
               {subscription.tier === 'free' && (
-                <button className="btn btn-primary" data-testid="upgrade-btn">
+                <button 
+                  className="btn btn-primary" 
+                  onClick={() => setShowUpgradeModal(true)}
+                  data-testid="upgrade-btn"
+                >
                   Upgrade Plan
                 </button>
               )}
