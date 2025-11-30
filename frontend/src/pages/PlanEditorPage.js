@@ -587,7 +587,7 @@ function PlanEditorPage({ navigate, user, planId }) {
                 style={{ width: '100%' }}
                 onClick={() => handleUpgrade('starter')}
                 disabled={upgrading}
-                data-testid=\"upgrade-starter-btn\"
+                data-testid="upgrade-starter-btn"
               >
                 {upgrading ? 'Redirecting to checkout...' : 'Choose Starter'}
               </button>
@@ -613,7 +613,7 @@ function PlanEditorPage({ navigate, user, planId }) {
                 style={{ width: '100%', background: '#27AC85' }}
                 onClick={() => handleUpgrade('professional')}
                 disabled={upgrading}
-                data-testid=\"upgrade-professional-btn\"
+                data-testid="upgrade-professional-btn"
               >
                 {upgrading ? 'Redirecting to checkout...' : 'Choose Professional'}
               </button>
@@ -625,7 +625,7 @@ function PlanEditorPage({ navigate, user, planId }) {
                 className="btn btn-ghost" 
                 onClick={() => setShowUpgradeModal(false)}
                 disabled={upgrading}
-                data-testid=\"close-modal-btn\"
+                data-testid="close-modal-btn"
               >
                 Maybe Later
               </button>
