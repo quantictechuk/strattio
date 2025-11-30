@@ -1,7 +1,7 @@
 """Research Agent - Fetches verified market data from external APIs"""
 
 from typing import Dict
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 
 logger = logging.getLogger(__name__)
