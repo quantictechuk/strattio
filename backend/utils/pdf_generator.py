@@ -98,9 +98,15 @@ def generate_business_plan_pdf(plan_data, sections_data, financial_data=None):
     
     # Table of Contents
     story.append(Paragraph("Table of Contents", heading_style))
-    for idx, section in enumerate(sections_data):
+    story.append(Spacer(1, 0.1*inch))
+    
+    # Sort sections by order_index for proper TOC
+    sorted_sections = sorted(sections_data, key=lambda x: x.get('order_index', 999))
+    
+    for idx, section in enumerate(sorted_sections):
         toc_item = f"{idx + 1}. {section.get('title', 'Section')}"
         story.append(Paragraph(toc_item, body_style))
+    
     story.append(PageBreak())
     
     # Sections
