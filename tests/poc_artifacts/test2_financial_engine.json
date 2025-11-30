@@ -1,0 +1,89 @@
+{
+  "financial_model_id": "test_fm_001",
+  "created_at": "2025-11-30T17:45:53.657613",
+  "pnl_annual": [
+    {
+      "year": 1,
+      "revenue": 180000,
+      "cogs": 63000.0,
+      "gross_profit": 117000.0,
+      "total_opex": 156400.0,
+      "operating_profit": -39400.0,
+      "tax": 0.0,
+      "net_profit": -39400.0
+    },
+    {
+      "year": 2,
+      "revenue": 207000.0,
+      "cogs": 72450.0,
+      "gross_profit": 134550.0,
+      "total_opex": 159910.0,
+      "operating_profit": -25360.0,
+      "tax": 0.0,
+      "net_profit": -25360.0
+    },
+    {
+      "year": 3,
+      "revenue": 238050.0,
+      "cogs": 83317.5,
+      "gross_profit": 154732.5,
+      "total_opex": 163946.5,
+      "operating_profit": -9214.0,
+      "tax": 0.0,
+      "net_profit": -9214.0
+    },
+    {
+      "year": 4,
+      "revenue": 273757.5,
+      "cogs": 95815.12,
+      "gross_profit": 177942.38,
+      "total_opex": 168588.48,
+      "operating_profit": 9353.9,
+      "tax": 1777.24,
+      "net_profit": 7576.66
+    },
+    {
+      "year": 5,
+      "revenue": 314821.12,
+      "cogs": 110187.39,
+      "gross_profit": 204633.73,
+      "total_opex": 173926.75,
+      "operating_profit": 30706.98,
+      "tax": 5834.33,
+      "net_profit": 24872.65
+    }
+  ],
+  "break_even": {
+    "fixed_costs_monthly": 11083.33,
+    "contribution_margin_per_unit": 2.92,
+    "break_even_units_monthly": 3789.0,
+    "break_even_revenue_monthly": 17051.28
+  },
+  "kpis": {
+    "gross_margin_percent": 65.0,
+    "net_margin_percent": -21.89,
+    "roi_year1_percent": -78.8
+  },
+  "formulas_used": [
+    {
+      "metric": "revenue",
+      "formula": "Year(N) = Year(N-1) \u00d7 (1 + growth_rate)"
+    },
+    {
+      "metric": "cogs",
+      "formula": "COGS = Revenue \u00d7 cogs_percentage"
+    },
+    {
+      "metric": "gross_profit",
+      "formula": "Gross Profit = Revenue - COGS"
+    },
+    {
+      "metric": "net_profit",
+      "formula": "Net Profit = Operating Profit - Tax"
+    },
+    {
+      "metric": "break_even",
+      "formula": "Break Even = Fixed Costs / Contribution Margin"
+    }
+  ]
+}
