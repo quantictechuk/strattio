@@ -211,6 +211,99 @@ function DashboardPage({ navigate, user, onLogout }) {
           </div>
         )}
       </div>
+
+      {/* Upgrade Modal */}
+      {showUpgradeModal && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(15, 20, 25, 0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={() => !upgrading && setShowUpgradeModal(false)}
+        >
+          <div 
+            className="card" 
+            style={{ maxWidth: '600px', padding: '2rem' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ marginBottom: '1rem', textAlign: 'center' }}>Choose Your Plan</h3>
+            <p style={{ color: '#6B7A91', marginBottom: '2rem', textAlign: 'center' }}>
+              Unlock PDF exports and advanced features
+            </p>
+            
+            {/* Starter Plan */}
+            <div className="card" style={{ background: 'var(--bg-secondary)', marginBottom: '1rem', borderLeft: '4px solid #1A85FF' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
+                <div>
+                  <h4 style={{ marginBottom: '0.5rem' }}>Starter Plan</h4>
+                  <div style={{ fontSize: '2rem', fontWeight: '700', color: '#1A85FF' }}>£12<span style={{ fontSize: '1rem', fontWeight: '400', color: '#6B7A91' }}>/month</span></div>
+                </div>
+              </div>
+              <ul style={{ color: '#4A5568', marginLeft: '1.5rem', marginBottom: '1rem' }}>
+                <li>3 plans per month</li>
+                <li>Full AI generation</li>
+                <li>PDF export</li>
+                <li>SWOT & competitor analysis</li>
+              </ul>
+              <button 
+                className="btn btn-primary" 
+                style={{ width: '100%' }}
+                onClick={() => handleUpgrade('starter')}
+                disabled={upgrading}
+                data-testid="upgrade-starter-btn"
+              >
+                {upgrading ? 'Redirecting to checkout...' : 'Choose Starter'}
+              </button>
+            </div>
+
+            {/* Professional Plan */}
+            <div className="card" style={{ background: 'linear-gradient(135deg, #EBF5FF 0%, #E8F5F1 100%)', marginBottom: '1rem', borderLeft: '4px solid #27AC85' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
+                <div>
+                  <h4 style={{ marginBottom: '0.5rem' }}>Professional Plan <span style={{ fontSize: '0.75rem', background: '#27AC85', color: 'white', padding: '0.25rem 0.5rem', borderRadius: '4px', marginLeft: '0.5rem' }}>POPULAR</span></h4>
+                  <div style={{ fontSize: '2rem', fontWeight: '700', color: '#27AC85' }}>£29<span style={{ fontSize: '1rem', fontWeight: '400', color: '#6B7A91' }}>/month</span></div>
+                </div>
+              </div>
+              <ul style={{ color: '#4A5568', marginLeft: '1.5rem', marginBottom: '1rem' }}>
+                <li><strong>Unlimited plans</strong></li>
+                <li>All export formats (PDF, DOCX)</li>
+                <li>Financial projections & charts</li>
+                <li>Compliance checking</li>
+                <li>Pitch deck generator</li>
+              </ul>
+              <button 
+                className="btn btn-primary" 
+                style={{ width: '100%', background: '#27AC85' }}
+                onClick={() => handleUpgrade('professional')}
+                disabled={upgrading}
+                data-testid="upgrade-professional-btn"
+              >
+                {upgrading ? 'Redirecting to checkout...' : 'Choose Professional'}
+              </button>
+            </div>
+
+            {/* Cancel Button */}
+            <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+              <button 
+                className="btn btn-ghost" 
+                onClick={() => setShowUpgradeModal(false)}
+                disabled={upgrading}
+                data-testid="close-modal-btn"
+              >
+                Maybe Later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
