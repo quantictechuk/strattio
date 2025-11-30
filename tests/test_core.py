@@ -430,10 +430,10 @@ def validate_data_pack(data_pack: Dict) -> Dict:
 # CITATION GUARDRAIL VALIDATOR
 # ============================================================================
 
-def validate_citations(generated_text: str, data_pack: Dict, financial_pack: Dict) -> Dict:
+def validate_citations(generated_text: str, data_pack: Dict, financial_pack: Dict, intake_data: Dict = None) -> Dict:
     """
     Check that all numbers in generated text exist in inputs.
-    Extract all numbers from text and verify they're in DATA_PACK or FINANCIAL_PACK.
+    Extract all numbers from text and verify they're in DATA_PACK or FINANCIAL_PACK or INTAKE_DATA.
     """
     # Extract all numbers from text (including decimals, commas, percentages)
     number_pattern = r'£?[\d,]+(?:\.\d+)?%?'
@@ -444,7 +444,11 @@ def validate_citations(generated_text: str, data_pack: Dict, financial_pack: Dic
     for num in found_numbers:
         clean = num.replace(',', '').replace('£', '').replace('%', '')
         try:
-            cleaned_numbers.append(float(clean))
+            float_num = float(clean)
+            # Exclude years (2000-2099) from validation
+            if float_num >= 2000 and float_num < 2100 and float_num == int(float_num):
+                continue
+            cleaned_numbers.append(float_num)
         except ValueError:
             continue
     
@@ -461,6 +465,12 @@ def validate_citations(generated_text: str, data_pack: Dict, financial_pack: Dic
         comp_count = data_pack["competitor_data"].get("competitor_count_estimate")
         if comp_count:
             valid_numbers.add(float(comp_count))
+    
+    # From INTAKE_DATA (if provided)
+    if intake_data:
+        for key, value in intake_data.items():
+            if isinstance(value, (int, float)):
+                valid_numbers.add(float(value))
     
     # From FINANCIAL_PACK
     if "pnl_annual" in financial_pack:
