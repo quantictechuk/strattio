@@ -148,8 +148,38 @@ function PlanEditorPage({ navigate, user, planId }) {
 
     // Paid tiers: Proceed with export
     try {
+      setError('');
       const exportJob = await api.exports.create(planId, 'pdf');
-      alert('PDF export created successfully! Download will be available shortly.');
+      
+      // Automatically trigger download
+      if (exportJob && exportJob.id) {
+        const downloadUrl = `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001'}/api/exports/${exportJob.id}/download`;
+        
+        // Create hidden link and click it
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = exportJob.file_name || 'business_plan.pdf';
+        
+        // Add auth header by opening in new window with fetch
+        const token = authService.getToken();
+        const response = await fetch(downloadUrl, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          link.href = url;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+          
+          alert('PDF downloaded successfully!');
+        } else {
+          throw new Error('Failed to download PDF');
+        }
+      }
     } catch (err) {
       setError(err.message || 'Failed to create export');
     }
