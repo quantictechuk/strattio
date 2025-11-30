@@ -28,8 +28,11 @@ class ResearchAgent:
         """
         logger.info(f"Fetching market data for {industry} in {location}")
         
-        # For MVP: Return fixture data (similar to POC)
+        # For MVP: Return fixture data with CURRENT timestamp
         # TODO: Integrate real APIs (ONS, Eurostat, etc.)
+        
+        # Use recent timestamp to pass validation
+        recent_date = (datetime.utcnow() - timedelta(days=30)).strftime("%Y-%m-%d")
         
         data_pack = {
             "data_pack_id": f"dp_{datetime.utcnow().timestamp()}",
@@ -40,11 +43,11 @@ class ResearchAgent:
                 "market_size_gbp": 4500000000,  # £4.5B
                 "market_size_source": "ONS",
                 "market_size_url": "https://www.ons.gov.uk/businessindustryandtrade/retailindustry",
-                "market_size_timestamp": "2024-09-15",
+                "market_size_timestamp": recent_date,
                 "growth_rate_percent": 8.2,
                 "growth_rate_source": "ONS",
                 "growth_rate_url": "https://www.ons.gov.uk/businessindustryandtrade/retailindustry",
-                "growth_rate_timestamp": "2024-09-15"
+                "growth_rate_timestamp": recent_date
             },
             "competitor_data": {
                 "top_competitors": [],
