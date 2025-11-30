@@ -124,17 +124,26 @@ class FinancialEngine:
         return pnl
     
     def calculate_break_even(self) -> Dict:
-        """Break-Even Analysis"""
-        employee_count = self.intake.get("team_size", 3)
-        sqft = self.intake.get("space_sqft", 1000)
+        """
+        Break-Even Analysis using USER-PROVIDED operating expenses.
+        """
+        # Get user-provided operating expenses (monthly)
+        user_opex = self.intake.get("operating_expenses", {})
         
-        annual_fixed_costs = (
-            employee_count * self.benchmarks.get("employee_cost_average", 25000) +
-            sqft * self.benchmarks.get("rent_per_sqft_average", 50) +
-            self.benchmarks.get("utilities_monthly", 500) * 12 +
-            self.benchmarks.get("insurance_annual", 2000)
+        # Calculate monthly fixed costs from user inputs
+        fixed_costs_monthly = (
+            user_opex.get("salaries", 0) +
+            user_opex.get("software_tools", 0) +
+            user_opex.get("hosting_domain", 0) +
+            user_opex.get("marketing", 0) +
+            user_opex.get("workspace_utilities", 0) +
+            user_opex.get("miscellaneous", 0)
         )
-        fixed_costs_monthly = annual_fixed_costs / 12
+        
+        # Add custom expenses
+        custom_expenses = user_opex.get("custom", [])
+        for expense in custom_expenses:
+            fixed_costs_monthly += expense.get("amount", 0)
         
         price_per_unit = self.intake.get("price_per_unit", 10.0)
         variable_cost_per_unit = price_per_unit * self.benchmarks.get("cogs_percentage", 0.35)
