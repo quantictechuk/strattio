@@ -113,7 +113,7 @@ async def create_plan(plan_data: PlanCreate, user_id: str = Depends(get_current_
 async def get_plan(plan_id: str, user_id: str = Depends(get_current_user_id)):
     """Get a single plan"""
     
-    plan = await db.plans.find_one({"_id": plan_id, "user_id": user_id})
+    plan = await db.plans.find_one({"_id": to_object_id(plan_id), "user_id": user_id})
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
     
@@ -130,21 +130,21 @@ async def update_plan(plan_id: str, plan_update: PlanUpdate, user_id: str = Depe
     update_data["updated_at"] = datetime.utcnow()
     
     result = await db.plans.update_one(
-        {"_id": plan_id, "user_id": user_id},
+        {"_id": to_object_id(plan_id), "user_id": user_id},
         {"$set": update_data}
     )
     
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Plan not found")
     
-    plan = await db.plans.find_one({"_id": plan_id})
+    plan = await db.plans.find_one({"_id": to_object_id(plan_id)})
     return serialize_doc(plan)
 
 @router.delete("/{plan_id}")
 async def delete_plan(plan_id: str, user_id: str = Depends(get_current_user_id)):
     """Delete a plan"""
     
-    result = await db.plans.delete_one({"_id": plan_id, "user_id": user_id})
+    result = await db.plans.delete_one({"_id": to_object_id(plan_id), "user_id": user_id})
     
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Plan not found")
@@ -163,13 +163,13 @@ async def generate_plan(plan_id: str, user_id: str = Depends(get_current_user_id
     """Generate business plan content using multi-agent pipeline"""
     
     # Get plan
-    plan = await db.plans.find_one({"_id": plan_id, "user_id": user_id})
+    plan = await db.plans.find_one({"_id": to_object_id(plan_id), "user_id": user_id})
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
     
     # Update status to generating
     await db.plans.update_one(
-        {"_id": plan_id},
+        {"_id": to_object_id(plan_id)},
         {"$set": {"status": "generating", "updated_at": datetime.utcnow()}}
     )
     
