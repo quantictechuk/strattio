@@ -21,19 +21,19 @@
   },
   {
     "content": "Phase 2 Frontend: Core pages (Home, Auth, Dashboard, Intake Wizard, Plan Editor)",
-    "status": "in_progress"
+    "status": "completed"
   },
   {
     "content": "Phase 2 Frontend: Key components (PlanCard, SectionEditor, WizardSteps)",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "Phase 2 Frontend: API integration layer with error handling",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "Phase 2: Integration testing of critical path user journey",
-    "status": "pending"
+    "status": "in_progress"
   },
   {
     "content": "Phase 2: Fix critical bugs and validate core flows",
