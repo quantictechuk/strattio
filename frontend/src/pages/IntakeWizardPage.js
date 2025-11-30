@@ -40,7 +40,17 @@ function IntakeWizardPage({ navigate, user, planId }) {
     price_per_unit: 10,
     units_per_month: 1500,
     team_size: 3,
-    plan_purpose: 'generic'
+    plan_purpose: 'generic',
+    // User-defined operating expenses (monthly)
+    operating_expenses: {
+      salaries: 6000,
+      software_tools: 200,
+      hosting_domain: 50,
+      marketing: 1000,
+      workspace_utilities: 1500,
+      miscellaneous: 500,
+      custom: []  // Array of {name: string, amount: number}
+    }
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
