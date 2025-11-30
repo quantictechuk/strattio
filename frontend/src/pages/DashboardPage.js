@@ -15,8 +15,8 @@ function DashboardPage({ navigate, user, onLogout }) {
     setLoading(true);
     try {
       const [plansData, subscriptionData] = await Promise.all([
-        api.plans.list(user.id),
-        api.subscriptions.current(user.id)
+        api.plans.list(),
+        api.subscriptions.current()
       ]);
       
       setPlans(plansData.plans || []);
@@ -46,7 +46,7 @@ function DashboardPage({ navigate, user, onLogout }) {
     if (!window.confirm('Are you sure you want to delete this plan?')) return;
     
     try {
-      await api.plans.delete(planId, user.id);
+      await api.plans.delete(planId);
       setPlans(plans.filter(p => p.id !== planId));
     } catch (err) {
       setError(err.message || 'Failed to delete plan');
@@ -55,7 +55,7 @@ function DashboardPage({ navigate, user, onLogout }) {
 
   const handleDuplicatePlan = async (planId) => {
     try {
-      const newPlan = await api.plans.duplicate(planId, user.id);
+      const newPlan = await api.plans.duplicate(planId);
       setPlans([newPlan, ...plans]);
     } catch (err) {
       setError(err.message || 'Failed to duplicate plan');
