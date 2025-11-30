@@ -27,3 +27,10 @@ def serialize_doc(doc):
         return result
     
     return doc
+
+def to_object_id(id_str):
+    """Convert string ID to ObjectId, handle errors gracefully"""
+    try:
+        return ObjectId(id_str)
+    except Exception:
+        return id_str  # Return as-is if not valid ObjectId
