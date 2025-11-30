@@ -6,6 +6,8 @@ function DashboardPage({ navigate, user, onLogout }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [subscription, setSubscription] = useState(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgrading, setUpgrading] = useState(false);
 
   useEffect(() => {
     loadDashboard();
@@ -59,6 +61,18 @@ function DashboardPage({ navigate, user, onLogout }) {
       setPlans([newPlan, ...plans]);
     } catch (err) {
       setError(err.message || 'Failed to duplicate plan');
+    }
+  };
+
+  const handleUpgrade = async (packageId) => {
+    setUpgrading(true);
+    try {
+      const originUrl = window.location.origin;
+      const checkoutData = await api.stripe.createCheckout(packageId, originUrl);
+      window.location.href = checkoutData.url;
+    } catch (err) {
+      setError(err.message || 'Failed to create checkout session');
+      setUpgrading(false);
     }
   };
 
