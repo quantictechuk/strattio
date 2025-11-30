@@ -5,8 +5,9 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 import logging
+from bson import ObjectId
 
-from utils.serializers import serialize_doc
+from utils.serializers import serialize_doc, to_object_id
 from utils.auth import decode_token
 
 router = APIRouter()
@@ -37,7 +38,7 @@ async def get_sections(plan_id: str, user_id: str = Depends(get_current_user_id)
     """Get all sections for a plan"""
     
     # Verify plan ownership
-    plan = await db.plans.find_one({"_id": plan_id, "user_id": user_id})
+    plan = await db.plans.find_one({"_id": to_object_id(plan_id), "user_id": user_id})
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
     
@@ -50,11 +51,11 @@ async def get_section(plan_id: str, section_id: str, user_id: str = Depends(get_
     """Get a specific section"""
     
     # Verify plan ownership
-    plan = await db.plans.find_one({"_id": plan_id, "user_id": user_id})
+    plan = await db.plans.find_one({"_id": to_object_id(plan_id), "user_id": user_id})
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
     
-    section = await db.sections.find_one({"_id": section_id, "plan_id": plan_id})
+    section = await db.sections.find_one({"_id": to_object_id(section_id), "plan_id": plan_id})
     if not section:
         raise HTTPException(status_code=404, detail="Section not found")
     
@@ -65,12 +66,12 @@ async def update_section(plan_id: str, section_id: str, section_update: SectionU
     """Update section content"""
     
     # Verify plan ownership
-    plan = await db.plans.find_one({"_id": plan_id, "user_id": user_id})
+    plan = await db.plans.find_one({"_id": to_object_id(plan_id), "user_id": user_id})
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
     
     result = await db.sections.update_one(
-        {"_id": section_id, "plan_id": plan_id},
+        {"_id": to_object_id(section_id), "plan_id": plan_id},
         {"$set": {
             "content": section_update.content,
             "updated_at": datetime.utcnow(),
@@ -81,7 +82,7 @@ async def update_section(plan_id: str, section_id: str, section_update: SectionU
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Section not found")
     
-    section = await db.sections.find_one({"_id": section_id})
+    section = await db.sections.find_one({"_id": to_object_id(section_id)})
     return serialize_doc(section)
 
 @router.post("/{plan_id}/sections/{section_id}/regenerate")
@@ -89,7 +90,7 @@ async def regenerate_section(plan_id: str, section_id: str, user_id: str = Depen
     """Regenerate a section using AI (simplified for MVP)"""
     
     # Verify plan ownership
-    plan = await db.plans.find_one({"_id": plan_id, "user_id": user_id})
+    plan = await db.plans.find_one({"_id": to_object_id(plan_id), "user_id": user_id})
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
     
