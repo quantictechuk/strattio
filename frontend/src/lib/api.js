@@ -46,9 +46,19 @@ export const apiRequest = async (endpoint, options = {}) => {
       // Token expired, try refresh
       const refreshed = await refreshAccessToken();
       if (refreshed) {
-        // Retry original request
-        const retryHeaders = { ...headers, Authorization: `Bearer ${authService.getToken()}` };
-        const retryResponse = await fetch(`${API_URL}${endpoint}`, { ...config, headers: retryHeaders });
+        // Retry original request with new token
+        const retryHeaders = { 
+          ...headers, 
+          Authorization: `Bearer ${authService.getToken()}` 
+        };
+        
+        // Rebuild config for retry (important: don't reuse consumed body)
+        const retryConfig = {
+          ...options,
+          headers: retryHeaders
+        };
+        
+        const retryResponse = await fetch(`${API_URL}${endpoint}`, retryConfig);
         return handleResponse(retryResponse);
       } else {
         authService.clearTokens();
