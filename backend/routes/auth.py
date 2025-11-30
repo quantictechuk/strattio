@@ -1,12 +1,14 @@
 """Authentication routes"""
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Header
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
+from typing import Optional
 import logging
+from bson import ObjectId
 
 from utils.auth import get_password_hash, verify_password, create_access_token, create_refresh_token, decode_token
-from utils.serializers import serialize_doc
+from utils.serializers import serialize_doc, to_object_id
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
