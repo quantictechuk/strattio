@@ -501,6 +501,8 @@ function IntakeWizardPage({ navigate, user, planId }) {
     }
 
     if (step.id === 'review') {
+      const totalMonthlyOpex = calculateTotalOpex();
+      
       return (
         <div>
           <h3 style={{ marginBottom: '1.5rem' }}>Review Your Information</h3>
@@ -524,12 +526,19 @@ function IntakeWizardPage({ navigate, user, planId }) {
             <div style={{ marginBottom: '1rem' }}>
               <strong>Monthly Revenue Estimate:</strong> £{formData.monthly_revenue_estimate.toLocaleString()}
             </div>
+            <div style={{ marginBottom: '1rem' }}>
+              <strong>Monthly Operating Expenses:</strong> £{totalMonthlyOpex.toLocaleString()}
+            </div>
+            <div style={{ marginBottom: '1rem' }}>
+              <strong>Team Size:</strong> {formData.team_size}
+            </div>
           </div>
 
           <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#DBEAFE', borderRadius: '8px' }}>
             <p style={{ fontSize: '0.875rem', color: '#1E40AF' }}>
               ℹ️ Your business plan will be generated using our multi-agent AI pipeline.
               This typically takes 60-90 seconds. All market data will be sourced from verified sources (ONS, Eurostat).
+              Financial projections will use your actual operating expenses for accuracy.
             </p>
           </div>
         </div>
