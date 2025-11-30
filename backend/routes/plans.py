@@ -5,8 +5,9 @@ from pydantic import BaseModel
 from typing import Dict, List, Optional
 from datetime import datetime
 import logging
+from bson import ObjectId
 
-from utils.serializers import serialize_doc
+from utils.serializers import serialize_doc, to_object_id
 from utils.auth import decode_token
 from agents.orchestrator import PlanOrchestrator
 
