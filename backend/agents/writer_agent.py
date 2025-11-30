@@ -161,17 +161,23 @@ Remember: Use these EXACT numbers. Cite sources. No placeholders! Write in the t
             }
     
     async def generate_all_sections(self, data_pack: Dict, financial_pack: Dict, intake_data: Dict) -> List[Dict]:
-        """Generate all sections"""
-        section_types = [
-            "executive_summary", "company_overview", "products_services",
-            "market_analysis", "competitive_analysis", "marketing_strategy",
-            "operations_plan", "team", "financial_projections"
-        ]
+        """Generate all sections based on plan_purpose template"""
+        plan_purpose = intake_data.get("plan_purpose", "generic")
+        
+        # Get all sections from template
+        all_section_defs = TemplateFactory.get_all_sections_for_plan(plan_purpose)
+        
+        logger.info(f"Generating {len(all_section_defs)} sections for {plan_purpose} plan")
         
         sections = []
-        for idx, section_type in enumerate(section_types):
-            section = await self.generate_section(section_type, data_pack, financial_pack, intake_data)
-            section["order_index"] = idx
+        for section_def in all_section_defs:
+            section = await self.generate_section(
+                section_def.section_type,
+                data_pack,
+                financial_pack,
+                intake_data
+            )
+            section["order_index"] = section_def.order_index
             sections.append(section)
         
         return sections
