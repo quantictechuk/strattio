@@ -261,7 +261,7 @@ async def duplicate_plan(plan_id: str, user_id: str = Depends(get_current_user_i
     """Clone/duplicate an existing plan"""
     
     # Get original plan
-    original = await db.plans.find_one({"_id": plan_id, "user_id": user_id})
+    original = await db.plans.find_one({"_id": to_object_id(plan_id), "user_id": user_id})
     if not original:
         raise HTTPException(status_code=404, detail="Plan not found")
     
