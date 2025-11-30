@@ -109,14 +109,19 @@ def generate_business_plan_pdf(plan_data, sections_data, financial_data=None):
     
     story.append(PageBreak())
     
-    # Sections
-    for idx, section in enumerate(sections_data):
+    # Sections (already sorted)
+    for idx, section in enumerate(sorted_sections):
         # Section heading
         section_title = f"{idx + 1}. {section.get('title', 'Section')}"
         story.append(Paragraph(section_title, heading_style))
         
         # Section content
         content = section.get('content', '')
+        
+        # Handle empty or error sections
+        if not content or content.strip() == "":
+            content = f"[{section.get('title')} content to be added]"
+        
         # Clean up content for PDF
         content = content.replace('\n', '<br/>')
         
