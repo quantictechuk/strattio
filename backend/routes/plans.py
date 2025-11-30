@@ -1,18 +1,48 @@
 """Plans routes - Core plan management and generation"""
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends, Header
 from pydantic import BaseModel
 from typing import Dict, List, Optional
 from datetime import datetime
 import logging
 
 from utils.serializers import serialize_doc
+from utils.auth import decode_token
 from agents.orchestrator import PlanOrchestrator
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
 from server import db
+
+# ============================================================================
+# DEPENDENCY: Get Current User
+# ============================================================================
+
+async def get_current_user_id(authorization: Optional[str] = Header(None)):
+    """Extract user_id from JWT token"""
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Missing authorization header")
+    
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != 'bearer':
+            raise HTTPException(status_code=401, detail="Invalid authentication scheme")
+        
+        payload = decode_token(token)
+        if not payload:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        
+        user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token payload")
+        
+        return user_id
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid authorization header format")
+    except Exception as e:
+        logger.error(f"Auth error: {e}")
+        raise HTTPException(status_code=401, detail="Authentication failed")
 
 # ============================================================================
 # MODELS
@@ -31,15 +61,15 @@ class PlanUpdate(BaseModel):
 # ROUTES
 # ============================================================================
 
-@router.get("/")
-async def list_plans(user_id: str):
+@router.get("")
+async def list_plans(user_id: str = Depends(get_current_user_id)):
     """List all plans for a user"""
     
     plans = await db.plans.find({"user_id": user_id}).sort("created_at", -1).to_list(100)
     return {"plans": [serialize_doc(p) for p in plans]}
 
-@router.post("/")
-async def create_plan(plan_data: PlanCreate, user_id: str):
+@router.post("")
+async def create_plan(plan_data: PlanCreate, user_id: str = Depends(get_current_user_id)):
     """Create a new plan"""
     
     # Check subscription limits
@@ -79,7 +109,7 @@ async def create_plan(plan_data: PlanCreate, user_id: str):
     return serialize_doc(plan_doc)
 
 @router.get("/{plan_id}")
-async def get_plan(plan_id: str, user_id: str):
+async def get_plan(plan_id: str, user_id: str = Depends(get_current_user_id)):
     """Get a single plan"""
     
     plan = await db.plans.find_one({"_id": plan_id, "user_id": user_id})
@@ -89,7 +119,7 @@ async def get_plan(plan_id: str, user_id: str):
     return serialize_doc(plan)
 
 @router.patch("/{plan_id}")
-async def update_plan(plan_id: str, plan_update: PlanUpdate, user_id: str):
+async def update_plan(plan_id: str, plan_update: PlanUpdate, user_id: str = Depends(get_current_user_id)):
     """Update plan metadata"""
     
     update_data = {k: v for k, v in plan_update.dict().items() if v is not None}
@@ -110,7 +140,7 @@ async def update_plan(plan_id: str, plan_update: PlanUpdate, user_id: str):
     return serialize_doc(plan)
 
 @router.delete("/{plan_id}")
-async def delete_plan(plan_id: str, user_id: str):
+async def delete_plan(plan_id: str, user_id: str = Depends(get_current_user_id)):
     """Delete a plan"""
     
     result = await db.plans.delete_one({"_id": plan_id, "user_id": user_id})
@@ -128,7 +158,7 @@ async def delete_plan(plan_id: str, user_id: str):
     return {"message": "Plan deleted successfully"}
 
 @router.post("/{plan_id}/generate")
-async def generate_plan(plan_id: str, user_id: str):
+async def generate_plan(plan_id: str, user_id: str = Depends(get_current_user_id)):
     """Generate business plan content using multi-agent pipeline"""
     
     # Get plan
@@ -212,7 +242,7 @@ async def generate_plan(plan_id: str, user_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{plan_id}/status")
-async def get_generation_status(plan_id: str, user_id: str):
+async def get_generation_status(plan_id: str, user_id: str = Depends(get_current_user_id)):
     """Get plan generation status"""
     
     plan = await db.plans.find_one({"_id": plan_id, "user_id": user_id})
@@ -226,7 +256,7 @@ async def get_generation_status(plan_id: str, user_id: str):
     }
 
 @router.post("/{plan_id}/duplicate")
-async def duplicate_plan(plan_id: str, user_id: str):
+async def duplicate_plan(plan_id: str, user_id: str = Depends(get_current_user_id)):
     """Clone/duplicate an existing plan"""
     
     # Get original plan
@@ -251,3 +281,4 @@ async def duplicate_plan(plan_id: str, user_id: str):
     logger.info(f"Plan duplicated: {plan_id} -> {result.inserted_id}")
     
     return serialize_doc(duplicate)
+
