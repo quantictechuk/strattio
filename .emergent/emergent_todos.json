@@ -1,10 +1,42 @@
 [
   {
-    "content": "Phase 2: Integration testing of critical path user journey",
-    "status": "completed"
+    "content": "Get Stripe integration playbook",
+    "status": "in_progress"
   },
   {
-    "content": "Phase 2: Fix critical bugs and validate core flows",
-    "status": "completed"
+    "content": "Ask user for Stripe API keys (test/production)",
+    "status": "pending"
+  },
+  {
+    "content": "Backend: Implement Stripe checkout session creation",
+    "status": "pending"
+  },
+  {
+    "content": "Backend: Implement Stripe webhook handler for subscription events",
+    "status": "pending"
+  },
+  {
+    "content": "Backend: Add subscription upgrade/downgrade endpoints",
+    "status": "pending"
+  },
+  {
+    "content": "Frontend: Create pricing page with tier comparison",
+    "status": "pending"
+  },
+  {
+    "content": "Frontend: Implement Stripe checkout redirect flow",
+    "status": "pending"
+  },
+  {
+    "content": "Frontend: Handle successful payment redirects",
+    "status": "pending"
+  },
+  {
+    "content": "Frontend: Update upgrade modal to redirect to checkout",
+    "status": "pending"
+  },
+  {
+    "content": "Test complete subscription flow end-to-end",
+    "status": "pending"
   }
 ]
