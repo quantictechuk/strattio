@@ -13,6 +13,7 @@ function PlanEditorPage({ navigate, user, planId }) {
   const [polling, setPolling] = useState(false);
   const [subscription, setSubscription] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgrading, setUpgrading] = useState(false);
 
   useEffect(() => {
     if (planId) {
@@ -27,6 +28,23 @@ function PlanEditorPage({ navigate, user, planId }) {
       setSubscription(subData);
     } catch (err) {
       console.error('Error loading subscription:', err);
+    }
+  };
+
+  const handleUpgrade = async (packageId) => {
+    setUpgrading(true);
+    try {
+      // Get current origin
+      const originUrl = window.location.origin;
+      
+      // Create Stripe checkout session
+      const checkoutData = await api.stripe.createCheckout(packageId, originUrl);
+      
+      // Redirect to Stripe
+      window.location.href = checkoutData.url;
+    } catch (err) {
+      setError(err.message || 'Failed to create checkout session');
+      setUpgrading(false);
     }
   };
 
