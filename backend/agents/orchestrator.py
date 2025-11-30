@@ -94,6 +94,33 @@ class PlanOrchestrator:
                 template_id=compliance_template
             )
             
+            # Inject compliance section for visa/loan plans
+            if plan_purpose in ["visa_startup", "visa_innovator", "loan"]:
+                logger.info(f"Injecting compliance section for {plan_purpose}")
+                compliance_content = self.compliance_agent.generate_compliance_section(
+                    plan_purpose=plan_purpose,
+                    intake_data=intake_data,
+                    financial_model=financial_model
+                )
+                
+                # Find the appropriate compliance section and inject content
+                compliance_section_types = {
+                    "visa_startup": "visa_compliance_checklist",
+                    "visa_innovator": "home_office_compliance",
+                    "loan": "loan_eligibility"
+                }
+                
+                target_section_type = compliance_section_types.get(plan_purpose)
+                
+                # Find and update the section
+                for section in sections:
+                    if section.get("section_type") == target_section_type:
+                        section["content"] = compliance_content
+                        section["ai_generated"] = False
+                        section["compliance_generated"] = True
+                        logger.info(f"Compliance section {target_section_type} injected")
+                        break
+            
             end_time = datetime.utcnow()
             duration_seconds = (end_time - start_time).total_seconds()
             
