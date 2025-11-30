@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { api } from '../lib/api';
+import { api, authService } from '../lib/api';
 
 function PlanEditorPage({ navigate, user, planId }) {
   const [plan, setPlan] = useState(null);
