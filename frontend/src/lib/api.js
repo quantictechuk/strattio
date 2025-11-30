@@ -185,5 +185,14 @@ export const api = {
   subscriptions: {
     current: () => apiRequest('/api/subscriptions/current'),
     usage: () => apiRequest('/api/subscriptions/usage')
+  },
+  
+  // Stripe Payments
+  stripe: {
+    createCheckout: (packageId, originUrl) => apiRequest('/api/stripe/checkout/session', {
+      method: 'POST',
+      body: JSON.stringify({ package_id: packageId, origin_url: originUrl })
+    }),
+    getCheckoutStatus: (sessionId) => apiRequest(`/api/stripe/checkout/status/${sessionId}`)
   }
 };
