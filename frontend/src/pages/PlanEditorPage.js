@@ -522,6 +522,64 @@ function PlanEditorPage({ navigate, user, planId }) {
           </div>
         )}
       </div>
+
+      {/* Upgrade Modal */}
+      {showUpgradeModal && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(15, 20, 25, 0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={() => setShowUpgradeModal(false)}
+        >
+          <div 
+            className="card" 
+            style={{ maxWidth: '500px', padding: '2rem' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ marginBottom: '1rem', textAlign: 'center' }}>Upgrade Required</h3>
+            <p style={{ color: '#6B7A91', marginBottom: '1.5rem', textAlign: 'center' }}>
+              PDF exports are available on Starter tier and above.
+            </p>
+            
+            <div className="card" style={{ background: 'var(--bg-secondary)', marginBottom: '1.5rem' }}>
+              <h4 style={{ marginBottom: '0.5rem' }}>Starter Plan - £12/month</h4>
+              <ul style={{ color: '#6B7A91', marginLeft: '1.5rem' }}>
+                <li>3 plans per month</li>
+                <li>Full AI generation</li>
+                <li>PDF export</li>
+                <li>SWOT analysis</li>
+                <li>Competitor analysis</li>
+              </ul>
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button 
+                className="btn btn-primary" 
+                style={{ flex: 1 }}
+                data-testid="upgrade-modal-btn"
+              >
+                Upgrade to Starter
+              </button>
+              <button 
+                className="btn btn-ghost" 
+                onClick={() => setShowUpgradeModal(false)}
+                data-testid="close-modal-btn"
+              >
+                Maybe Later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
