@@ -49,9 +49,25 @@ class WriterAgent:
         return cleaned
     
     async def generate_section(self, section_type: str, data_pack: Dict, financial_pack: Dict, intake_data: Dict) -> Dict:
-        """Generate section with plan-type specialization"""
+        """Generate section using template-based instructions"""
         plan_purpose = intake_data.get("plan_purpose", "generic")
         business_name = intake_data.get("business_name", "the business")
+        
+        # Get template configuration
+        template_config = TemplateFactory.get_template(plan_purpose)
+        section_def = TemplateFactory.get_section_definition(plan_purpose, section_type)
+        
+        if not section_def:
+            logger.warning(f"Section {section_type} not found in template for {plan_purpose}")
+            return {
+                "section_type": section_type,
+                "title": section_type.replace('_', ' ').title(),
+                "content": f"Section {section_type} not defined in template.",
+                "word_count": 0,
+                "generated_at": datetime.utcnow().isoformat(),
+                "ai_generated": False,
+                "error": "Section not in template"
+            }
         
         # Get market data
         market_data = data_pack.get("market_data", {})
@@ -62,29 +78,36 @@ class WriterAgent:
         # Get financials
         pnl = financial_pack.get("pnl_annual", [])
         year1 = pnl[0] if len(pnl) > 0 else {}
+        year2 = pnl[1] if len(pnl) > 1 else {}
+        year3 = pnl[2] if len(pnl) > 2 else {}
+        
         revenue_y1 = year1.get("revenue", 0)
+        revenue_y2 = year2.get("revenue", 0)
+        revenue_y3 = year3.get("revenue", 0)
         net_profit_y1 = year1.get("net_profit", 0)
         opex_y1 = year1.get("total_opex", 0)
+        opex_monthly = opex_y1 / 12 if opex_y1 > 0 else 0
         
-        # Build specialized prompt
-        emphasis = PLAN_TYPE_EMPHASIS.get(plan_purpose, "business model and market opportunity")
+        # Get operating expenses breakdown
+        opex_data = intake_data.get("operating_expenses", {})
+        salaries = opex_data.get("salaries", 0)
+        marketing = opex_data.get("marketing", 0)
+        software = opex_data.get("software_tools", 0)
         
-        section_instructions = {
-            "executive_summary": f"Write 200-250 words covering: (1) {business_name}'s core business, (2) market opportunity (£{market_size/1e9:.1f}B market, {growth_rate}% growth from {market_source}), (3) financial summary (Year 1: £{revenue_y1:,.0f} revenue, £{net_profit_y1:,.0f} profit), (4) key strengths. EMPHASIZE: {emphasis}.",
-            
-            "financial_projections": f"Write 200-250 words summarizing the financial model: (1) Revenue projections starting at £{revenue_y1:,.0f} Year 1, (2) Operating expenses of £{opex_y1:,.0f} annually based on actual planned costs, (3) Break-even analysis, (4) Key financial metrics. For {plan_purpose} plans, emphasize {emphasis}."
-        }.get(section_type, f"Write 200-250 words for the {section_type.replace('_', ' ')} section.")
+        # Build context-aware prompt using template instructions
+        task_instructions = f"{section_def.instructions}\n\nTarget: {section_def.min_words}-{section_def.max_words} words.\nTone: {template_config.tone}\nEmphasis: {template_config.emphasis}"
         
         prompt = f"""{ZERO_HALLUCINATION_PROMPT}
 
-TASK: {section_instructions}
+TASK: {task_instructions}
 
 BUSINESS INFO:
 • Name: {business_name}
-• Industry: {intake_data.get('industry')}
-• Location: {intake_data.get('location_city')}, {intake_data.get('location_country')}
+• Industry: {intake_data.get('industry', 'N/A')}
+• Location: {intake_data.get('location_city', 'N/A')}, {intake_data.get('location_country', 'N/A')}
 • Description: {intake_data.get('business_description', 'N/A')}
 • Value Proposition: {intake_data.get('unique_value_proposition', 'N/A')}
+• Plan Purpose: {template_config.template_name}
 
 MARKET DATA:
 • Market Size: £{market_size:,} ({market_source}, {market_data.get('market_size_timestamp', 'recent')})
@@ -92,17 +115,24 @@ MARKET DATA:
 
 FINANCIAL PROJECTIONS:
 • Year 1 Revenue: £{revenue_y1:,.0f}
+• Year 2 Revenue: £{revenue_y2:,.0f}
+• Year 3 Revenue: £{revenue_y3:,.0f}
 • Year 1 Net Profit: £{net_profit_y1:,.0f}
-• Annual OpEx: £{opex_y1:,.0f}
-• Monthly OpEx: £{opex_y1/12:,.0f}
+• Annual OpEx: £{opex_y1:,.0f} (Monthly: £{opex_monthly:,.0f})
+• OpEx Breakdown: Salaries £{salaries:,}/mo, Marketing £{marketing:,}/mo, Software £{software:,}/mo
 
-Remember: Use these EXACT numbers. Cite sources. No placeholders!
+ADDITIONAL CONTEXT:
+• Target Customers: {intake_data.get('target_customers', 'N/A')}
+• Revenue Model: {', '.join(intake_data.get('revenue_model', []))}
+• Team Size: {intake_data.get('team_size', 'N/A')}
+
+Remember: Use these EXACT numbers. Cite sources. No placeholders! Write in the tone and emphasis specified above.
 """
         
         try:
             chat = LlmChat(
                 api_key=self.api_key,
-                session_id=f"writer_{section_type}",
+                session_id=f"writer_{section_type}_{plan_purpose}",
                 system_message="You are a professional business plan writer. Follow all instructions precisely."
             ).with_model("openai", self.model)
             
@@ -111,7 +141,7 @@ Remember: Use these EXACT numbers. Cite sources. No placeholders!
             
             return {
                 "section_type": section_type,
-                "title": section_type.replace('_', ' ').title(),
+                "title": section_def.title,
                 "content": cleaned,
                 "word_count": len(cleaned.split()),
                 "generated_at": datetime.utcnow().isoformat(),
@@ -122,8 +152,8 @@ Remember: Use these EXACT numbers. Cite sources. No placeholders!
             logger.error(f"Generation error for {section_type}: {e}")
             return {
                 "section_type": section_type,
-                "title": section_type.replace('_', ' ').title(),
-                "content": f"{business_name}'s {section_type.replace('_', ' ')} information will be added here. Please review inputs and regenerate, or edit manually.",
+                "title": section_def.title,
+                "content": f"Unable to generate {section_def.title} at this time. Please review inputs and regenerate, or edit manually.",
                 "word_count": 20,
                 "generated_at": datetime.utcnow().isoformat(),
                 "ai_generated": False,
