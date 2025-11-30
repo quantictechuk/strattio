@@ -138,28 +138,37 @@ async def refresh_token(refresh_token: str):
     }
 
 @router.get("/me")
-async def get_current_user(authorization: str = None):
-    """Get current user (placeholder - needs proper auth dependency)"""
-    # For MVP: Simple implementation
-    # In production: Use proper Depends(get_current_user) dependency
+async def get_me(authorization: Optional[str] = Header(None)):
+    """Get current user"""
     
     if not authorization:
         raise HTTPException(status_code=401, detail="Not authenticated")
     
     try:
         scheme, token = authorization.split()
+        if scheme.lower() != 'bearer':
+            raise HTTPException(status_code=401, detail="Invalid authentication scheme")
+        
         payload = decode_token(token)
+        if not payload:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        
         user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token payload")
         
         user = await db.users.find_one({"_id": user_id})
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
         user_clean = serialize_doc(user)
-        del user_clean["password_hash"]
+        if "password_hash" in user_clean:
+            del user_clean["password_hash"]
         
         return user_clean
         
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid authorization header format")
     except Exception as e:
         logger.error(f"Auth error: {e}")
         raise HTTPException(status_code=401, detail="Invalid token")
