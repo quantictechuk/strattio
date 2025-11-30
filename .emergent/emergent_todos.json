@@ -1,42 +1,10 @@
 [
   {
-    "content": "Phase 2 Backend: Complete backend architecture with all models, routes, agents scaffolds",
-    "status": "completed"
-  },
-  {
-    "content": "Phase 2 Backend: Auth system with JWT (register, login, refresh, me)",
-    "status": "completed"
-  },
-  {
-    "content": "Phase 2 Backend: Plan generation pipeline with simplified multi-agent flow",
-    "status": "completed"
-  },
-  {
-    "content": "Phase 2 Backend: Subscription tier checking and usage limits",
-    "status": "completed"
-  },
-  {
-    "content": "Phase 2 Backend: PDF export with ReportLab",
-    "status": "completed"
-  },
-  {
-    "content": "Phase 2 Frontend: Core pages (Home, Auth, Dashboard, Intake Wizard, Plan Editor)",
-    "status": "completed"
-  },
-  {
-    "content": "Phase 2 Frontend: Key components (PlanCard, SectionEditor, WizardSteps)",
-    "status": "completed"
-  },
-  {
-    "content": "Phase 2 Frontend: API integration layer with error handling",
-    "status": "completed"
-  },
-  {
     "content": "Phase 2: Integration testing of critical path user journey",
-    "status": "in_progress"
+    "status": "completed"
   },
   {
     "content": "Phase 2: Fix critical bugs and validate core flows",
-    "status": "pending"
+    "status": "completed"
   }
 ]
