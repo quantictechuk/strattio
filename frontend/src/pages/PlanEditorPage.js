@@ -448,7 +448,7 @@ function PlanEditorPage({ navigate, user, planId }) {
 
         {/* Compliance Tab */}
         {activeTab === 'compliance' && (
-          <div className=\"card\">
+          <div className="card">
             <h3 style={{ marginBottom: '1.5rem' }}>Compliance Report</h3>
             
             {!compliance && (
@@ -471,7 +471,7 @@ function PlanEditorPage({ navigate, user, planId }) {
                 {compliance.data.checks?.map((check, idx) => (
                   <div 
                     key={idx}
-                    className=\"card\" 
+                    className="card" 
                     style={{ 
                       marginBottom: '1rem', 
                       background: check.status === 'pass' ? '#D1FAE5' : '#FEE2E2',
