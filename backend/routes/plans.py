@@ -218,7 +218,7 @@ async def generate_plan(plan_id: str, user_id: str = Depends(get_current_user_id
         
         # Update plan status
         await db.plans.update_one(
-            {"_id": plan_id},
+            {"_id": to_object_id(plan_id)},
             {"$set": {
                 "status": "complete",
                 "completed_at": datetime.utcnow(),
