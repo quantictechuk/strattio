@@ -42,29 +42,55 @@ class FinancialEngine:
         return cogs
     
     def calculate_operating_expenses(self, revenue_projections: List[Dict]) -> List[Dict]:
-        """Operating Expenses calculation"""
+        """
+        Operating Expenses calculation using USER-PROVIDED values.
+        No more hard-coded benchmarks - uses actual user inputs.
+        """
         opex = []
-        employee_count = self.intake.get("team_size", 3)
-        sqft = self.intake.get("space_sqft", 1000)
         
-        for proj in revenue_projections:
-            salaries = employee_count * self.benchmarks.get("employee_cost_average", 25000)
-            rent = sqft * self.benchmarks.get("rent_per_sqft_average", 50)
-            marketing = proj["revenue"] * self.benchmarks.get("marketing_spend_percentage", 0.08)
-            utilities = self.benchmarks.get("utilities_monthly", 500) * 12
-            insurance = self.benchmarks.get("insurance_annual", 2000)
-            other = proj["revenue"] * 0.05
+        # Get user-provided operating expenses (monthly)
+        user_opex = self.intake.get("operating_expenses", {})
+        
+        # Calculate base monthly OPEX from user inputs
+        base_monthly_opex = (
+            user_opex.get("salaries", 0) +
+            user_opex.get("software_tools", 0) +
+            user_opex.get("hosting_domain", 0) +
+            user_opex.get("marketing", 0) +
+            user_opex.get("workspace_utilities", 0) +
+            user_opex.get("miscellaneous", 0)
+        )
+        
+        # Add custom expenses
+        custom_expenses = user_opex.get("custom", [])
+        for expense in custom_expenses:
+            base_monthly_opex += expense.get("amount", 0)
+        
+        # Annual base OPEX
+        annual_base_opex = base_monthly_opex * 12
+        
+        # For each year, OPEX grows slightly with revenue (for scalability)
+        for idx, proj in enumerate(revenue_projections):
+            year = proj["year"]
             
-            total_opex = salaries + rent + marketing + utilities + insurance + other
+            # Year 1: Use base OPEX
+            if year == 1:
+                total_opex = annual_base_opex
+            else:
+                # Subsequent years: OPEX grows at 50% of revenue growth rate
+                # (as business scales, costs increase but not linearly)
+                growth_rate = self.benchmarks.get("growth_rate", 0.15)
+                opex_growth = growth_rate * 0.5
+                total_opex = opex[-1]["total_opex"] * (1 + opex_growth)
             
             opex.append({
-                "year": proj["year"],
-                "salaries": round(salaries, 2),
-                "rent": round(rent, 2),
-                "marketing": round(marketing, 2),
-                "utilities": round(utilities, 2),
-                "insurance": round(insurance, 2),
-                "other": round(other, 2),
+                "year": year,
+                "salaries": user_opex.get("salaries", 0) * 12 * (1 + (year - 1) * 0.075),  # 7.5% annual increase
+                "software_tools": user_opex.get("software_tools", 0) * 12,
+                "hosting_domain": user_opex.get("hosting_domain", 0) * 12,
+                "marketing": user_opex.get("marketing", 0) * 12,
+                "workspace_utilities": user_opex.get("workspace_utilities", 0) * 12,
+                "miscellaneous": user_opex.get("miscellaneous", 0) * 12,
                 "total_opex": round(total_opex, 2)
             })
         return opex
