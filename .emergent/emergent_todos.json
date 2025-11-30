@@ -1,31 +1,31 @@
 [
   {
     "content": "Phase 1 POC: Get integration playbooks for OpenAI (text), ONS/Eurostat data, Companies House, SERP API",
-    "status": "in_progress"
+    "status": "completed"
   },
   {
     "content": "Phase 1 POC: Retrieve Emergent LLM key for OpenAI integration",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "Phase 1 POC: Create tests/test_core.py with all 5 test functions (LLM writer zero-halluc, financial engine formulas, market data fetch, citation guardrails, output shapes)",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "Phase 1 POC: Implement deterministic financial engine formulas (revenue, COGS, OpEx, P&L, CF, breakeven, KPIs) as pure Python functions",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "Phase 1 POC: Run test_core.py and fix until all tests pass with reproducible outputs",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "Phase 1 POC: Save artifacts to /app/tests/poc_artifacts/*.json for traceability",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "Phase 1: Verify all POC user stories are covered in testing",
-    "status": "pending"
+    "status": "completed"
   },
   {
     "content": "Phase 2 Backend: Setup FastAPI with load_dotenv, MongoDB connection, /api prefix, healthcheck endpoint",
