@@ -1,21 +1,45 @@
 """Exports routes - PDF generation"""
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends, Header
 from fastapi.responses import FileResponse
+from typing import Optional
 import logging
 from datetime import datetime
 import os
 
 from utils.serializers import serialize_doc
+from utils.auth import decode_token
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
 from server import db
 
-@router.post("/")
-async def create_export(plan_id: str, format: str, user_id: str):
+async def get_current_user_id(authorization: Optional[str] = Header(None)):
+    """Extract user_id from JWT token"""
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Missing authorization header")
+    
+    try:
+        scheme, token = authorization.split()
+        payload = decode_token(token)
+        user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return user_id
+    except Exception:
+        raise HTTPException(status_code=401, detail="Authentication failed")
+
+class ExportCreate(BaseModel):
+    plan_id: str
+    format: str
+
+@router.post("")
+async def create_export(export_data: ExportCreate, user_id: str = Depends(get_current_user_id)):
     """Create an export job"""
+    
+    plan_id = export_data.plan_id
+    format = export_data.format
     
     # Verify plan ownership
     plan = await db.plans.find_one({"_id": plan_id, "user_id": user_id})
@@ -54,7 +78,7 @@ async def create_export(plan_id: str, format: str, user_id: str):
     return serialize_doc(export_doc)
 
 @router.get("/{export_id}/download")
-async def download_export(export_id: str, user_id: str):
+async def download_export(export_id: str, user_id: str = Depends(get_current_user_id)):
     """Download an export file"""
     
     export = await db.exports.find_one({"_id": export_id, "user_id": user_id})
