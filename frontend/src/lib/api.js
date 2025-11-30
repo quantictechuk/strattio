@@ -126,63 +126,63 @@ export const api = {
   
   // Plans
   plans: {
-    list: (userId) => apiRequest(`/api/plans?user_id=${userId}`),
-    create: (data, userId) => apiRequest('/api/plans', {
+    list: () => apiRequest('/api/plans'),
+    create: (data) => apiRequest('/api/plans', {
       method: 'POST',
-      body: JSON.stringify({ ...data, user_id: userId })
+      body: JSON.stringify(data)
     }),
-    get: (planId, userId) => apiRequest(`/api/plans/${planId}?user_id=${userId}`),
-    update: (planId, data, userId) => apiRequest(`/api/plans/${planId}?user_id=${userId}`, {
+    get: (planId) => apiRequest(`/api/plans/${planId}`),
+    update: (planId, data) => apiRequest(`/api/plans/${planId}`, {
       method: 'PATCH',
       body: JSON.stringify(data)
     }),
-    delete: (planId, userId) => apiRequest(`/api/plans/${planId}?user_id=${userId}`, {
+    delete: (planId) => apiRequest(`/api/plans/${planId}`, {
       method: 'DELETE'
     }),
-    generate: (planId, userId) => apiRequest(`/api/plans/${planId}/generate?user_id=${userId}`, {
+    generate: (planId) => apiRequest(`/api/plans/${planId}/generate`, {
       method: 'POST'
     }),
-    status: (planId, userId) => apiRequest(`/api/plans/${planId}/status?user_id=${userId}`),
-    duplicate: (planId, userId) => apiRequest(`/api/plans/${planId}/duplicate?user_id=${userId}`, {
+    status: (planId) => apiRequest(`/api/plans/${planId}/status`),
+    duplicate: (planId) => apiRequest(`/api/plans/${planId}/duplicate`, {
       method: 'POST'
     })
   },
   
   // Sections
   sections: {
-    list: (planId, userId) => apiRequest(`/api/plans/${planId}/sections?user_id=${userId}`),
-    get: (planId, sectionId, userId) => apiRequest(`/api/plans/${planId}/sections/${sectionId}?user_id=${userId}`),
-    update: (planId, sectionId, data, userId) => apiRequest(`/api/plans/${planId}/sections/${sectionId}?user_id=${userId}`, {
+    list: (planId) => apiRequest(`/api/${planId}/sections`),
+    get: (planId, sectionId) => apiRequest(`/api/${planId}/sections/${sectionId}`),
+    update: (planId, sectionId, data) => apiRequest(`/api/${planId}/sections/${sectionId}`, {
       method: 'PATCH',
       body: JSON.stringify(data)
     }),
-    regenerate: (planId, sectionId, userId) => apiRequest(`/api/plans/${planId}/sections/${sectionId}/regenerate?user_id=${userId}`, {
+    regenerate: (planId, sectionId) => apiRequest(`/api/${planId}/sections/${sectionId}/regenerate`, {
       method: 'POST'
     })
   },
   
   // Financials
   financials: {
-    get: (planId, userId) => apiRequest(`/api/plans/${planId}/financials?user_id=${userId}`)
+    get: (planId) => apiRequest(`/api/${planId}/financials`)
   },
   
   // Compliance
   compliance: {
-    get: (planId, userId) => apiRequest(`/api/plans/${planId}/compliance?user_id=${userId}`)
+    get: (planId) => apiRequest(`/api/${planId}/compliance`)
   },
   
   // Exports
   exports: {
-    create: (planId, format, userId) => apiRequest('/api/exports', {
+    create: (planId, format) => apiRequest('/api/exports', {
       method: 'POST',
-      body: JSON.stringify({ plan_id: planId, format, user_id: userId })
+      body: JSON.stringify({ plan_id: planId, format })
     }),
-    download: (exportId, userId) => apiRequest(`/api/exports/${exportId}/download?user_id=${userId}`)
+    download: (exportId) => apiRequest(`/api/exports/${exportId}/download`)
   },
   
   // Subscriptions
   subscriptions: {
-    current: (userId) => apiRequest(`/api/subscriptions/current?user_id=${userId}`),
-    usage: (userId) => apiRequest(`/api/subscriptions/usage?user_id=${userId}`)
+    current: () => apiRequest('/api/subscriptions/current'),
+    usage: () => apiRequest('/api/subscriptions/usage')
   }
 };
