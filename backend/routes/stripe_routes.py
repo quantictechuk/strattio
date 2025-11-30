@@ -88,7 +88,8 @@ async def create_checkout_session(checkout_req: CheckoutRequest, user_id: str = 
         raise HTTPException(status_code=404, detail="User not found")
     
     # Build dynamic success/cancel URLs from frontend origin
-    success_url = f"{checkout_req.origin_url}/subscription/success?session_id={{{{CHECKOUT_SESSION_ID}}}}"
+    # Use CHECKOUT_SESSION_ID as placeholder (Stripe will replace it)
+    success_url = f"{checkout_req.origin_url}/subscription/success?session_id={{CHECKOUT_SESSION_ID}}"
     cancel_url = f"{checkout_req.origin_url}/subscription/cancel"
     
     # Create webhook URL (use request to get actual host)
