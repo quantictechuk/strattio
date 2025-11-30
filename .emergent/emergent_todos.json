@@ -1,7 +1,7 @@
 [
   {
     "content": "Phase 1 POC: Get integration playbooks for OpenAI (text), ONS/Eurostat data, Companies House, SERP API",
-    "status": "pending"
+    "status": "in_progress"
   },
   {
     "content": "Phase 1 POC: Retrieve Emergent LLM key for OpenAI integration",
