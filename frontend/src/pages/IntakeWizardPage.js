@@ -60,7 +60,8 @@ function IntakeWizardPage({ navigate, user, planId }) {
     { id: 'basics', title: 'Business Basics', fields: ['business_name', 'industry', 'location_city'] },
     { id: 'description', title: 'Business Description', fields: ['business_description', 'unique_value_proposition'] },
     { id: 'market', title: 'Target Market', fields: ['target_customers'] },
-    { id: 'financials', title: 'Financial Details', fields: ['starting_capital', 'monthly_revenue_estimate', 'price_per_unit', 'team_size'] },
+    { id: 'financials', title: 'Revenue Details', fields: ['starting_capital', 'monthly_revenue_estimate', 'price_per_unit', 'team_size'] },
+    { id: 'operating_expenses', title: 'Operating Expenses', fields: ['operating_expenses'] },
     { id: 'review', title: 'Review & Generate', fields: [] }
   ];
 
