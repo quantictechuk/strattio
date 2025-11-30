@@ -145,3 +145,66 @@ Risks & Mitigation (concise)
 Phase Closeouts
 - Phase 1: All POC tests pass and artifacts saved.
 - Phase 2: All user stories covered and verified by testing_agent_v3; "Phase 2: End to End Testing using Testing Agent." recorded.
+
+
+---
+
+## Phase 3 — Production Quality Enhancements
+
+**STATUS: ✅ COMPLETE - Template System Implemented**
+
+### Template-Based Plan Generation (Completed)
+
+**Objective:** Implement sophisticated template system where each plan_purpose generates meaningfully different documents, not just minor rewording.
+
+**Implementation Complete:**
+
+✅ **Template System Architecture** (`/app/backend/agents/templates.py`)
+- Base Template with 11 core sections (Executive Summary, Company Overview, Market Analysis, Products & Services, Business Model, Marketing Strategy, Operations, Team, Financial Forecasts, Risk Analysis, Appendix)
+- 5 specialized templates inheriting from base:
+  - **General Business Plan** (11 sections) - Neutral tone
+  - **UK Start-Up Loan** (15 sections) - Cashflow-focused, repayment emphasis
+  - **UK Start-Up Visa** (16 sections) - Innovation, viability, scalability focus
+  - **UK Innovator Founder Visa** (17 sections) - High-growth, IP strategy, investment-ready
+  - **Investor Pitch** (19 sections) - TAM/SAM/SOM, traction, returns focus
+
+✅ **Writer Agent Updated** (`/app/backend/agents/writer_agent.py`)
+- Uses TemplateFactory to select correct template based on plan_purpose
+- Applies template-specific instructions, tone, and emphasis to each section
+- Generates all sections defined in template (base + additional)
+- Section overrides applied automatically
+
+✅ **PDF Generator Updated** (`/app/backend/utils/pdf_generator.py`)
+- Reflects template structure with proper section ordering
+- Displays template name on title page
+- Handles variable section counts across plan types
+
+✅ **Compliance Agent Enhanced** (`/app/backend/agents/compliance_agent.py`)
+- Generates specialized compliance sections for visa/loan plans
+- Three compliance section generators:
+  - `_generate_startup_visa_compliance()` - Start-Up Visa checklist
+  - `_generate_innovator_visa_compliance()` - Innovator Founder checklist
+  - `_generate_loan_compliance()` - Start-Up Loan eligibility
+
+✅ **Orchestrator Updated** (`/app/backend/agents/orchestrator.py`)
+- Injects compliance content into appropriate sections
+- Maps plan_purpose to correct compliance section type
+
+✅ **Documentation Created** (`/app/docs/Template_System_Documentation.md`)
+- Complete documentation of template system
+- Details all 5 templates with section breakdowns
+- Implementation guide for extending system
+
+**Results:**
+- ✅ Backend starts successfully with template system
+- ✅ All 5 templates load correctly
+- ✅ Section counts verified: Generic (11), Loan (15), Start-Up Visa (16), Innovator Visa (17), Investor (19)
+- ✅ Template selection based on plan_purpose working
+- ✅ Compliance section injection implemented
+
+**Next Steps:**
+- Test end-to-end plan generation for each plan type
+- Verify template-specific tone and content differentiation
+- Ensure PDF export reflects all additional sections
+
+---
