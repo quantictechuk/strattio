@@ -91,10 +91,10 @@ function FinancialsPage({ navigate, user, planId }) {
         {financialModel && financialModel.data && (
           <div className="mt-8 space-y-6">
             {/* P&L Table */}
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Profit & Loss Statement (Annual)</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full" data-testid="pnl-table">
+            <div className="card">
+              <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem' }}>Profit & Loss Statement (Annual)</h3>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%' }} data-testid="pnl-table">
                   <thead>
                     <tr className="border-b">
                       <th className="text-left py-2">Metric</th>
