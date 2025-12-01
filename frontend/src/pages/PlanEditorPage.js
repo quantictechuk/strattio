@@ -15,6 +15,8 @@ function PlanEditorPage({ navigate, user, planId }) {
   const [subscription, setSubscription] = useState(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgrading, setUpgrading] = useState(false);
+  const [editingSection, setEditingSection] = useState(null);
+  const [isRegenerating, setIsRegenerating] = useState(false);
 
   useEffect(() => {
     if (planId) {
