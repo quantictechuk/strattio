@@ -1,8 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
-import { Button } from './ui/button';
-import { Save, X, RotateCw } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Save, X, RotateCw, Bold, Italic, List, AlignLeft } from 'lucide-react';
 
 const RichTextEditor = ({ 
   initialContent, 
@@ -20,14 +17,15 @@ const RichTextEditor = ({
     length: '',
     additional_instructions: ''
   });
+  const editorRef = useRef(null);
 
   useEffect(() => {
     setContent(initialContent || '');
     setHasChanges(false);
   }, [initialContent]);
 
-  const handleChange = (value) => {
-    setContent(value);
+  const handleChange = (e) => {
+    setContent(e.target.value);
     setHasChanges(true);
   };
 
@@ -48,58 +46,71 @@ const RichTextEditor = ({
     setRegenerateOptions({ tone: '', length: '', additional_instructions: '' });
   };
 
-  const modules = {
-    toolbar: [
-      [{ 'header': [1, 2, 3, false] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-      [{ 'align': [] }],
-      ['clean']
-    ],
+  const applyFormatting = (command) => {
+    const textarea = editorRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = content.substring(start, end);
+    
+    if (!selectedText) return;
+
+    let formattedText = '';
+    switch(command) {
+      case 'bold':
+        formattedText = `**${selectedText}**`;
+        break;
+      case 'italic':
+        formattedText = `*${selectedText}*`;
+        break;
+      case 'list':
+        formattedText = selectedText.split('\n').map(line => `• ${line}`).join('\n');
+        break;
+      default:
+        formattedText = selectedText;
+    }
+
+    const newContent = content.substring(0, start) + formattedText + content.substring(end);
+    setContent(newContent);
+    setHasChanges(true);
   };
 
-  const formats = [
-    'header',
-    'bold', 'italic', 'underline', 'strike',
-    'list', 'bullet',
-    'align'
-  ];
+  const wordCount = content.replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length;
 
   return (
-    <div className="space-y-4" data-testid="rich-text-editor">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }} data-testid="rich-text-editor">
       {/* Toolbar */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">{sectionTitle}</h3>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h3 style={{ fontSize: '1.125rem', fontWeight: '600' }}>{sectionTitle}</h3>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button
+            className="btn btn-ghost"
             onClick={() => setShowRegenerateOptions(!showRegenerateOptions)}
             disabled={isRegenerating}
             data-testid="regenerate-button"
+            style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
           >
-            <RotateCw className="w-4 h-4 mr-1" />
-            {isRegenerating ? 'Regenerating...' : 'Regenerate'}
-          </Button>
+            🔄 {isRegenerating ? 'Regenerating...' : 'Regenerate'}
+          </button>
           {hasChanges && (
             <>
-              <Button
-                variant="outline"
-                size="sm"
+              <button
+                className="btn btn-ghost"
                 onClick={handleCancel}
                 data-testid="cancel-button"
+                style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
               >
-                <X className="w-4 h-4 mr-1" />
-                Cancel
-              </Button>
-              <Button
-                size="sm"
+                ✕ Cancel
+              </button>
+              <button
+                className="btn btn-primary"
                 onClick={handleSave}
                 data-testid="save-button"
+                style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
               >
-                <Save className="w-4 h-4 mr-1" />
-                Save
-              </Button>
+                💾 Save
+              </button>
             </>
           )}
         </div>
@@ -107,12 +118,20 @@ const RichTextEditor = ({
 
       {/* Regeneration Options */}
       {showRegenerateOptions && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3" data-testid="regenerate-options">
-          <div className="grid grid-cols-2 gap-4">
+        <div style={{ 
+          background: '#EFF6FF', 
+          border: '1px solid #BFDBFE', 
+          borderRadius: '8px', 
+          padding: '1rem',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.75rem'
+        }} data-testid="regenerate-options">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div>
-              <label className="block text-sm font-medium mb-1">Tone</label>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.25rem' }}>Tone</label>
               <select
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
+                style={{ width: '100%', border: '1px solid #D1D5DB', borderRadius: '6px', padding: '0.5rem' }}
                 value={regenerateOptions.tone}
                 onChange={(e) => setRegenerateOptions({...regenerateOptions, tone: e.target.value})}
                 data-testid="tone-select"
@@ -124,9 +143,9 @@ const RichTextEditor = ({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Length</label>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.25rem' }}>Length</label>
               <select
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
+                style={{ width: '100%', border: '1px solid #D1D5DB', borderRadius: '6px', padding: '0.5rem' }}
                 value={regenerateOptions.length}
                 onChange={(e) => setRegenerateOptions({...regenerateOptions, length: e.target.value})}
                 data-testid="length-select"
@@ -138,9 +157,9 @@ const RichTextEditor = ({
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Additional Instructions</label>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.25rem' }}>Additional Instructions</label>
             <textarea
-              className="w-full border border-gray-300 rounded-md px-3 py-2"
+              style={{ width: '100%', border: '1px solid #D1D5DB', borderRadius: '6px', padding: '0.5rem', fontFamily: 'inherit' }}
               rows="2"
               placeholder="e.g., Focus more on sustainability aspects..."
               value={regenerateOptions.additional_instructions}
@@ -148,42 +167,102 @@ const RichTextEditor = ({
               data-testid="additional-instructions"
             />
           </div>
-          <div className="flex gap-2">
-            <Button
-              size="sm"
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              className="btn btn-primary"
               onClick={handleRegenerate}
               disabled={isRegenerating}
               data-testid="confirm-regenerate"
+              style={{ fontSize: '0.875rem' }}
             >
               Regenerate with Options
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
+            </button>
+            <button
+              className="btn btn-ghost"
               onClick={() => setShowRegenerateOptions(false)}
+              style={{ fontSize: '0.875rem' }}
             >
               Cancel
-            </Button>
+            </button>
           </div>
         </div>
       )}
 
-      {/* Editor */}
-      <div className="border border-gray-300 rounded-lg overflow-hidden">
-        <ReactQuill
-          theme="snow"
-          value={content}
-          onChange={handleChange}
-          modules={modules}
-          formats={formats}
-          placeholder="Edit section content..."
-          data-testid="quill-editor"
-        />
+      {/* Formatting Toolbar */}
+      <div style={{ 
+        display: 'flex', 
+        gap: '0.5rem', 
+        padding: '0.5rem',
+        background: '#F9FAFB',
+        borderRadius: '8px',
+        border: '1px solid #E5E7EB'
+      }}>
+        <button
+          onClick={() => applyFormatting('bold')}
+          style={{ 
+            padding: '0.5rem', 
+            border: 'none', 
+            background: 'white',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontWeight: 'bold'
+          }}
+          title="Bold (select text first)"
+        >
+          B
+        </button>
+        <button
+          onClick={() => applyFormatting('italic')}
+          style={{ 
+            padding: '0.5rem', 
+            border: 'none', 
+            background: 'white',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontStyle: 'italic'
+          }}
+          title="Italic (select text first)"
+        >
+          I
+        </button>
+        <button
+          onClick={() => applyFormatting('list')}
+          style={{ 
+            padding: '0.5rem', 
+            border: 'none', 
+            background: 'white',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+          title="Bullet List (select text first)"
+        >
+          •
+        </button>
       </div>
 
+      {/* Editor */}
+      <textarea
+        ref={editorRef}
+        style={{
+          width: '100%',
+          minHeight: '400px',
+          padding: '1rem',
+          border: '1px solid #D1D5DB',
+          borderRadius: '8px',
+          fontFamily: 'inherit',
+          fontSize: '1rem',
+          lineHeight: '1.7',
+          resize: 'vertical'
+        }}
+        value={content}
+        onChange={handleChange}
+        placeholder="Edit section content..."
+        data-testid="content-textarea"
+      />
+
       {/* Word Count */}
-      <div className="text-sm text-gray-500 text-right" data-testid="word-count">
-        {content.replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length} words
+      <div style={{ fontSize: '0.875rem', color: '#6B7280', textAlign: 'right' }} data-testid="word-count">
+        {wordCount} words
       </div>
     </div>
   );
