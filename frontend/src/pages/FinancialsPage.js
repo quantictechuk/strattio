@@ -47,10 +47,10 @@ function FinancialsPage({ navigate, user, planId }) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-600">{error}</p>
-          <Button onClick={() => navigate(`/plan/${planId}`)} className="mt-4">
+          <p style={{ color: '#DC2626' }}>{error}</p>
+          <button className="btn btn-primary" onClick={() => navigate('plan-editor', { planId })} style={{ marginTop: '1rem' }}>
             Back to Plan
-          </Button>
+          </button>
         </div>
       </div>
     );
