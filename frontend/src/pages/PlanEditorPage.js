@@ -140,7 +140,7 @@ function PlanEditorPage({ navigate, user, planId }) {
     if (!editingSection) return;
     
     try {
-      const response = await fetch(`${import.meta.env.REACT_APP_BACKEND_URL || process.env.REACT_APP_BACKEND_URL}/api/plans/${planId}/sections/${editingSection.id}`, {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/plans/${planId}/sections/${editingSection.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
