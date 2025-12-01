@@ -42,3 +42,63 @@ async def get_financials(plan_id: str, user_id: str = Depends(get_current_user_i
         raise HTTPException(status_code=404, detail="Financial model not found")
     
     return serialize_doc(financial_model)
+
+@router.get("/{plan_id}/financials/charts")
+async def get_financial_charts_data(plan_id: str, user_id: str = Depends(get_current_user_id)):
+    """Get financial data formatted for charts"""
+    
+    # Verify plan ownership
+    plan = await db.plans.find_one({"_id": to_object_id(plan_id), "user_id": user_id})
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+    
+    financial_model = plan.get("financial_model", {})
+    if not financial_model:
+        raise HTTPException(status_code=404, detail="Financial model not found")
+    
+    # Extract data for charts
+    pnl_annual = financial_model.get("pnl_annual", [])
+    cashflow_annual = financial_model.get("cashflow_annual", [])
+    kpis = financial_model.get("kpis", {})
+    
+    # Format for Recharts
+    revenue_data = []
+    profit_data = []
+    cashflow_data = []
+    
+    for year_data in pnl_annual:
+        year = year_data.get("year")
+        revenue_data.append({
+            "year": f"Year {year}",
+            "revenue": round(year_data.get("revenue", 0), 0),
+            "cogs": round(year_data.get("cogs", 0), 0),
+            "gross_profit": round(year_data.get("gross_profit", 0), 0)
+        })
+        
+        profit_data.append({
+            "year": f"Year {year}",
+            "gross_profit": round(year_data.get("gross_profit", 0), 0),
+            "net_profit": round(year_data.get("net_profit", 0), 0),
+            "total_opex": round(year_data.get("total_opex", 0), 0)
+        })
+    
+    for year_data in cashflow_annual:
+        year = year_data.get("year")
+        cashflow_data.append({
+            "year": f"Year {year}",
+            "operating_cf": round(year_data.get("operating_cashflow", 0), 0),
+            "net_cf": round(year_data.get("net_cashflow", 0), 0),
+            "cumulative_cf": round(year_data.get("cumulative_cashflow", 0), 0)
+        })
+    
+    return {
+        "revenue_chart": revenue_data,
+        "profit_chart": profit_data,
+        "cashflow_chart": cashflow_data,
+        "kpis": {
+            "gross_margin": round(kpis.get("gross_margin_percent", 0), 1),
+            "net_margin": round(kpis.get("net_margin_percent", 0), 1),
+            "roi_year1": round(kpis.get("roi_year1_percent", 0), 1),
+            "break_even_months": round(kpis.get("break_even_months", 0), 0)
+        }
+    }
