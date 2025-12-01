@@ -89,49 +89,49 @@ function FinancialsPage({ navigate, user, planId }) {
 
         {/* Financial Tables */}
         {financialModel && financialModel.data && (
-          <div className="mt-8 space-y-6">
+          <div style={{ marginTop: '2rem' }}>
             {/* P&L Table */}
             <div className="card">
               <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem' }}>Profit & Loss Statement (Annual)</h3>
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%' }} data-testid="pnl-table">
                   <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2">Metric</th>
+                    <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                      <th style={{ textAlign: 'left', padding: '0.5rem 0' }}>Metric</th>
                       {financialModel.data.pnl_annual.slice(0, 5).map((year) => (
-                        <th key={year.year} className="text-right py-2">Year {year.year}</th>
+                        <th key={year.year} style={{ textAlign: 'right', padding: '0.5rem 0' }}>Year {year.year}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    <tr className="border-b">
-                      <td className="py-2 font-medium">Revenue</td>
+                    <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                      <td style={{ padding: '0.5rem 0', fontWeight: '500' }}>Revenue</td>
                       {financialModel.data.pnl_annual.slice(0, 5).map((year) => (
-                        <td key={year.year} className="text-right py-2">£{year.revenue.toLocaleString()}</td>
+                        <td key={year.year} style={{ textAlign: 'right', padding: '0.5rem 0' }}>£{year.revenue.toLocaleString()}</td>
                       ))}
                     </tr>
-                    <tr className="border-b">
-                      <td className="py-2">COGS</td>
+                    <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                      <td style={{ padding: '0.5rem 0' }}>COGS</td>
                       {financialModel.data.pnl_annual.slice(0, 5).map((year) => (
-                        <td key={year.year} className="text-right py-2">£{year.cogs.toLocaleString()}</td>
+                        <td key={year.year} style={{ textAlign: 'right', padding: '0.5rem 0' }}>£{year.cogs.toLocaleString()}</td>
                       ))}
                     </tr>
-                    <tr className="border-b bg-green-50">
-                      <td className="py-2 font-medium">Gross Profit</td>
+                    <tr style={{ borderBottom: '1px solid #E5E7EB', background: '#F0FDF4' }}>
+                      <td style={{ padding: '0.5rem 0', fontWeight: '500' }}>Gross Profit</td>
                       {financialModel.data.pnl_annual.slice(0, 5).map((year) => (
-                        <td key={year.year} className="text-right py-2 font-medium">£{year.gross_profit.toLocaleString()}</td>
+                        <td key={year.year} style={{ textAlign: 'right', padding: '0.5rem 0', fontWeight: '500' }}>£{year.gross_profit.toLocaleString()}</td>
                       ))}
                     </tr>
-                    <tr className="border-b">
-                      <td className="py-2">Operating Expenses</td>
+                    <tr style={{ borderBottom: '1px solid #E5E7EB' }}>
+                      <td style={{ padding: '0.5rem 0' }}>Operating Expenses</td>
                       {financialModel.data.pnl_annual.slice(0, 5).map((year) => (
-                        <td key={year.year} className="text-right py-2">£{year.total_opex.toLocaleString()}</td>
+                        <td key={year.year} style={{ textAlign: 'right', padding: '0.5rem 0' }}>£{year.total_opex.toLocaleString()}</td>
                       ))}
                     </tr>
-                    <tr className="border-b bg-blue-50">
-                      <td className="py-2 font-medium">Net Profit</td>
+                    <tr style={{ borderBottom: '1px solid #E5E7EB', background: '#EFF6FF' }}>
+                      <td style={{ padding: '0.5rem 0', fontWeight: '500' }}>Net Profit</td>
                       {financialModel.data.pnl_annual.slice(0, 5).map((year) => (
-                        <td key={year.year} className="text-right py-2 font-medium">£{year.net_profit.toLocaleString()}</td>
+                        <td key={year.year} style={{ textAlign: 'right', padding: '0.5rem 0', fontWeight: '500' }}>£{year.net_profit.toLocaleString()}</td>
                       ))}
                     </tr>
                   </tbody>
