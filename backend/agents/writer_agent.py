@@ -197,17 +197,21 @@ class WriterAgent:
         units_per_month = intake_data.get("units_per_month", 0)
         starting_capital = intake_data.get("starting_capital", 0)
         
+        # Get plan-type specific guidance for this section
+        plan_guidance = self._get_plan_type_specific_guidance(plan_purpose, section_type)
+        
         # Build comprehensive, dynamic prompt
-        task_instructions = f"{section_def.instructions}\n\nTarget: {section_def.min_words}-{section_def.max_words} words.\nTone: {template_config.tone}\nEmphasis: {template_config.emphasis}"
+        task_instructions = f"{section_def.instructions}\n\nTarget: {section_def.min_words}-{section_def.max_words} words.\nTone: {template_config.tone}\nEmphasis: {template_config.emphasis}\n\nPLAN-TYPE SPECIFIC GUIDANCE: {plan_guidance}"
         
         prompt = f"""{ZERO_HALLUCINATION_PROMPT}
 
 CRITICAL INSTRUCTIONS:
-1. Use ONLY the data provided below - NO hard-coded examples
-2. Reference {business_name} specifically, NOT generic examples
-3. Use EXACT numbers from financial projections
+1. Use ONLY the data provided below - NO hard-coded examples or generic companies
+2. Reference "{business_name}" specifically throughout (not "the business" or "the company")
+3. Use EXACT numbers from financial projections - verify every figure
 4. Write for {template_config.template_name} with {template_config.tone} tone
 5. Emphasize: {template_config.emphasis}
+6. Apply plan-specific framing: {plan_guidance}
 
 TASK: {task_instructions}
 
