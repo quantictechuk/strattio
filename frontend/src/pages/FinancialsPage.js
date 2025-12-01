@@ -1,14 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import FinancialCharts from '../components/FinancialCharts';
-import { Card } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { ArrowLeft, Download } from 'lucide-react';
 
-function FinancialsPage() {
-  const { planId } = useParams();
-  const navigate = useNavigate();
+function FinancialsPage({ navigate, user, planId }) {
   const [chartsData, setChartsData] = useState(null);
   const [financialModel, setFinancialModel] = useState(null);
   const [loading, setLoading] = useState(true);
