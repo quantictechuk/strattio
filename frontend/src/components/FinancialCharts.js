@@ -33,33 +33,33 @@ const FinancialCharts = ({ chartsData }) => {
   };
 
   return (
-    <div className="space-y-6" data-testid="financial-charts">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }} data-testid="financial-charts">
       {/* KPIs Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <div className="text-sm text-gray-600">Gross Margin</div>
-          <div className="text-2xl font-bold text-blue-600" data-testid="kpi-gross-margin">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+        <div className="card" style={{ padding: '1rem' }}>
+          <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>Gross Margin</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#3B82F6' }} data-testid="kpi-gross-margin">
             {kpis.gross_margin}%
           </div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-sm text-gray-600">Net Margin</div>
-          <div className="text-2xl font-bold text-green-600" data-testid="kpi-net-margin">
+        </div>
+        <div className="card" style={{ padding: '1rem' }}>
+          <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>Net Margin</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#10B981' }} data-testid="kpi-net-margin">
             {kpis.net_margin}%
           </div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-sm text-gray-600">ROI Year 1</div>
-          <div className="text-2xl font-bold text-purple-600" data-testid="kpi-roi">
+        </div>
+        <div className="card" style={{ padding: '1rem' }}>
+          <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>ROI Year 1</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#8B5CF6' }} data-testid="kpi-roi">
             {kpis.roi_year1}%
           </div>
-        </Card>
-        <Card className="p-4">
-          <div className="text-sm text-gray-600">Break-even</div>
-          <div className="text-2xl font-bold text-orange-600" data-testid="kpi-breakeven">
+        </div>
+        <div className="card" style={{ padding: '1rem' }}>
+          <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>Break-even</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#F97316' }} data-testid="kpi-breakeven">
             {kpis.break_even_months}mo
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* Revenue Chart */}
