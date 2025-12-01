@@ -62,26 +62,22 @@ function FinancialsPage({ navigate, user, planId }) {
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate(`/plan/${planId}`)}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <button
+                className="btn btn-ghost"
+                onClick={() => navigate('plan-editor', { planId })}
                 data-testid="back-button"
               >
-                <ArrowLeft className="w-4 h-4 mr-1" />
-                Back to Plan
-              </Button>
-              <h1 className="text-2xl font-bold">Financial Analysis</h1>
+                ← Back to Plan
+              </button>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Financial Analysis</h1>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
+            <button
+              className="btn btn-secondary"
               data-testid="download-financials"
             >
-              <Download className="w-4 h-4 mr-1" />
-              Export Data
-            </Button>
+              📥 Export Data
+            </button>
           </div>
         </div>
       </div>
