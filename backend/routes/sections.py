@@ -33,6 +33,12 @@ async def get_current_user_id(authorization: Optional[str] = Header(None)):
 class SectionUpdate(BaseModel):
     content: str
 
+class RegenerationOptions(BaseModel):
+    tone: Optional[str] = None  # "formal", "casual", "technical"
+    length: Optional[str] = None  # "shorter", "longer", "same"
+    emphasis: Optional[str] = None  # Custom emphasis
+    additional_instructions: Optional[str] = None
+
 @router.get("/{plan_id}/sections")
 async def get_sections(plan_id: str, user_id: str = Depends(get_current_user_id)):
     """Get all sections for a plan"""
