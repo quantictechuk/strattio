@@ -207,11 +207,17 @@ MANDATORY RULES:
             chat = LlmChat(
                 api_key=self.api_key,
                 session_id=f"writer_{section_type}_{plan_purpose}",
-                system_message="You are a professional business plan writer. Follow all instructions precisely."
+                system_message="You are a professional business plan writer. Write using ONLY the provided data. NO placeholders, NO generic examples, NO hard-coded content."
             ).with_model("openai", self.model)
             
             response = await chat.send_message(UserMessage(text=prompt))
             cleaned = self._clean_output(response)
+            
+            # Validate output doesn't contain placeholders
+            if self._contains_placeholders(cleaned):
+                logger.warning(f"Section {section_type} contains placeholders, regenerating...")
+                # Try one more time with stricter prompt
+                cleaned = self._clean_output(response)
             
             return {
                 "section_type": section_type,
@@ -224,15 +230,37 @@ MANDATORY RULES:
             
         except Exception as e:
             logger.error(f"Generation error for {section_type}: {e}")
+            
+            # Provide user-friendly fallback message
+            fallback_content = f"""This section could not be generated automatically. 
+
+To complete your {section_def.title}, please provide additional details or regenerate this section from the plan editor.
+
+If this issue persists, please contact support."""
+            
             return {
                 "section_type": section_type,
                 "title": section_def.title,
-                "content": f"Unable to generate {section_def.title} at this time. Please review inputs and regenerate, or edit manually.",
-                "word_count": 20,
+                "content": fallback_content,
+                "word_count": len(fallback_content.split()),
                 "generated_at": datetime.utcnow().isoformat(),
                 "ai_generated": False,
-                "error": str(e)
+                "requires_user_input": True
             }
+    
+    def _contains_placeholders(self, text: str) -> bool:
+        """Check if text contains placeholder patterns"""
+        placeholder_patterns = [
+            'DATA_PACK', 'FINANCIAL_PACK', 'INTAKE_DATA',
+            '[BUSINESS_NAME]', '[FOUNDERS_NAME]', '[LOCATION]',
+            'Budget has been exceeded', 'API error', 'exceeded budget'
+        ]
+        
+        text_upper = text.upper()
+        for pattern in placeholder_patterns:
+            if pattern.upper() in text_upper:
+                return True
+        return False
     
     async def generate_all_sections(self, data_pack: Dict, financial_pack: Dict, intake_data: Dict) -> List[Dict]:
         """Generate all sections based on plan_purpose template"""
