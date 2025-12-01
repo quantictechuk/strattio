@@ -414,47 +414,43 @@ function PlanEditorPage({ navigate, user, planId }) {
             </div>
 
             {/* Section Content */}
-            {selectedSection && (
+            {selectedSection && !editingSection && (
               <div className="card">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                   <h3>{selectedSection.title}</h3>
-                  <button className="btn btn-ghost" data-testid="regenerate-section-btn">
-                    🔄 Regenerate
-                  </button>
-                </div>
-                
-                <textarea
-                  style={{
-                    width: '100%',
-                    minHeight: '400px',
-                    padding: '1rem',
-                    border: '1px solid #E4E9EF',
-                    borderRadius: '8px',
-                    fontFamily: 'Inter',
-                    fontSize: '1rem',
-                    lineHeight: '1.7',
-                    resize: 'vertical'
-                  }}
-                  value={selectedSection.content}
-                  onChange={(e) => {
-                    const updated = { ...selectedSection, content: e.target.value };
-                    setSelectedSection(updated);
-                  }}
-                  data-testid="section-content-textarea"
-                />
-                
-                <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
                   <button 
                     className="btn btn-primary"
-                    onClick={() => handleUpdateSection(selectedSection.id, selectedSection.content)}
-                    data-testid="save-section-btn"
+                    onClick={() => handleEditSection(selectedSection)}
+                    data-testid="edit-section-btn"
                   >
-                    💾 Save Changes
-                  </button>
-                  <button className="btn btn-ghost" onClick={loadPlan}>
-                    Cancel
+                    ✏️ Edit Section
                   </button>
                 </div>
+                
+                <div 
+                  style={{
+                    padding: '1.5rem',
+                    background: '#F9FAFB',
+                    borderRadius: '8px',
+                    lineHeight: '1.7'
+                  }}
+                  dangerouslySetInnerHTML={{ __html: selectedSection.content }}
+                  data-testid="section-content-display"
+                />
+              </div>
+            )}
+
+            {/* Rich Text Editor */}
+            {editingSection && (
+              <div className="card">
+                <RichTextEditor
+                  initialContent={editingSection.content}
+                  sectionTitle={editingSection.title}
+                  onSave={handleSaveSection}
+                  onCancel={handleCancelEdit}
+                  onRegenerate={handleRegenerateSection}
+                  isRegenerating={isRegenerating}
+                />
               </div>
             )}
           </div>
