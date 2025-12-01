@@ -9,6 +9,7 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import IntakeWizardPage from './pages/IntakeWizardPage';
 import PlanEditorPage from './pages/PlanEditorPage';
+import FinancialsPage from './pages/FinancialsPage';
 import SubscriptionSuccessPage from './pages/SubscriptionSuccessPage';
 import SubscriptionCancelPage from './pages/SubscriptionCancelPage';
 
