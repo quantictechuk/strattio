@@ -113,11 +113,11 @@ const FinancialCharts = ({ chartsData }) => {
             />
           </LineChart>
         </ResponsiveContainer>
-      </Card>
+      </div>
 
       {/* Cashflow Chart */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Cash Flow</h3>
+      <div className="card" style={{ padding: '1.5rem' }}>
+        <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem' }}>Cash Flow</h3>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={cashflow_chart} data-testid="cashflow-chart">
             <CartesianGrid strokeDasharray="3 3" />
