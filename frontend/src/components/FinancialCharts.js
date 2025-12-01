@@ -11,12 +11,11 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
-import { Card } from './ui/card';
 
 const FinancialCharts = ({ chartsData }) => {
   if (!chartsData) {
     return (
-      <div className="text-center py-8 text-gray-500">
+      <div style={{ textAlign: 'center', padding: '2rem 0', color: '#6B7280' }}>
         No financial data available
       </div>
     );
