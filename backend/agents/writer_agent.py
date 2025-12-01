@@ -36,6 +36,66 @@ class WriterAgent:
             r'\[FOUNDERS_NAME\]', r'\[BUSINESS_NAME\]', r'\[LOCATION\]',
             r'\[BUSINESS_DESCRIPTION\]', r'\[INDUSTRY\]',
             'INTAKE_DATA', 'DATA_PACK', 'FINANCIAL_PACK',
+
+    def _get_plan_type_specific_guidance(self, plan_purpose: str, section_type: str) -> str:
+        """Get plan-type specific writing guidance for deeper specialization"""
+        
+        # Loan-specific guidance
+        if plan_purpose == "loan":
+            loan_guidance = {
+                "executive_summary": "Emphasize loan viability: repayment capacity, break-even timeline, and low-risk nature of the business.",
+                "financial_projections": "Focus on cash flow sustainability, loan repayment schedule, and affordability. Show clear path to profitability.",
+                "business_model": "Explain how the business generates consistent cash flow to meet loan obligations.",
+                "market_analysis": "Demonstrate stable market with predictable revenue opportunities.",
+                "risk_analysis": "Address financial risks and show mitigation strategies that protect loan repayment ability."
+            }
+            return loan_guidance.get(section_type, "Frame content to demonstrate business viability and loan repayment capacity.")
+        
+        # Start-Up Visa specific guidance
+        elif plan_purpose == "visa_startup":
+            visa_guidance = {
+                "executive_summary": "Lead with innovation claim, UK market opportunity, and scalability potential.",
+                "business_model": "Emphasize viability in the UK market and sustainable revenue generation over 2+ years.",
+                "market_analysis": "Deep focus on UK market specifically - size, trends, customer needs in UK context.",
+                "products_services": "Highlight what makes this innovative and how it meets UK market needs.",
+                "operations_plan": "Show practical feasibility of operating in the UK.",
+                "team": "Demonstrate capability to execute in the UK market.",
+                "risk_analysis": "Address UK-specific risks and mitigation."
+            }
+            return visa_guidance.get(section_type, "Frame content to demonstrate innovation, UK viability, and scalability for visa endorsement.")
+        
+        # Innovator Founder Visa specific guidance
+        elif plan_purpose == "visa_innovator":
+            innovator_guidance = {
+                "executive_summary": "Strong innovation narrative with high-growth trajectory and investment readiness.",
+                "business_model": "Show defensible model with IP protection and path to market leadership.",
+                "market_analysis": "Large addressable market with internationalization potential beyond UK.",
+                "products_services": "Emphasize significant innovation, IP strategy, and competitive moat.",
+                "operations_plan": "Show scalable operations capable of high-growth execution.",
+                "team": "Deep focus on founder credentials, track record, and capability to execute at scale.",
+                "financial_projections": "Show aggressive but achievable growth trajectory suitable for institutional investment.",
+                "risk_analysis": "Address scaling risks with clear mitigation strategies."
+            }
+            return innovator_guidance.get(section_type, "Frame content for high-growth, investment-ready business with significant innovation.")
+        
+        # Investor pitch specific guidance
+        elif plan_purpose == "investor":
+            investor_guidance = {
+                "executive_summary": "Write as compelling investor pitch: problem, solution, market size, traction, ask.",
+                "market_analysis": "Include TAM/SAM/SOM analysis, show large growing market with clear path to capture.",
+                "business_model": "Focus on unit economics, scalability, capital efficiency, and attractive margins.",
+                "products_services": "Emphasize competitive advantage, moat, and why customers will choose this solution.",
+                "marketing_strategy": "Show CAC analysis, clear GTM strategy, and repeatable customer acquisition.",
+                "team": "Highlight founder-market fit and why THIS team will win.",
+                "financial_projections": "Show path to profitability, attractive returns, and efficient use of capital.",
+                "risk_analysis": "Frame risks as manageable with clear mitigation - investors expect honesty."
+            }
+            return investor_guidance.get(section_type, "Frame content for investor audience: emphasize returns, traction, and competitive moat.")
+        
+        # Generic - neutral guidance
+        else:
+            return "Write in neutral, professional tone suitable for general business planning purposes."
+
             r'\{INTAKE_DATA\}', r'\{DATA_PACK\}', r'\{FINANCIAL_PACK\}',
             r'\{.*?_DATA\}', r'\{.*?_PACK\}',
             # Remove error messages
