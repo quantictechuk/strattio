@@ -306,6 +306,13 @@ function PlanEditorPage({ navigate, user, planId }) {
           </div>
           <div style={{ display: 'flex', gap: '1rem' }}>
             <button 
+              className="btn btn-secondary"
+              onClick={() => navigate(`financials/${planId}`)}
+              data-testid="view-financials-btn"
+            >
+              📊 View Financials
+            </button>
+            <button 
               className="btn btn-secondary" 
               onClick={handleExportPDF}
               data-testid="export-pdf-btn"
