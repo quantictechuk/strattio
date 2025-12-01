@@ -148,7 +148,7 @@ const FinancialCharts = ({ chartsData }) => {
             />
           </LineChart>
         </ResponsiveContainer>
-      </Card>
+      </div>
     </div>
   );
 };
