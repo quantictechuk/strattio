@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api, authService } from '../lib/api';
+import RichTextEditor from '../components/RichTextEditor';
 
 function PlanEditorPage({ navigate, user, planId }) {
   const [plan, setPlan] = useState(null);
