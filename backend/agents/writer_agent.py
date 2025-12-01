@@ -49,7 +49,7 @@ class WriterAgent:
         return cleaned
     
     async def generate_section(self, section_type: str, data_pack: Dict, financial_pack: Dict, intake_data: Dict) -> Dict:
-        """Generate section using template-based instructions"""
+        """Generate section using template-based instructions with dynamic data"""
         plan_purpose = intake_data.get("plan_purpose", "generic")
         business_name = intake_data.get("business_name", "the business")
         
@@ -62,71 +62,145 @@ class WriterAgent:
             return {
                 "section_type": section_type,
                 "title": section_type.replace('_', ' ').title(),
-                "content": f"Section {section_type} not defined in template.",
+                "content": "This section requires additional information. Please contact support or regenerate the plan.",
                 "word_count": 0,
                 "generated_at": datetime.utcnow().isoformat(),
                 "ai_generated": False,
                 "error": "Section not in template"
             }
         
-        # Get market data
+        # Extract ALL user data comprehensively
         market_data = data_pack.get("market_data", {})
         market_size = market_data.get("market_size_gbp", 0)
         growth_rate = market_data.get("growth_rate_percent", 0)
         market_source = market_data.get("market_size_source", "market research")
         
-        # Get financials
+        # Get complete financials from engine
         pnl = financial_pack.get("pnl_annual", [])
+        cashflow = financial_pack.get("cashflow_annual", [])
+        kpis = financial_pack.get("kpis", {})
+        
         year1 = pnl[0] if len(pnl) > 0 else {}
         year2 = pnl[1] if len(pnl) > 1 else {}
         year3 = pnl[2] if len(pnl) > 2 else {}
+        year5 = pnl[4] if len(pnl) > 4 else {}
         
+        # Revenue trajectory
         revenue_y1 = year1.get("revenue", 0)
         revenue_y2 = year2.get("revenue", 0)
         revenue_y3 = year3.get("revenue", 0)
+        revenue_y5 = year5.get("revenue", 0)
+        
+        # Profitability
+        gross_profit_y1 = year1.get("gross_profit", 0)
         net_profit_y1 = year1.get("net_profit", 0)
+        net_profit_y3 = year3.get("net_profit", 0)
+        
+        # Operating expenses (user-defined)
         opex_y1 = year1.get("total_opex", 0)
         opex_monthly = opex_y1 / 12 if opex_y1 > 0 else 0
         
-        # Get operating expenses breakdown
+        # Detailed OPEX breakdown from USER INPUT
         opex_data = intake_data.get("operating_expenses", {})
-        salaries = opex_data.get("salaries", 0)
-        marketing = opex_data.get("marketing", 0)
-        software = opex_data.get("software_tools", 0)
+        opex_salaries = opex_data.get("salaries", 0)
+        opex_marketing = opex_data.get("marketing", 0)
+        opex_software = opex_data.get("software_tools", 0)
+        opex_hosting = opex_data.get("hosting_domain", 0)
+        opex_workspace = opex_data.get("workspace_utilities", 0)
+        opex_misc = opex_data.get("miscellaneous", 0)
         
-        # Build context-aware prompt using template instructions
+        # KPIs
+        gross_margin = kpis.get("gross_margin_percent", 0)
+        net_margin = kpis.get("net_margin_percent", 0)
+        roi_y1 = kpis.get("roi_year1_percent", 0)
+        break_even_months = kpis.get("break_even_months", 0)
+        
+        # Cashflow
+        cf_y1 = cashflow[0] if len(cashflow) > 0 else {}
+        net_cashflow_y1 = cf_y1.get("net_cashflow", 0)
+        
+        # Revenue model specifics
+        price_per_unit = intake_data.get("price_per_unit", 0)
+        units_per_month = intake_data.get("units_per_month", 0)
+        starting_capital = intake_data.get("starting_capital", 0)
+        
+        # Build comprehensive, dynamic prompt
         task_instructions = f"{section_def.instructions}\n\nTarget: {section_def.min_words}-{section_def.max_words} words.\nTone: {template_config.tone}\nEmphasis: {template_config.emphasis}"
         
         prompt = f"""{ZERO_HALLUCINATION_PROMPT}
 
+CRITICAL INSTRUCTIONS:
+1. Use ONLY the data provided below - NO hard-coded examples
+2. Reference {business_name} specifically, NOT generic examples
+3. Use EXACT numbers from financial projections
+4. Write for {template_config.template_name} with {template_config.tone} tone
+5. Emphasize: {template_config.emphasis}
+
 TASK: {task_instructions}
 
-BUSINESS INFO:
-• Name: {business_name}
-• Industry: {intake_data.get('industry', 'N/A')}
+===== USER'S ACTUAL BUSINESS DATA =====
+
+BUSINESS IDENTITY:
+• Business Name: {business_name}
+• Industry/Sector: {intake_data.get('industry', 'N/A')}
 • Location: {intake_data.get('location_city', 'N/A')}, {intake_data.get('location_country', 'N/A')}
-• Description: {intake_data.get('business_description', 'N/A')}
-• Value Proposition: {intake_data.get('unique_value_proposition', 'N/A')}
-• Plan Purpose: {template_config.template_name}
-
-MARKET DATA:
-• Market Size: £{market_size:,} ({market_source}, {market_data.get('market_size_timestamp', 'recent')})
-• Growth Rate: {growth_rate}% ({market_data.get('growth_rate_source', 'N/A')})
-
-FINANCIAL PROJECTIONS:
-• Year 1 Revenue: £{revenue_y1:,.0f}
-• Year 2 Revenue: £{revenue_y2:,.0f}
-• Year 3 Revenue: £{revenue_y3:,.0f}
-• Year 1 Net Profit: £{net_profit_y1:,.0f}
-• Annual OpEx: £{opex_y1:,.0f} (Monthly: £{opex_monthly:,.0f})
-• OpEx Breakdown: Salaries £{salaries:,}/mo, Marketing £{marketing:,}/mo, Software £{software:,}/mo
-
-ADDITIONAL CONTEXT:
+• Business Description: {intake_data.get('business_description', 'N/A')}
+• Unique Value Proposition: {intake_data.get('unique_value_proposition', 'N/A')}
 • Target Customers: {intake_data.get('target_customers', 'N/A')}
-• Revenue Model: {', '.join(intake_data.get('revenue_model', []))}
-• Team Size: {intake_data.get('team_size', 'N/A')}
 
-Remember: Use these EXACT numbers. Cite sources. No placeholders! Write in the tone and emphasis specified above.
+REVENUE MODEL:
+• Revenue Streams: {', '.join(intake_data.get('revenue_model', []))}
+• Pricing: £{price_per_unit:.2f} per unit
+• Volume: {units_per_month:,} units/month
+• Starting Capital: £{starting_capital:,}
+
+MARKET INTELLIGENCE:
+• Market Size: £{market_size:,.0f} ({market_source}, {market_data.get('market_size_timestamp', 'recent')})
+• Market Growth Rate: {growth_rate:.1f}% annually ({market_data.get('growth_rate_source', 'N/A')})
+
+FINANCIAL PROJECTIONS (from deterministic engine):
+Revenue Trajectory:
+• Year 1: £{revenue_y1:,.0f}
+• Year 2: £{revenue_y2:,.0f}
+• Year 3: £{revenue_y3:,.0f}
+• Year 5: £{revenue_y5:,.0f}
+
+Profitability:
+• Gross Profit Y1: £{gross_profit_y1:,.0f}
+• Net Profit Y1: £{net_profit_y1:,.0f}
+• Net Profit Y3: £{net_profit_y3:,.0f}
+
+Key Metrics:
+• Gross Margin: {gross_margin:.1f}%
+• Net Margin: {net_margin:.1f}%
+• ROI Year 1: {roi_y1:.1f}%
+• Break-even: Month {break_even_months:.0f}
+
+USER-DEFINED OPERATING EXPENSES (Monthly):
+• Salaries/Wages: £{opex_salaries:,.0f}
+• Marketing/Advertising: £{opex_marketing:,.0f}
+• Software/Tools: £{opex_software:,.0f}
+• Hosting/Domain: £{opex_hosting:,.0f}
+• Workspace/Utilities: £{opex_workspace:,.0f}
+• Miscellaneous: £{opex_misc:,.0f}
+• TOTAL Monthly OpEx: £{opex_monthly:,.0f}
+• TOTAL Annual OpEx: £{opex_y1:,.0f}
+
+CASHFLOW:
+• Year 1 Net Cashflow: £{net_cashflow_y1:,.0f}
+
+TEAM:
+• Team Size: {intake_data.get('team_size', 'N/A')} people
+
+===== END USER DATA =====
+
+MANDATORY RULES:
+- Use these EXACT numbers in your narrative
+- Reference "{business_name}" specifically (not "the business" or generic examples)
+- Cite data sources where mentioned (e.g., "According to {market_source}...")
+- NO PLACEHOLDERS like [NAME], DATA_PACK, etc.
+- NO hard-coded example companies or locations
+- ALL figures must come from the data above
 """
         
         try:
