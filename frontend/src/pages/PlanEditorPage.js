@@ -136,6 +136,69 @@ function PlanEditorPage({ navigate, user, planId }) {
     }
   };
 
+  const handleSaveSection = async (content) => {
+    if (!editingSection) return;
+    
+    try {
+      const response = await fetch(`${import.meta.env.REACT_APP_BACKEND_URL || process.env.REACT_APP_BACKEND_URL}/api/plans/${planId}/sections/${editingSection.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        body: JSON.stringify({ content })
+      });
+
+      if (!response.ok) throw new Error('Failed to save section');
+      
+      const updated = await response.json();
+      setSections(sections.map(s => s.id === editingSection.id ? updated : s));
+      setSelectedSection(updated);
+      setEditingSection(null);
+    } catch (err) {
+      setError(err.message || 'Failed to save section');
+    }
+  };
+
+  const handleRegenerateSection = async (options) => {
+    if (!editingSection) return;
+    
+    setIsRegenerating(true);
+    try {
+      const response = await fetch(`${import.meta.env.REACT_APP_BACKEND_URL || process.env.REACT_APP_BACKEND_URL}/api/plans/${planId}/sections/${editingSection.id}/regenerate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        body: JSON.stringify(options)
+      });
+
+      if (!response.ok) throw new Error('Failed to regenerate section');
+      
+      const result = await response.json();
+      
+      if (result.success && result.section) {
+        setSections(sections.map(s => s.id === editingSection.id ? result.section : s));
+        setSelectedSection(result.section);
+        setEditingSection(result.section);
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to regenerate section');
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingSection(null);
+  };
+
+  const handleEditSection = (section) => {
+    setEditingSection(section);
+    setSelectedSection(section);
+  };
+
   const handleExportPDF = async () => {
     // Check subscription tier first
     if (!subscription) {
