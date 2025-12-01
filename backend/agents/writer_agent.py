@@ -1,4 +1,4 @@
-"""Enhanced Plan Writer Agent with template-based section generation"""
+"""Enhanced Plan Writer Agent with dynamic content and deep plan-type specialization"""
 
 from typing import Dict, List
 from datetime import datetime
@@ -20,6 +20,7 @@ ABSOLUTE RULES:
 5. NO placeholder text like DATA_PACK, INTAKE_DATA, [NAME], etc. - write complete content
 6. Use exact numbers from the data provided
 7. Write in professional business English
+8. Reference the ACTUAL business name provided, not generic placeholders
 
 FORMAT: Professional, clear, suitable for business plan readers"""
 
@@ -36,7 +37,45 @@ class WriterAgent:
             r'\[FOUNDERS_NAME\]', r'\[BUSINESS_NAME\]', r'\[LOCATION\]',
             r'\[BUSINESS_DESCRIPTION\]', r'\[INDUSTRY\]',
             'INTAKE_DATA', 'DATA_PACK', 'FINANCIAL_PACK',
-
+            r'\{INTAKE_DATA\}', r'\{DATA_PACK\}', r'\{FINANCIAL_PACK\}',
+            r'\{.*?_DATA\}', r'\{.*?_PACK\}',
+            # Remove error messages
+            r'Budget has been exceeded.*',
+            r'API error.*',
+            r'Error:.*',
+            r'exceeded budget.*',
+            # Remove leftover brackets with all caps
+            r'\[[A-Z_]+\]'
+        ]
+        
+        cleaned = text
+        for pattern in patterns_to_remove:
+            cleaned = re.sub(pattern, '', cleaned, flags=re.IGNORECASE)
+        
+        # Remove any remaining square bracket placeholders
+        cleaned = re.sub(r'\[([A-Z_\s]+)\]', '', cleaned)
+        
+        # Clean up extra whitespace
+        cleaned = re.sub(r'\n\s*\n\s*\n+', '\n\n', cleaned)
+        cleaned = re.sub(r'\s+', ' ', cleaned)  # Normalize spaces
+        cleaned = cleaned.strip()
+        
+        return cleaned
+    
+    def _contains_placeholders(self, text: str) -> bool:
+        """Check if text contains placeholder patterns"""
+        placeholder_patterns = [
+            'DATA_PACK', 'FINANCIAL_PACK', 'INTAKE_DATA',
+            '[BUSINESS_NAME]', '[FOUNDERS_NAME]', '[LOCATION]',
+            'Budget has been exceeded', 'API error', 'exceeded budget'
+        ]
+        
+        text_upper = text.upper()
+        for pattern in placeholder_patterns:
+            if pattern.upper() in text_upper:
+                return True
+        return False
+    
     def _get_plan_type_specific_guidance(self, plan_purpose: str, section_type: str) -> str:
         """Get plan-type specific writing guidance for deeper specialization"""
         
@@ -95,34 +134,9 @@ class WriterAgent:
         # Generic - neutral guidance
         else:
             return "Write in neutral, professional tone suitable for general business planning purposes."
-
-            r'\{INTAKE_DATA\}', r'\{DATA_PACK\}', r'\{FINANCIAL_PACK\}',
-            r'\{.*?_DATA\}', r'\{.*?_PACK\}',
-            # Remove error messages
-            r'Budget has been exceeded.*',
-            r'API error.*',
-            r'Error:.*',
-            r'exceeded budget.*',
-            # Remove leftover brackets with all caps
-            r'\[[A-Z_]+\]'
-        ]
-        
-        cleaned = text
-        for pattern in patterns_to_remove:
-            cleaned = re.sub(pattern, '', cleaned, flags=re.IGNORECASE)
-        
-        # Remove any remaining square bracket placeholders
-        cleaned = re.sub(r'\[([A-Z_\s]+)\]', '', cleaned)
-        
-        # Clean up extra whitespace
-        cleaned = re.sub(r'\n\s*\n\s*\n+', '\n\n', cleaned)
-        cleaned = re.sub(r'\s+', ' ', cleaned)  # Normalize spaces
-        cleaned = cleaned.strip()
-        
-        return cleaned
     
     async def generate_section(self, section_type: str, data_pack: Dict, financial_pack: Dict, intake_data: Dict) -> Dict:
-        """Generate section using template-based instructions with dynamic data"""
+        """Generate section using template-based instructions with fully dynamic data"""
         plan_purpose = intake_data.get("plan_purpose", "generic")
         business_name = intake_data.get("business_name", "the business")
         
@@ -292,9 +306,7 @@ MANDATORY RULES:
             
             # Validate output doesn't contain placeholders
             if self._contains_placeholders(cleaned):
-                logger.warning(f"Section {section_type} contains placeholders, regenerating...")
-                # Try one more time with stricter prompt
-                cleaned = self._clean_output(response)
+                logger.warning(f"Section {section_type} contains placeholders after generation")
             
             return {
                 "section_type": section_type,
@@ -324,20 +336,6 @@ If this issue persists, please contact support."""
                 "ai_generated": False,
                 "requires_user_input": True
             }
-    
-    def _contains_placeholders(self, text: str) -> bool:
-        """Check if text contains placeholder patterns"""
-        placeholder_patterns = [
-            'DATA_PACK', 'FINANCIAL_PACK', 'INTAKE_DATA',
-            '[BUSINESS_NAME]', '[FOUNDERS_NAME]', '[LOCATION]',
-            'Budget has been exceeded', 'API error', 'exceeded budget'
-        ]
-        
-        text_upper = text.upper()
-        for pattern in placeholder_patterns:
-            if pattern.upper() in text_upper:
-                return True
-        return False
     
     async def generate_all_sections(self, data_pack: Dict, financial_pack: Dict, intake_data: Dict) -> List[Dict]:
         """Generate all sections based on plan_purpose template"""
