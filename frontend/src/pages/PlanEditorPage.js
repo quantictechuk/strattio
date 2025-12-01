@@ -165,7 +165,7 @@ function PlanEditorPage({ navigate, user, planId }) {
     
     setIsRegenerating(true);
     try {
-      const response = await fetch(`${import.meta.env.REACT_APP_BACKEND_URL || process.env.REACT_APP_BACKEND_URL}/api/plans/${planId}/sections/${editingSection.id}/regenerate`, {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/plans/${planId}/sections/${editingSection.id}/regenerate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
