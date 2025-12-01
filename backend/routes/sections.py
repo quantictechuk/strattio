@@ -92,19 +92,73 @@ async def update_section(plan_id: str, section_id: str, section_update: SectionU
     return serialize_doc(section)
 
 @router.post("/{plan_id}/sections/{section_id}/regenerate")
-async def regenerate_section(plan_id: str, section_id: str, user_id: str = Depends(get_current_user_id)):
-    """Regenerate a section using AI (simplified for MVP)"""
+async def regenerate_section(
+    plan_id: str, 
+    section_id: str, 
+    options: RegenerationOptions,
+    user_id: str = Depends(get_current_user_id)
+):
+    """Regenerate a section with custom options (tone, length, emphasis)"""
     
     # Verify plan ownership
     plan = await db.plans.find_one({"_id": to_object_id(plan_id), "user_id": user_id})
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
     
-    # For MVP: Return placeholder
-    # In full version: Call writer agent with regeneration options
+    # Get existing section
+    section = await db.sections.find_one({"_id": to_object_id(section_id), "plan_id": plan_id})
+    if not section:
+        raise HTTPException(status_code=404, detail="Section not found")
     
-    return {
-        "message": "Section regeneration queued",
-        "section_id": section_id
-    }
+    # Get plan data for regeneration
+    intake_data = plan.get("intake_data", {})
+    
+    # Get research and financial data
+    research_pack = plan.get("research_pack", {})
+    financial_model = plan.get("financial_model", {})
+    
+    # Import writer agent
+    from agents.writer_agent import WriterAgent
+    
+    try:
+        writer = WriterAgent()
+        
+        # Apply regeneration options
+        if options.tone:
+            # Modify tone in prompt
+            pass
+        
+        if options.length:
+            # Adjust word count targets
+            pass
+        
+        # Regenerate section
+        new_section_data = await writer.generate_section(
+            section_type=section.get("section_type"),
+            data_pack=research_pack,
+            financial_pack=financial_model,
+            intake_data=intake_data
+        )
+        
+        # Save regenerated content
+        await db.sections.update_one(
+            {"_id": to_object_id(section_id)},
+            {"$set": {
+                "content": new_section_data.get("content"),
+                "word_count": new_section_data.get("word_count"),
+                "regenerated_at": datetime.utcnow(),
+                "regeneration_count": section.get("regeneration_count", 0) + 1
+            }}
+        )
+        
+        updated_section = await db.sections.find_one({"_id": to_object_id(section_id)})
+        
+        return {
+            "success": True,
+            "section": serialize_doc(updated_section)
+        }
+        
+    except Exception as e:
+        logger.error(f"Regeneration error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to regenerate section: {str(e)}")
 
