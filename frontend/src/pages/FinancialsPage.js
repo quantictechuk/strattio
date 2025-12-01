@@ -137,7 +137,7 @@ function FinancialsPage({ navigate, user, planId }) {
                   </tbody>
                 </table>
               </div>
-            </Card>
+            </div>
           </div>
         )}
       </div>
