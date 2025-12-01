@@ -29,21 +29,34 @@ class WriterAgent:
         self.model = "gpt-4o"
     
     def _clean_output(self, text: str) -> str:
-        """Remove placeholder tokens and clean output"""
+        """Remove placeholder tokens, error messages, and clean output"""
         # Remove placeholder patterns
         patterns_to_remove = [
             r'\[INTAKE_DATA\]', r'\[DATA_PACK\]', r'\[FINANCIAL_PACK\]',
-            r'\[FOUNDERS_NAME\]', r'\[BUSINESS_NAME\]', r'\[.*?\]',
+            r'\[FOUNDERS_NAME\]', r'\[BUSINESS_NAME\]', r'\[LOCATION\]',
+            r'\[BUSINESS_DESCRIPTION\]', r'\[INDUSTRY\]',
             'INTAKE_DATA', 'DATA_PACK', 'FINANCIAL_PACK',
-            r'\{INTAKE_DATA\}', r'\{DATA_PACK\}', r'\{FINANCIAL_PACK\}'
+            r'\{INTAKE_DATA\}', r'\{DATA_PACK\}', r'\{FINANCIAL_PACK\}',
+            r'\{.*?_DATA\}', r'\{.*?_PACK\}',
+            # Remove error messages
+            r'Budget has been exceeded.*',
+            r'API error.*',
+            r'Error:.*',
+            r'exceeded budget.*',
+            # Remove leftover brackets with all caps
+            r'\[[A-Z_]+\]'
         ]
         
         cleaned = text
         for pattern in patterns_to_remove:
             cleaned = re.sub(pattern, '', cleaned, flags=re.IGNORECASE)
         
+        # Remove any remaining square bracket placeholders
+        cleaned = re.sub(r'\[([A-Z_\s]+)\]', '', cleaned)
+        
         # Clean up extra whitespace
-        cleaned = re.sub(r'\n\s*\n\s*\n', '\n\n', cleaned)
+        cleaned = re.sub(r'\n\s*\n\s*\n+', '\n\n', cleaned)
+        cleaned = re.sub(r'\s+', ' ', cleaned)  # Normalize spaces
         cleaned = cleaned.strip()
         
         return cleaned
