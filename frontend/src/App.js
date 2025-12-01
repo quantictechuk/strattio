@@ -75,6 +75,8 @@ function App() {
         return <IntakeWizardPage navigate={navigate} user={user} planId={planId} />;
       case 'plan-editor':
         return <PlanEditorPage navigate={navigate} user={user} planId={planId} />;
+      case 'financials':
+        return <FinancialsPage navigate={navigate} user={user} planId={planId} />;
       case 'subscription-success':
         return <SubscriptionSuccessPage navigate={navigate} user={user} />;
       case 'subscription-cancel':
