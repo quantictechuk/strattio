@@ -77,11 +77,11 @@ const FinancialCharts = ({ chartsData }) => {
             <Bar dataKey="gross_profit" fill="#10b981" name="Gross Profit" />
           </BarChart>
         </ResponsiveContainer>
-      </Card>
+      </div>
 
       {/* Profit Chart */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Profitability</h3>
+      <div className="card" style={{ padding: '1.5rem' }}>
+        <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem' }}>Profitability</h3>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={profit_chart} data-testid="profit-chart">
             <CartesianGrid strokeDasharray="3 3" />
