@@ -140,7 +140,7 @@ function PlanEditorPage({ navigate, user, planId }) {
     if (!editingSection) return;
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/plans/${planId}/sections/${editingSection.id}`, {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/${planId}/sections/${editingSection.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -149,13 +149,17 @@ function PlanEditorPage({ navigate, user, planId }) {
         body: JSON.stringify({ content })
       });
 
-      if (!response.ok) throw new Error('Failed to save section');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to save section');
+      }
       
       const updated = await response.json();
       setSections(sections.map(s => s.id === editingSection.id ? updated : s));
       setSelectedSection(updated);
       setEditingSection(null);
     } catch (err) {
+      console.error('Save error:', err);
       setError(err.message || 'Failed to save section');
     }
   };
