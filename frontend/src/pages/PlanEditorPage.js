@@ -307,7 +307,7 @@ function PlanEditorPage({ navigate, user, planId }) {
           <div style={{ display: 'flex', gap: '1rem' }}>
             <button 
               className="btn btn-secondary"
-              onClick={() => navigate(`financials/${planId}`)}
+              onClick={() => navigate('financials', { planId })}
               data-testid="view-financials-btn"
             >
               📊 View Financials
