@@ -169,7 +169,7 @@ function PlanEditorPage({ navigate, user, planId }) {
     
     setIsRegenerating(true);
     try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/plans/${planId}/sections/${editingSection.id}/regenerate`, {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/${planId}/sections/${editingSection.id}/regenerate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -178,7 +178,10 @@ function PlanEditorPage({ navigate, user, planId }) {
         body: JSON.stringify(options)
       });
 
-      if (!response.ok) throw new Error('Failed to regenerate section');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to regenerate section');
+      }
       
       const result = await response.json();
       
@@ -188,6 +191,7 @@ function PlanEditorPage({ navigate, user, planId }) {
         setEditingSection(result.section);
       }
     } catch (err) {
+      console.error('Regenerate error:', err);
       setError(err.message || 'Failed to regenerate section');
     } finally {
       setIsRegenerating(false);
