@@ -46,9 +46,9 @@ function App() {
       '/register': 'register',
       '/dashboard': 'dashboard',
       '/settings': 'settings',
-      '/admin/login': 'admin-login',
-      '/admin': 'admin-dashboard',
-      '/admin/dashboard': 'admin-dashboard',
+      '/backoffice/login': 'admin-login',
+      '/backoffice': 'admin-dashboard',
+      '/backoffice/dashboard': 'admin-dashboard',
       '/subscription/success': 'subscription-success',
       '/subscription/cancel': 'subscription-cancel'
     };
@@ -177,7 +177,7 @@ function App() {
     // Handle initial route - restore user state first if needed
     const restoreUserAndRoute = async () => {
       const path = window.location.pathname;
-      const isAdminRoute = path === '/admin' || path === '/admin/dashboard';
+      const isAdminRoute = path === '/backoffice' || path === '/backoffice/dashboard';
       const isProtectedRoute = isAdminRoute || path === '/dashboard' || path === '/settings';
       
       if (isProtectedRoute) {
@@ -269,8 +269,8 @@ function App() {
       'register': '/register',
       'dashboard': '/dashboard',
       'settings': '/settings',
-      'admin-login': '/admin/login',
-      'admin-dashboard': '/admin/dashboard',
+      'admin-login': '/backoffice/login',
+      'admin-dashboard': '/backoffice/dashboard',
       'subscription-success': '/subscription/success',
       'subscription-cancel': '/subscription/cancel'
     };
