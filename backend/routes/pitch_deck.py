@@ -87,7 +87,7 @@ async def generate_pitch_deck(
         # Add background rectangle for visual appeal
         if idx == 0:  # Title slide gets special treatment
             bg_shape = slide.shapes.add_shape(
-                1,  # MSO_SHAPE.RECTANGLE
+                MSO_SHAPE.RECTANGLE,
                 Inches(0), Inches(0), Inches(10), Inches(2.5)
             )
             bg_shape.fill.solid()
@@ -243,7 +243,7 @@ async def download_pitch_deck(
         # Add background rectangle for visual appeal
         if idx == 0:  # Title slide gets special treatment
             bg_shape = slide.shapes.add_shape(
-                1,  # MSO_SHAPE.RECTANGLE
+                MSO_SHAPE.RECTANGLE,
                 Inches(0), Inches(0), Inches(10), Inches(2.5)
             )
             bg_shape.fill.solid()
