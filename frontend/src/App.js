@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { authService } from './lib/api';
+import { authService, api } from './lib/api';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -70,22 +70,35 @@ function App() {
       // Store tokens
       authService.setTokens(token, refresh);
       
-      // Get user info from token (decode JWT)
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        const userData = { id: payload.sub, email: payload.email || '' };
-        authService.setUser(userData);
-        setUser(userData);
-        
-        // Clear URL params
-        window.history.replaceState({}, '', window.location.pathname);
-        
-        // Navigate to dashboard
-        setCurrentPage('dashboard');
-        return;
-      } catch (e) {
-        console.error('Error parsing token:', e);
-      }
+      // Fetch full user data from backend (includes name, email, etc.)
+      const fetchUserData = async () => {
+        try {
+          const userData = await api.auth.me();
+          authService.setUser(userData);
+          setUser(userData);
+          
+          // Clear URL params
+          window.history.replaceState({}, '', window.location.pathname);
+          
+          // Navigate to dashboard
+          setCurrentPage('dashboard');
+        } catch (e) {
+          console.error('Error fetching user data:', e);
+          // Fallback: use token payload if API call fails
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const userData = { id: payload.sub, email: payload.email || '' };
+            authService.setUser(userData);
+            setUser(userData);
+            setCurrentPage('dashboard');
+          } catch (parseError) {
+            console.error('Error parsing token:', parseError);
+          }
+        }
+      };
+      
+      fetchUserData();
+      return;
     }
     
     // Handle initial route

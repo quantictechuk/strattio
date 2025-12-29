@@ -176,28 +176,29 @@ async def google_oauth_callback(
             user = await db.users.find_one({"email": email})
             
             if user:
-                # Existing user - check if Google auth is linked
-                if user.get("auth_provider") != "google" or user.get("auth_provider_id") != google_id:
-                    # Link Google account and update name if not set or if Google provides better info
-                    update_data = {
-                        "auth_provider": "google",
-                        "auth_provider_id": google_id,
-                        "avatar_url": picture,
-                        "updated_at": datetime.utcnow()
-                    }
-                    
-                    # Update name if current name is empty or if we have better info from Google
-                    if not user.get("name") or (name and name.strip()):
-                        update_data["name"] = name
-                    if first_name:
-                        update_data["first_name"] = first_name
-                    if last_name:
-                        update_data["last_name"] = last_name
-                    
-                    await db.users.update_one(
-                        {"_id": user["_id"]},
-                        {"$set": update_data}
-                    )
+                # Existing user - update Google auth info and name
+                update_data = {
+                    "auth_provider": "google",
+                    "auth_provider_id": google_id,
+                    "updated_at": datetime.utcnow()
+                }
+                
+                # Update avatar if available
+                if picture:
+                    update_data["avatar_url"] = picture
+                
+                # Always update name from Google (Google is the source of truth for OAuth users)
+                if name and name.strip():
+                    update_data["name"] = name
+                if first_name:
+                    update_data["first_name"] = first_name
+                if last_name:
+                    update_data["last_name"] = last_name
+                
+                await db.users.update_one(
+                    {"_id": user["_id"]},
+                    {"$set": update_data}
+                )
                 
                 user_id = str(user["_id"])
             else:
