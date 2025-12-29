@@ -106,6 +106,14 @@ async def login(credentials: UserLogin, db = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
+    # Check if user signed up with OAuth (no password_hash)
+    if not user.get("password_hash"):
+        auth_provider = user.get("auth_provider", "Google")
+        raise HTTPException(
+            status_code=400,
+            detail=f"This account was created using {auth_provider} sign-in. Please use {auth_provider} to sign in instead."
+        )
+    
     # Verify password
     if not verify_password(credentials.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")

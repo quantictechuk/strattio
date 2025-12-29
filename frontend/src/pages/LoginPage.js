@@ -30,6 +30,9 @@ function LoginPage({ navigate, onLogin, user }) {
       // Provide more helpful error messages
       if (err.message && err.message.includes('connect to server')) {
         setError('Unable to connect to the server. Please make sure the backend is running.');
+      } else if (err.message && (err.message.includes('Google sign-in') || err.message.includes('OAuth'))) {
+        // User signed up with Google - show the specific message from backend
+        setError(err.message);
       } else if (err.message && err.message.includes('401')) {
         setError('Invalid email or password. Please check your credentials.');
       } else {
