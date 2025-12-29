@@ -20,6 +20,8 @@ import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsOfServicePage from './pages/TermsOfServicePage';
 import AboutUsPage from './pages/AboutUsPage';
 import SettingsPage from './pages/SettingsPage';
+import AdminLoginPage from './pages/AdminLoginPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
 import BackToTop from './components/BackToTop';
 
 function App() {
@@ -40,6 +42,9 @@ function App() {
       '/register': 'register',
       '/dashboard': 'dashboard',
       '/settings': 'settings',
+      '/admin/login': 'admin-login',
+      '/admin': 'admin-dashboard',
+      '/admin/dashboard': 'admin-dashboard',
       '/subscription/success': 'subscription-success',
       '/subscription/cancel': 'subscription-cancel'
     };
@@ -132,6 +137,8 @@ function App() {
       'register': '/register',
       'dashboard': '/dashboard',
       'settings': '/settings',
+      'admin-login': '/admin/login',
+      'admin-dashboard': '/admin/dashboard',
       'subscription-success': '/subscription/success',
       'subscription-cancel': '/subscription/cancel'
     };
@@ -195,6 +202,10 @@ function App() {
         return <AboutUsPage navigate={navigate} user={user} />;
       case 'settings':
         return <SettingsPage navigate={navigate} user={user} onLogout={handleLogout} />;
+      case 'admin-login':
+        return <AdminLoginPage navigate={navigate} onLogin={handleLogin} />;
+      case 'admin-dashboard':
+        return <AdminDashboardPage navigate={navigate} user={user} onLogout={handleLogout} />;
       default:
         return <HomePage navigate={navigate} user={user} />;
     }

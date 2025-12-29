@@ -126,8 +126,10 @@ try:
     from routes.audit_logs import router as audit_logs_router
     from routes.business_model_canvas import router as canvas_router
     from routes.oauth import router as oauth_router
+    from routes.admin import router as admin_router
     
     api_router.include_router(oauth_router, prefix="/auth", tags=["OAuth"])
+    api_router.include_router(admin_router, prefix="/admin", tags=["Admin"])
     api_router.include_router(plans_router, prefix="/plans", tags=["Plans"])
     api_router.include_router(sections_router, tags=["Sections"])
     api_router.include_router(financials_router, tags=["Financials"])

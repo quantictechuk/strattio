@@ -304,5 +304,28 @@ export const api = {
     delete: () => apiRequest('/api/auth/me', {
       method: 'DELETE'
     })
+  },
+  admin: {
+    analytics: {
+      overview: () => apiRequest('/api/admin/analytics/overview'),
+      users: () => apiRequest('/api/admin/analytics/users'),
+      revenue: (days = 30) => apiRequest(`/api/admin/analytics/revenue?days=${days}`)
+    },
+    users: {
+      list: (skip = 0, limit = 50, search = '') => {
+        const params = new URLSearchParams({ skip: skip.toString(), limit: limit.toString() });
+        if (search) params.append('search', search);
+        return apiRequest(`/api/admin/users?${params.toString()}`);
+      },
+      get: (userId) => apiRequest(`/api/admin/users/${userId}`),
+      changePassword: (userId, newPassword) => apiRequest(`/api/admin/users/${userId}/password`, {
+        method: 'POST',
+        body: JSON.stringify({ user_id: userId, new_password: newPassword })
+      })
+    },
+    changePassword: (newPassword) => apiRequest('/api/admin/admin/password', {
+      method: 'POST',
+      body: JSON.stringify({ new_password: newPassword })
+    })
   }
 };
