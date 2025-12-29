@@ -96,7 +96,7 @@ async def generate_pitch_deck(
         else:
             # Subtle top accent bar for other slides
             accent_bar = slide.shapes.add_shape(
-                1,  # MSO_SHAPE.RECTANGLE
+                MSO_SHAPE.RECTANGLE,
                 Inches(0), Inches(0), Inches(10), Inches(0.3)
             )
             accent_bar.fill.solid()
@@ -252,7 +252,7 @@ async def download_pitch_deck(
         else:
             # Subtle top accent bar for other slides
             accent_bar = slide.shapes.add_shape(
-                1,  # MSO_SHAPE.RECTANGLE
+                MSO_SHAPE.RECTANGLE,
                 Inches(0), Inches(0), Inches(10), Inches(0.3)
             )
             accent_bar.fill.solid()
