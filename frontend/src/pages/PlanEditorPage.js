@@ -736,6 +736,18 @@ function PlanEditorPage({ navigate, user, planId }) {
           </div>
         )}
 
+        {activeTab === 'pitch-deck' && (
+          <div>
+            <PitchDeckGenerator planId={planId} />
+          </div>
+        )}
+
+        {activeTab === 'insights' && (
+          <div>
+            <AIInsights planId={planId} />
+          </div>
+        )}
+
         {activeTab === 'sections' && (
           <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '2rem' }}>
             {/* Sections List */}
