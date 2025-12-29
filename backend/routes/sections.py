@@ -9,11 +9,11 @@ from bson import ObjectId
 
 from utils.serializers import serialize_doc, to_object_id
 from utils.auth import decode_token
+from utils.audit_logger import AuditLogger
+from utils.dependencies import get_db
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-
-from server import db
 
 async def get_current_user_id(authorization: Optional[str] = Header(None)):
     """Extract user_id from JWT token"""
@@ -40,7 +40,7 @@ class RegenerationOptions(BaseModel):
     additional_instructions: Optional[str] = None
 
 @router.get("/{plan_id}/sections")
-async def get_sections(plan_id: str, user_id: str = Depends(get_current_user_id)):
+async def get_sections(plan_id: str, user_id: str = Depends(get_current_user_id), db = Depends(get_db)):
     """Get all sections for a plan"""
     
     # Verify plan ownership
@@ -53,7 +53,7 @@ async def get_sections(plan_id: str, user_id: str = Depends(get_current_user_id)
     return {"sections": [serialize_doc(s) for s in sections]}
 
 @router.get("/{plan_id}/sections/{section_id}")
-async def get_section(plan_id: str, section_id: str, user_id: str = Depends(get_current_user_id)):
+async def get_section(plan_id: str, section_id: str, user_id: str = Depends(get_current_user_id), db = Depends(get_db)):
     """Get a specific section"""
     
     # Verify plan ownership
@@ -68,35 +68,55 @@ async def get_section(plan_id: str, section_id: str, user_id: str = Depends(get_
     return serialize_doc(section)
 
 @router.patch("/{plan_id}/sections/{section_id}")
-async def update_section(plan_id: str, section_id: str, section_update: SectionUpdate, user_id: str = Depends(get_current_user_id)):
+async def update_section(plan_id: str, section_id: str, section_update: SectionUpdate, user_id: str = Depends(get_current_user_id), db = Depends(get_db)):
     """Update section content"""
     
-    # Verify plan ownership
-    plan = await db.plans.find_one({"_id": to_object_id(plan_id), "user_id": user_id})
-    if not plan:
-        raise HTTPException(status_code=404, detail="Plan not found")
-    
-    result = await db.sections.update_one(
-        {"_id": to_object_id(section_id), "plan_id": plan_id},
-        {"$set": {
-            "content": section_update.content,
-            "updated_at": datetime.utcnow(),
-            "edited_by_user": True
-        }}
-    )
-    
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Section not found")
-    
-    section = await db.sections.find_one({"_id": to_object_id(section_id)})
-    return serialize_doc(section)
+    try:
+        # Verify plan ownership
+        plan = await db.plans.find_one({"_id": to_object_id(plan_id), "user_id": user_id})
+        if not plan:
+            logger.warning(f"Plan not found: {plan_id} for user {user_id}")
+            raise HTTPException(status_code=404, detail="Plan not found")
+        
+        # Convert section_id to ObjectId
+        section_object_id = to_object_id(section_id)
+        logger.info(f"Updating section {section_id} (ObjectId: {section_object_id}) for plan {plan_id}")
+        
+        # Update section
+        result = await db.sections.update_one(
+            {"_id": section_object_id, "plan_id": plan_id},
+            {"$set": {
+                "content": section_update.content,
+                "updated_at": datetime.utcnow(),
+                "edited_by_user": True
+            }}
+        )
+        
+        if result.matched_count == 0:
+            logger.warning(f"Section not found: {section_id} for plan {plan_id}")
+            # Try to find section to see if it exists but with different plan_id
+            section_check = await db.sections.find_one({"_id": section_object_id})
+            if section_check:
+                logger.warning(f"Section exists but plan_id mismatch. Section plan_id: {section_check.get('plan_id')}, requested: {plan_id}")
+            raise HTTPException(status_code=404, detail="Section not found")
+        
+        logger.info(f"Section updated successfully: {section_id}")
+        section = await db.sections.find_one({"_id": section_object_id})
+        return serialize_doc(section)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating section {section_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to update section: {str(e)}")
 
 @router.post("/{plan_id}/sections/{section_id}/regenerate")
 async def regenerate_section(
     plan_id: str, 
     section_id: str, 
     options: RegenerationOptions,
-    user_id: str = Depends(get_current_user_id)
+    user_id: str = Depends(get_current_user_id),
+    db = Depends(get_db)
 ):
     """Regenerate a section with custom options (tone, length, emphasis)"""
     
@@ -152,6 +172,23 @@ async def regenerate_section(
         )
         
         updated_section = await db.sections.find_one({"_id": to_object_id(section_id)})
+        
+        # Log activity
+        await AuditLogger.log_activity(
+            db=db,
+            user_id=user_id,
+            activity_type="section_regenerated",
+            entity_type="section",
+            entity_id=section_id,
+            details={
+                "plan_id": plan_id,
+                "section_type": section.get("section_type"),
+                "options": {
+                    "tone": options.tone,
+                    "length": options.length
+                }
+            }
+        )
         
         return {
             "success": True,

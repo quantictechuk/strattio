@@ -4,8 +4,7 @@
 
 body {
     margin: 0;
-    font-family:
-        -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
         "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
         sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -13,8 +12,7 @@ body {
 }
 
 code {
-    font-family:
-        source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+    font-family: 'Inter', source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
 
 @layer base {
@@ -111,5 +109,146 @@ code {
         border-right-color: inherit;
         border-top-color: inherit;
         border-bottom-color: inherit;
+    }
+}
+
+/* Pricing Grid Responsive Styles */
+.pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.5rem;
+}
+
+@media (max-width: 1200px) {
+    .pricing-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .pricing-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Features Grid Responsive Styles */
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+}
+
+@media (max-width: 1023px) {
+    .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 767px) {
+    .features-grid {
+        grid-template-columns: repeat(1, 1fr);
+    }
+}
+
+/* Responsive line break for features heading */
+.features-heading br {
+    display: none;
+}
+
+@media (min-width: 640px) {
+    .features-heading br {
+        display: block;
+    }
+}
+
+/* Dashboard Plans Grid Responsive */
+.dashboard-plans-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+    .dashboard-plans-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .dashboard-plans-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Companies Grid Responsive */
+.companies-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+    .companies-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .companies-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Responsive utilities for dashboard */
+/* Dashboard responsive utilities */
+@media (min-width: 768px) {
+    .dashboard-user-info {
+        display: flex !important;
+    }
+    .dashboard-divider {
+        display: block !important;
+    }
+    .dashboard-usage-content {
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+    }
+    .dashboard-manage-btn {
+        align-self: center !important;
+    }
+    .dashboard-action-header {
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+    }
+    .dashboard-search-container {
+        width: auto !important;
+    }
+    .dashboard-search-input {
+        flex: initial !important;
+    }
+}
+
+/* Spin animation for loading */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* Contact Grid Responsive */
+.contact-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3rem;
+}
+
+@media (min-width: 1024px) {
+    .contact-grid {
+        grid-template-columns: 2fr 1fr;
     }
 }

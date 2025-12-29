@@ -113,9 +113,25 @@ class BaseTemplate:
             max_words=250
         ),
         SectionDefinition(
+            section_type="swot_analysis",
+            title="SWOT Analysis",
+            order_index=10,
+            instructions="Comprehensive analysis of Strengths, Weaknesses, Opportunities, and Threats based on business data.",
+            min_words=150,
+            max_words=250
+        ),
+        SectionDefinition(
+            section_type="competitor_analysis",
+            title="Competitor Analysis",
+            order_index=11,
+            instructions="Analysis of main competitors, competitive advantages, market positioning, and competitive threats.",
+            min_words=200,
+            max_words=300
+        ),
+        SectionDefinition(
             section_type="appendix",
             title="Appendix",
-            order_index=10,
+            order_index=12,
             instructions="Data sources, assumptions, supporting documents, and references.",
             min_words=100,
             max_words=200

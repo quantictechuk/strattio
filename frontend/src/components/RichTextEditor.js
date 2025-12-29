@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Save, X, RotateCw, Bold, Italic, List, AlignLeft } from 'lucide-react';
+import { htmlToMarkdown, markdownToHtml } from '../utils/markdown';
 
 const RichTextEditor = ({ 
   initialContent, 
@@ -20,7 +21,11 @@ const RichTextEditor = ({
   const editorRef = useRef(null);
 
   useEffect(() => {
-    setContent(initialContent || '');
+    // Convert HTML to markdown for editing (if content looks like HTML)
+    const contentToEdit = initialContent || '';
+    const isHtml = contentToEdit.includes('<') && contentToEdit.includes('>');
+    const markdownContent = isHtml ? htmlToMarkdown(contentToEdit) : contentToEdit;
+    setContent(markdownContent);
     setHasChanges(false);
   }, [initialContent]);
 
@@ -30,7 +35,9 @@ const RichTextEditor = ({
   };
 
   const handleSave = () => {
-    onSave(content);
+    // Convert markdown to HTML before saving
+    const htmlContent = markdownToHtml(content);
+    onSave(htmlContent);
     setHasChanges(false);
   };
 

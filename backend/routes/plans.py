@@ -9,12 +9,12 @@ from bson import ObjectId
 
 from utils.serializers import serialize_doc, to_object_id
 from utils.auth import decode_token
+from utils.audit_logger import AuditLogger
+from utils.dependencies import get_db
 from agents.orchestrator import PlanOrchestrator
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-
-from server import db
 
 # ============================================================================
 # DEPENDENCY: Get Current User
@@ -63,14 +63,14 @@ class PlanUpdate(BaseModel):
 # ============================================================================
 
 @router.get("")
-async def list_plans(user_id: str = Depends(get_current_user_id)):
+async def list_plans(user_id: str = Depends(get_current_user_id), db = Depends(get_db)):
     """List all plans for a user"""
     
     plans = await db.plans.find({"user_id": user_id}).sort("created_at", -1).to_list(100)
     return {"plans": [serialize_doc(p) for p in plans]}
 
 @router.post("")
-async def create_plan(plan_data: PlanCreate, user_id: str = Depends(get_current_user_id)):
+async def create_plan(plan_data: PlanCreate, user_id: str = Depends(get_current_user_id), db = Depends(get_db)):
     """Create a new plan"""
     
     # Check subscription limits
@@ -110,7 +110,7 @@ async def create_plan(plan_data: PlanCreate, user_id: str = Depends(get_current_
     return serialize_doc(plan_doc)
 
 @router.get("/{plan_id}")
-async def get_plan(plan_id: str, user_id: str = Depends(get_current_user_id)):
+async def get_plan(plan_id: str, user_id: str = Depends(get_current_user_id), db = Depends(get_db)):
     """Get a single plan"""
     
     plan = await db.plans.find_one({"_id": to_object_id(plan_id), "user_id": user_id})
@@ -120,7 +120,7 @@ async def get_plan(plan_id: str, user_id: str = Depends(get_current_user_id)):
     return serialize_doc(plan)
 
 @router.patch("/{plan_id}")
-async def update_plan(plan_id: str, plan_update: PlanUpdate, user_id: str = Depends(get_current_user_id)):
+async def update_plan(plan_id: str, plan_update: PlanUpdate, user_id: str = Depends(get_current_user_id), db = Depends(get_db)):
     """Update plan metadata"""
     
     update_data = {k: v for k, v in plan_update.dict().items() if v is not None}
@@ -141,7 +141,7 @@ async def update_plan(plan_id: str, plan_update: PlanUpdate, user_id: str = Depe
     return serialize_doc(plan)
 
 @router.delete("/{plan_id}")
-async def delete_plan(plan_id: str, user_id: str = Depends(get_current_user_id)):
+async def delete_plan(plan_id: str, user_id: str = Depends(get_current_user_id), db = Depends(get_db)):
     """Delete a plan"""
     
     result = await db.plans.delete_one({"_id": to_object_id(plan_id), "user_id": user_id})
@@ -159,7 +159,7 @@ async def delete_plan(plan_id: str, user_id: str = Depends(get_current_user_id))
     return {"message": "Plan deleted successfully"}
 
 @router.post("/{plan_id}/generate")
-async def generate_plan(plan_id: str, user_id: str = Depends(get_current_user_id)):
+async def generate_plan(plan_id: str, user_id: str = Depends(get_current_user_id), db = Depends(get_db)):
     """Generate business plan content using multi-agent pipeline"""
     
     # Get plan
@@ -203,8 +203,9 @@ async def generate_plan(plan_id: str, user_id: str = Depends(get_current_user_id
             "created_at": datetime.utcnow()
         })
         
-        # 3. Sections
-        for section in result["sections"]:
+        # 3. Sections (sort by order_index to ensure proper ordering)
+        sorted_sections = sorted(result["sections"], key=lambda x: x.get("order_index", 999))
+        for section in sorted_sections:
             section["plan_id"] = plan_id
             section["created_at"] = datetime.utcnow()
             await db.sections.insert_one(section)
@@ -216,6 +217,24 @@ async def generate_plan(plan_id: str, user_id: str = Depends(get_current_user_id
             "created_at": datetime.utcnow()
         })
         
+        # 5. SWOT Analysis
+        if result.get("swot_analysis"):
+            await db.swot_analyses.insert_one({
+                "plan_id": plan_id,
+                "user_id": user_id,
+                "data": result["swot_analysis"],
+                "created_at": datetime.utcnow()
+            })
+        
+        # 6. Competitor Analysis
+        if result.get("competitor_analysis"):
+            await db.competitor_analyses.insert_one({
+                "plan_id": plan_id,
+                "user_id": user_id,
+                "data": result["competitor_analysis"],
+                "created_at": datetime.utcnow()
+            })
+        
         # Update plan status
         await db.plans.update_one(
             {"_id": to_object_id(plan_id)},
@@ -224,6 +243,16 @@ async def generate_plan(plan_id: str, user_id: str = Depends(get_current_user_id
                 "completed_at": datetime.utcnow(),
                 "generation_metadata": result["generation_metadata"]
             }}
+        )
+        
+        # Log activity
+        await AuditLogger.log_activity(
+            db=db,
+            user_id=user_id,
+            activity_type="plan_generated",
+            entity_type="plan",
+            entity_id=plan_id,
+            details={"sections_count": len(result["sections"])}
         )
         
         logger.info(f"Plan generation complete: {plan_id}")
@@ -243,7 +272,7 @@ async def generate_plan(plan_id: str, user_id: str = Depends(get_current_user_id
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{plan_id}/status")
-async def get_generation_status(plan_id: str, user_id: str = Depends(get_current_user_id)):
+async def get_generation_status(plan_id: str, user_id: str = Depends(get_current_user_id), db = Depends(get_db)):
     """Get plan generation status"""
     
     plan = await db.plans.find_one({"_id": to_object_id(plan_id), "user_id": user_id})
@@ -257,7 +286,7 @@ async def get_generation_status(plan_id: str, user_id: str = Depends(get_current
     }
 
 @router.post("/{plan_id}/duplicate")
-async def duplicate_plan(plan_id: str, user_id: str = Depends(get_current_user_id)):
+async def duplicate_plan(plan_id: str, user_id: str = Depends(get_current_user_id), db = Depends(get_db)):
     """Clone/duplicate an existing plan"""
     
     # Get original plan
@@ -280,6 +309,16 @@ async def duplicate_plan(plan_id: str, user_id: str = Depends(get_current_user_i
     duplicate["_id"] = result.inserted_id
     
     logger.info(f"Plan duplicated: {plan_id} -> {result.inserted_id}")
+    
+    # Log activity
+    await AuditLogger.log_activity(
+        db=db,
+        user_id=user_id,
+        activity_type="plan_duplicated",
+        entity_type="plan",
+        entity_id=str(result.inserted_id),
+        details={"source_plan_id": plan_id, "name": duplicate.get("name")}
+    )
     
     return serialize_doc(duplicate)
 

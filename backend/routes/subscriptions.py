@@ -6,11 +6,10 @@ import logging
 
 from utils.serializers import serialize_doc
 from utils.auth import decode_token
+from utils.dependencies import get_db
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-
-from server import db
 
 async def get_current_user_id(authorization: Optional[str] = Header(None)):
     """Extract user_id from JWT token"""
@@ -28,7 +27,7 @@ async def get_current_user_id(authorization: Optional[str] = Header(None)):
         raise HTTPException(status_code=401, detail="Authentication failed")
 
 @router.get("/current")
-async def get_current_subscription(user_id: str = Depends(get_current_user_id)):
+async def get_current_subscription(user_id: str = Depends(get_current_user_id), db = Depends(get_db)):
     """Get current user subscription"""
     
     subscription = await db.subscriptions.find_one({"user_id": user_id})
@@ -46,7 +45,7 @@ async def get_current_subscription(user_id: str = Depends(get_current_user_id)):
     return serialize_doc(subscription)
 
 @router.get("/usage")
-async def get_usage_stats(user_id: str = Depends(get_current_user_id)):
+async def get_usage_stats(user_id: str = Depends(get_current_user_id), db = Depends(get_db)):
     """Get usage statistics"""
     
     subscription = await db.subscriptions.find_one({"user_id": user_id})

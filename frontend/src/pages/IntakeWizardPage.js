@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { api } from '../lib/api';
+import { Building2, Plus, ArrowRight } from 'lucide-react';
 
 const INDUSTRIES = [
   { value: 'food_beverage_cafe', label: 'Café / Coffee Shop' },
   { value: 'restaurant', label: 'Restaurant' },
   { value: 'saas', label: 'SaaS / Software' },
+  { value: 'information_technology', label: 'Information Technology' },
   { value: 'ecommerce', label: 'E-commerce / Online Retail' },
   { value: 'consulting', label: 'Consulting Services' },
   { value: 'healthcare', label: 'Healthcare Services' },
@@ -25,6 +27,10 @@ const PLAN_PURPOSES = [
 
 function IntakeWizardPage({ navigate, user, planId }) {
   const [currentStep, setCurrentStep] = useState(0);
+  const [companies, setCompanies] = useState([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState(null);
+  const [useExistingCompany, setUseExistingCompany] = useState(null); // null = not chosen, true = use existing, false = enter new
+  const [loadingCompanies, setLoadingCompanies] = useState(true);
   const [formData, setFormData] = useState({
     business_name: '',
     industry: '',
@@ -54,8 +60,10 @@ function IntakeWizardPage({ navigate, user, planId }) {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [validationError, setValidationError] = useState('');
 
   const steps = [
+    { id: 'company', title: 'Select Company', fields: [] },
     { id: 'purpose', title: 'Plan Purpose', fields: ['plan_purpose'] },
     { id: 'basics', title: 'Business Basics', fields: ['business_name', 'industry', 'location_city'] },
     { id: 'description', title: 'Business Description', fields: ['business_description', 'unique_value_proposition'] },
@@ -65,8 +73,96 @@ function IntakeWizardPage({ navigate, user, planId }) {
     { id: 'review', title: 'Review & Generate', fields: [] }
   ];
 
+  useEffect(() => {
+    loadCompanies();
+  }, []);
+
+  const loadCompanies = async () => {
+    try {
+      setLoadingCompanies(true);
+      const response = await api.companies.list();
+      setCompanies(response.companies || []);
+    } catch (err) {
+      console.error('Failed to load companies:', err);
+    } finally {
+      setLoadingCompanies(false);
+    }
+  };
+
+  const handleCompanySelect = (companyId) => {
+    setSelectedCompanyId(companyId);
+    setUseExistingCompany(true);
+    
+    // Load company data into form
+    const company = companies.find(c => c.id === companyId);
+    if (company) {
+      setFormData({
+        ...formData,
+        business_name: company.business_name || '',
+        industry: company.industry || '',
+        location_country: company.location_country || 'GB',
+        location_city: company.location_city || '',
+        business_description: company.business_description || '',
+        unique_value_proposition: company.unique_value_proposition || '',
+        target_customers: company.target_customers || '',
+        revenue_model: company.revenue_model || ['product_sales'],
+        starting_capital: company.starting_capital || 50000,
+        currency: company.currency || 'GBP',
+        monthly_revenue_estimate: company.monthly_revenue_estimate || 15000,
+        price_per_unit: company.price_per_unit || 10,
+        units_per_month: company.units_per_month || 1500,
+        team_size: company.team_size || 3,
+        operating_expenses: company.operating_expenses || {
+          salaries: 6000,
+          software_tools: 200,
+          hosting_domain: 50,
+          marketing: 1000,
+          workspace_utilities: 1500,
+          miscellaneous: 500,
+          custom: []
+        }
+      });
+    }
+  };
+
+  const handleUseNewCompany = () => {
+    setUseExistingCompany(false);
+    setSelectedCompanyId(null);
+    // Reset form to defaults
+    setFormData({
+      ...formData,
+      business_name: '',
+      industry: '',
+      location_country: 'GB',
+      location_city: '',
+      business_description: '',
+      unique_value_proposition: '',
+      target_customers: '',
+      revenue_model: ['product_sales'],
+      starting_capital: 50000,
+      currency: 'GBP',
+      monthly_revenue_estimate: 15000,
+      price_per_unit: 10,
+      units_per_month: 1500,
+      team_size: 3,
+      operating_expenses: {
+        salaries: 6000,
+        software_tools: 200,
+        hosting_domain: 50,
+        marketing: 1000,
+        workspace_utilities: 1500,
+        miscellaneous: 500,
+        custom: []
+      }
+    });
+  };
+
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear validation error when user starts typing
+    if (validationError) {
+      setValidationError('');
+    }
   };
 
   const handleOpexChange = (category, value) => {
@@ -119,15 +215,79 @@ function IntakeWizardPage({ navigate, user, planId }) {
     return standard + custom;
   };
 
+  const validateCurrentStep = () => {
+    const step = steps[currentStep];
+    setValidationError('');
+    
+    // Validate based on current step
+    if (step.id === 'company') {
+      if (useExistingCompany === null) {
+        setValidationError('Please select a company or choose to enter new information');
+        return false;
+      }
+    }
+    
+    if (step.id === 'basics') {
+      if (!formData.business_name || formData.business_name.trim() === '') {
+        setValidationError('Business name is required');
+        return false;
+      }
+      if (!formData.industry || formData.industry === '') {
+        setValidationError('Industry is required');
+        return false;
+      }
+      if (!formData.location_city || formData.location_city.trim() === '') {
+        setValidationError('Location/City is required');
+        return false;
+      }
+    }
+    
+    if (step.id === 'description') {
+      if (!formData.business_description || formData.business_description.trim() === '') {
+        setValidationError('Business description is required');
+        return false;
+      }
+    }
+    
+    if (step.id === 'market') {
+      if (!formData.target_customers || formData.target_customers.trim() === '') {
+        setValidationError('Target customers is required');
+        return false;
+      }
+    }
+    
+    if (step.id === 'financials') {
+      if (!formData.starting_capital || formData.starting_capital <= 0) {
+        setValidationError('Starting capital is required and must be greater than 0');
+        return false;
+      }
+      if (!formData.monthly_revenue_estimate || formData.monthly_revenue_estimate <= 0) {
+        setValidationError('Estimated monthly revenue is required and must be greater than 0');
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
   const handleNext = () => {
+    // Validate current step before proceeding
+    if (!validateCurrentStep()) {
+      return;
+    }
+    
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
+      setValidationError(''); // Clear validation error when moving to next step
     }
   };
 
   const handleBack = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
+    } else {
+      // On first step, go back to dashboard
+      navigate('dashboard');
     }
   };
 
@@ -159,6 +319,173 @@ function IntakeWizardPage({ navigate, user, planId }) {
   const renderStepContent = () => {
     const step = steps[currentStep];
 
+    if (step.id === 'company') {
+      return (
+        <div>
+          <h3 style={{ marginBottom: '1rem' }}>Select or Create a Company</h3>
+          <p style={{ color: '#64748B', marginBottom: '1.5rem', fontSize: '0.9375rem' }}>
+            Choose an existing company or enter new business information manually.
+          </p>
+
+          {loadingCompanies ? (
+            <div style={{ textAlign: 'center', padding: '2rem' }}>
+              <div className="loading-spinner" style={{ margin: '0 auto' }}></div>
+              <p style={{ marginTop: '1rem', color: '#64748B' }}>Loading companies...</p>
+            </div>
+          ) : (
+            <>
+              {/* Existing Companies */}
+              {companies.length > 0 && (
+                <div style={{ marginBottom: '2rem' }}>
+                  <h4 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '1rem', color: '#0F172A' }}>
+                    Select Existing Company
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {companies.map((company) => (
+                      <div
+                        key={company.id}
+                        onClick={() => handleCompanySelect(company.id)}
+                        style={{
+                          padding: '1rem',
+                          border: selectedCompanyId === company.id ? '2px solid #001639' : '1px solid #E4E9EF',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          background: selectedCompanyId === company.id ? '#E6EBF0' : 'white',
+                          transition: 'all 0.2s',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '1rem'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (selectedCompanyId !== company.id) {
+                            e.currentTarget.style.borderColor = '#CBD5E1';
+                            e.currentTarget.style.background = '#F8FAFC';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (selectedCompanyId !== company.id) {
+                            e.currentTarget.style.borderColor = '#E4E9EF';
+                            e.currentTarget.style.background = 'white';
+                          }
+                        }}
+                      >
+                        <div style={{
+                          width: '40px',
+                          height: '40px',
+                          borderRadius: '8px',
+                          background: 'rgba(0, 22, 57, 0.06)',
+                          color: '#001639',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}>
+                          <Building2 size={20} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: '600', color: '#0F172A', marginBottom: '0.25rem' }}>
+                            {company.business_name}
+                          </div>
+                          <div style={{ fontSize: '0.875rem', color: '#64748B' }}>
+                            {company.industry && INDUSTRIES.find(i => i.value === company.industry)?.label} • {company.location_city}
+                          </div>
+                        </div>
+                        {selectedCompanyId === company.id && (
+                          <div style={{
+                            width: '24px',
+                            height: '24px',
+                            borderRadius: '50%',
+                            background: '#001639',
+                            color: 'white',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}>
+                            <ArrowRight size={14} />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Enter New Company Option */}
+              <div>
+                <h4 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '1rem', color: '#0F172A' }}>
+                  {companies.length > 0 ? 'Or Enter New Company Information' : 'Enter Company Information'}
+                </h4>
+                <div
+                  onClick={handleUseNewCompany}
+                  style={{
+                    padding: '1rem',
+                    border: useExistingCompany === false ? '2px solid #001639' : '1px solid #E4E9EF',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    background: useExistingCompany === false ? '#E6EBF0' : 'white',
+                    transition: 'all 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1rem'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (useExistingCompany !== false) {
+                      e.currentTarget.style.borderColor = '#CBD5E1';
+                      e.currentTarget.style.background = '#F8FAFC';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (useExistingCompany !== false) {
+                      e.currentTarget.style.borderColor = '#E4E9EF';
+                      e.currentTarget.style.background = 'white';
+                    }
+                  }}
+                >
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '8px',
+                    background: 'rgba(0, 22, 57, 0.06)',
+                    color: '#001639',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    <Plus size={20} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: '600', color: '#0F172A', marginBottom: '0.25rem' }}>
+                      Enter New Company Information
+                    </div>
+                    <div style={{ fontSize: '0.875rem', color: '#64748B' }}>
+                      Manually enter all business details
+                    </div>
+                  </div>
+                  {useExistingCompany === false && (
+                    <div style={{
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      background: '#001639',
+                      color: 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}>
+                      <ArrowRight size={14} />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      );
+    }
+
     if (step.id === 'purpose') {
       return (
         <div>
@@ -169,11 +496,11 @@ function IntakeWizardPage({ navigate, user, planId }) {
                 key={purpose.value}
                 style={{
                   padding: '1rem',
-                  border: formData.plan_purpose === purpose.value ? '2px solid #1A85FF' : '1px solid #E4E9EF',
+                  border: formData.plan_purpose === purpose.value ? '2px solid #001639' : '1px solid #E4E9EF',
                   borderRadius: '8px',
                   marginBottom: '0.75rem',
                   cursor: 'pointer',
-                  background: formData.plan_purpose === purpose.value ? '#EBF5FF' : 'white'
+                  background: formData.plan_purpose === purpose.value ? '#E6EBF0' : 'white'
                 }}
                 onClick={() => handleChange('plan_purpose', purpose.value)}
                 data-testid={`purpose-${purpose.value}`}
@@ -483,12 +810,12 @@ function IntakeWizardPage({ navigate, user, planId }) {
           </button>
 
           {/* Total Summary */}
-          <div className="card" style={{ background: '#EBF5FF', border: '2px solid #1A85FF', marginTop: '1.5rem' }}>
+          <div className="card" style={{ background: '#E6EBF0', border: '2px solid #001639', marginTop: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <strong>Total Monthly Operating Expenses:</strong>
               </div>
-              <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1A85FF' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#001639' }}>
                 £{totalMonthly.toLocaleString()}
               </div>
             </div>
@@ -553,8 +880,12 @@ function IntakeWizardPage({ navigate, user, planId }) {
       {/* Header */}
       <header style={{ padding: '1.5rem 0', borderBottom: '1px solid #E4E9EF', background: 'white' }}>
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1A85FF', fontFamily: 'IBM Plex Sans' }}>
-            STRATTIO
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <img 
+              src="/logo.png" 
+              alt="Strattio" 
+              style={{ height: '40px', width: 'auto' }}
+            />
           </div>
           <button 
             className="btn btn-ghost" 
@@ -576,7 +907,7 @@ function IntakeWizardPage({ navigate, user, planId }) {
                 style={{
                   flex: 1,
                   height: '4px',
-                  background: idx <= currentStep ? '#1A85FF' : '#E4E9EF',
+                  background: idx <= currentStep ? '#001639' : '#E4E9EF',
                   marginRight: idx < steps.length - 1 ? '4px' : '0',
                   borderRadius: '2px'
                 }}
@@ -595,12 +926,26 @@ function IntakeWizardPage({ navigate, user, planId }) {
           {renderStepContent()}
         </div>
 
+        {/* Validation Error */}
+        {validationError && (
+          <div style={{
+            marginBottom: '1rem',
+            padding: '0.75rem 1rem',
+            background: '#FEE2E2',
+            border: '1px solid #EF4444',
+            borderRadius: '8px',
+            color: '#DC2626',
+            fontSize: '0.875rem'
+          }}>
+            {validationError}
+          </div>
+        )}
+
         {/* Navigation */}
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <button 
             className="btn btn-secondary" 
             onClick={handleBack}
-            disabled={currentStep === 0}
             data-testid="wizard-back-btn"
           >
             ← Back
@@ -630,8 +975,8 @@ function IntakeWizardPage({ navigate, user, planId }) {
         {loading && (
           <div style={{ marginTop: '2rem', textAlign: 'center' }}>
             <div className="loading-spinner" style={{ margin: '0 auto' }}></div>
-            <p style={{ marginTop: '1rem', color: '#6B7A91' }}>Running multi-agent pipeline...</p>
-            <p style={{ fontSize: '0.875rem', color: '#9BA9BC' }}>This may take 60-90 seconds</p>
+            <p style={{ marginTop: '1rem', color: '#6B7A91' }}>Our Specialist AI is crafting your business Plan</p>
+            <p style={{ fontSize: '0.875rem', color: '#9BA9BC' }}>Please wait, this may take up to 60-90 seconds</p>
           </div>
         )}
       </div>

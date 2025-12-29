@@ -45,7 +45,7 @@ function SubscriptionSuccessPage({ navigate, user }) {
       // Make direct fetch call to avoid any body issues
       const token = authService.getToken();
       const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001'}/api/stripe/checkout/status/${sessionId}`,
+        `${process.env.REACT_APP_BACKEND_URL || 'https://strattio-backend.vercel.app'}/api/stripe/checkout/status/${sessionId}`,
         {
           method: 'GET',
           headers: {

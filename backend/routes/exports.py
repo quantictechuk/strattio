@@ -12,12 +12,17 @@ from pathlib import Path
 
 from utils.serializers import serialize_doc, to_object_id
 from utils.auth import decode_token
+from utils.audit_logger import AuditLogger
 from utils.pdf_generator import generate_business_plan_pdf
+from utils.docx_generator import generate_business_plan_docx
+from utils.markdown_generator import generate_business_plan_markdown
+from utils.dependencies import get_db
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-
-from server import db
 
 async def get_current_user_id(authorization: Optional[str] = Header(None)):
     """Extract user_id from JWT token"""
@@ -39,7 +44,7 @@ class ExportCreate(BaseModel):
     format: str
 
 @router.post("")
-async def create_export(export_data: ExportCreate, user_id: str = Depends(get_current_user_id)):
+async def create_export(export_data: ExportCreate, user_id: str = Depends(get_current_user_id), db = Depends(get_db)):
     """Create an export job and generate PDF"""
     
     plan_id = export_data.plan_id
@@ -66,6 +71,14 @@ async def create_export(export_data: ExportCreate, user_id: str = Depends(get_cu
             detail="Upgrade to export plans. Free tier: preview only."
         )
     
+    # Validate format
+    valid_formats = ["pdf", "docx", "markdown", "md"]
+    if format not in valid_formats:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid format. Supported formats: {', '.join(valid_formats)}"
+        )
+    
     try:
         # Get plan sections
         sections = await db.sections.find({"plan_id": plan_id}).sort("order_index", 1).to_list(100)
@@ -75,13 +88,34 @@ async def create_export(export_data: ExportCreate, user_id: str = Depends(get_cu
         # Get financial model
         financial_model = await db.financial_models.find_one({"plan_id": plan_id})
         
-        # Generate PDF
-        logger.info(f"Generating PDF for plan {plan_id}")
-        pdf_path = generate_business_plan_pdf(
-            plan_data=serialize_doc(plan),
-            sections_data=[serialize_doc(s) for s in sections],
-            financial_data=serialize_doc(financial_model) if financial_model else None
-        )
+        plan_data_serialized = serialize_doc(plan)
+        sections_data_serialized = [serialize_doc(s) for s in sections]
+        financial_data_serialized = serialize_doc(financial_model) if financial_model else None
+        
+        # Generate export based on format
+        if format == "pdf":
+            logger.info(f"Generating PDF for plan {plan_id}")
+            file_path = generate_business_plan_pdf(
+                plan_data=plan_data_serialized,
+                sections_data=sections_data_serialized,
+                financial_data=financial_data_serialized
+            )
+        elif format == "docx":
+            logger.info(f"Generating DOCX for plan {plan_id}")
+            file_path = generate_business_plan_docx(
+                plan_data=plan_data_serialized,
+                sections_data=sections_data_serialized,
+                financial_data=financial_data_serialized
+            )
+        elif format in ["markdown", "md"]:
+            logger.info(f"Generating Markdown for plan {plan_id}")
+            file_path = generate_business_plan_markdown(
+                plan_data=plan_data_serialized,
+                sections_data=sections_data_serialized,
+                financial_data=financial_data_serialized
+            )
+        else:
+            raise HTTPException(status_code=400, detail=f"Unsupported format: {format}")
         
         # Create export record
         export_doc = {
@@ -89,8 +123,8 @@ async def create_export(export_data: ExportCreate, user_id: str = Depends(get_cu
             "user_id": user_id,
             "format": format,
             "status": "complete",
-            "file_path": pdf_path,
-            "file_name": os.path.basename(pdf_path),
+            "file_path": file_path,
+            "file_name": os.path.basename(file_path),
             "download_count": 0,
             "created_at": datetime.utcnow()
         }
@@ -98,7 +132,17 @@ async def create_export(export_data: ExportCreate, user_id: str = Depends(get_cu
         result = await db.exports.insert_one(export_doc)
         export_doc["_id"] = result.inserted_id
         
-        logger.info(f"PDF export created: {pdf_path}")
+        # Log activity
+        await AuditLogger.log_activity(
+            db=db,
+            user_id=user_id,
+            activity_type="export_created",
+            entity_type="plan",
+            entity_id=plan_id,
+            details={"format": format, "file_name": export_doc["file_name"]}
+        )
+        
+        logger.info(f"Export created: {export_doc['file_name']}")
         
         return serialize_doc(export_doc)
         
@@ -107,7 +151,7 @@ async def create_export(export_data: ExportCreate, user_id: str = Depends(get_cu
         raise HTTPException(status_code=500, detail=f"Failed to generate export: {str(e)}")
 
 @router.get("/{export_id}/download")
-async def download_export(export_id: str, user_id: str = Depends(get_current_user_id)):
+async def download_export(export_id: str, user_id: str = Depends(get_current_user_id), db = Depends(get_db)):
     """Download an export file"""
     
     export = await db.exports.find_one({"_id": to_object_id(export_id), "user_id": user_id})
@@ -131,7 +175,7 @@ async def download_export(export_id: str, user_id: str = Depends(get_current_use
     )
 
 @router.get("")
-async def list_exports(user_id: str = Depends(get_current_user_id)):
+async def list_exports(user_id: str = Depends(get_current_user_id), db = Depends(get_db)):
     """List all exports for current user"""
     
     exports = await db.exports.find({"user_id": user_id}).sort("created_at", -1).to_list(50)

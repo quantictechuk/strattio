@@ -10,6 +10,8 @@ from .validation_agent import ValidationAgent
 from .financial_engine import FinancialEngine
 from .writer_agent import WriterAgent
 from .compliance_agent import ComplianceAgent
+from .swot_agent import SWOTAgent
+from .competitor_agent import CompetitorAgent
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +26,8 @@ class PlanOrchestrator:
         self.validation_agent = ValidationAgent()
         self.writer_agent = WriterAgent()
         self.compliance_agent = ComplianceAgent()
+        self.swot_agent = SWOTAgent()
+        self.competitor_agent = CompetitorAgent()
     
     async def generate_plan(self, intake_data: Dict, plan_purpose: str = "generic") -> Dict:
         """
@@ -74,19 +78,48 @@ class PlanOrchestrator:
             financial_engine = FinancialEngine(intake_data, benchmarks)
             financial_model = financial_engine.generate_financial_model()
             
-            # Stage 4: Plan Writer Agent (60s max)
-            logger.info("Stage 4: Plan Writer Agent")
+            # Stage 4: SWOT Analysis (15s max)
+            logger.info("Stage 4: SWOT Analysis")
+            try:
+                swot_data = await asyncio.wait_for(
+                    self.swot_agent.generate_swot(
+                        intake_data=intake_data,
+                        data_pack=research_pack,
+                        financial_pack=financial_model
+                    ),
+                    timeout=15.0
+                )
+            except Exception as e:
+                logger.warning(f"SWOT analysis failed: {e}, continuing without it")
+                swot_data = None
+            
+            # Stage 5: Competitor Analysis (20s max)
+            logger.info("Stage 5: Competitor Analysis")
+            try:
+                competitor_data = await asyncio.wait_for(
+                    self.competitor_agent.generate_competitor_analysis(
+                        intake_data=intake_data,
+                        data_pack=research_pack
+                    ),
+                    timeout=20.0
+                )
+            except Exception as e:
+                logger.warning(f"Competitor analysis failed: {e}, continuing without it")
+                competitor_data = None
+            
+            # Stage 6: Plan Writer Agent (180s max - ~10-12s per section for 16 sections)
+            logger.info("Stage 6: Plan Writer Agent")
             sections = await asyncio.wait_for(
                 self.writer_agent.generate_all_sections(
                     data_pack=research_pack,
                     financial_pack=financial_model,
                     intake_data=intake_data
                 ),
-                timeout=60.0
+                timeout=180.0
             )
             
-            # Stage 5: Compliance Agent (10s max)
-            logger.info("Stage 5: Compliance Agent")
+            # Stage 7: Compliance Agent (10s max)
+            logger.info("Stage 7: Compliance Agent")
             compliance_template = self._map_purpose_to_template(plan_purpose)
             compliance_report = self.compliance_agent.check_compliance(
                 plan_sections=sections,
@@ -133,6 +166,8 @@ class PlanOrchestrator:
                 "financial_model": financial_model,
                 "sections": sections,
                 "compliance_report": compliance_report,
+                "swot_analysis": swot_data if swot_data else {},
+                "competitor_analysis": competitor_data if competitor_data else {},
                 "generation_metadata": {
                     "duration_seconds": duration_seconds,
                     "started_at": start_time.isoformat(),

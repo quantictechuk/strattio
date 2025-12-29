@@ -30,7 +30,19 @@ def serialize_doc(doc):
 
 def to_object_id(id_str):
     """Convert string ID to ObjectId, handle errors gracefully"""
+    if id_str is None:
+        return None
     try:
+        # If it's already an ObjectId, return it
+        if isinstance(id_str, ObjectId):
+            return id_str
+        # Try to convert string to ObjectId
         return ObjectId(id_str)
-    except Exception:
-        return id_str  # Return as-is if not valid ObjectId
+    except Exception as e:
+        # Log the error but still return the string for debugging
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Invalid ObjectId format: {id_str}, error: {e}")
+        # For section/plan IDs, we should raise an error if invalid
+        # But for backward compatibility, return the string
+        return id_str

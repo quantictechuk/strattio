@@ -1,6 +1,20 @@
 // API client with auth token handling
 
-const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+// Normalize API URL - remove trailing slash to prevent double slashes
+const getApiUrl = () => {
+  const url = process.env.REACT_APP_BACKEND_URL || 'https://strattio-backend.vercel.app';
+  return url.replace(/\/+$/, ''); // Remove trailing slashes
+};
+
+const API_URL = getApiUrl();
+
+// Helper to build API URLs safely (prevents double slashes)
+const buildApiUrl = (endpoint) => {
+  // Remove leading slashes from endpoint
+  const cleanEndpoint = endpoint.replace(/^\/+/, '');
+  // Ensure single slash between base URL and endpoint
+  return `${API_URL}/${cleanEndpoint}`;
+};
 
 // Auth token management
 export const authService = {
@@ -29,7 +43,7 @@ const refreshAccessToken = async () => {
   if (!refreshToken) return false;
   
   try {
-    const response = await fetch(`${API_URL}/api/auth/refresh`, {
+    const response = await fetch(buildApiUrl('api/auth/refresh'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refresh_token: refreshToken })
@@ -57,12 +71,20 @@ export const apiRequest = async (endpoint, options = {}) => {
       ...options.headers
     };
     
-    const response = await fetch(`${API_URL}${endpoint}`, {
-      ...options,
-      headers
-    });
-    
-    return response;
+    try {
+      // Use helper to build URL safely (prevents double slashes)
+      const url = buildApiUrl(endpoint);
+      const response = await fetch(url, {
+        ...options,
+        headers
+      });
+      
+      return response;
+    } catch (networkError) {
+      // Handle network errors (backend not running, CORS, etc.)
+      console.error('Network error:', networkError);
+      throw new Error(`Unable to connect to server. Please check if the backend is running. (${networkError.message})`);
+    }
   };
   
   try {
@@ -86,6 +108,10 @@ export const apiRequest = async (endpoint, options = {}) => {
     
   } catch (error) {
     console.error('API request error:', error);
+    // Re-throw with better error message if it's a network error
+    if (error.message.includes('Failed to fetch') || error.message.includes('Load failed')) {
+      throw new Error('Unable to connect to server. Please check if the backend is running at ' + API_URL);
+    }
     throw error;
   }
 };
@@ -97,13 +123,20 @@ const handleResponse = async (response) => {
     const data = await response.json();
     
     if (!response.ok) {
-      throw new Error(data.detail || data.message || 'Request failed');
+      // Provide more specific error messages
+      if (response.status === 404) {
+        throw new Error(data.detail || data.message || `Endpoint not found (${response.status}). Please ensure the backend server is running and has been restarted.`);
+      }
+      throw new Error(data.detail || data.message || `Request failed with status ${response.status}`);
     }
     
     return data;
   }
   
   if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error(`Endpoint not found (${response.status}). Please ensure the backend server is running and has been restarted.`);
+    }
     throw new Error(`Request failed with status ${response.status}`);
   }
   
@@ -157,8 +190,9 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify(data)
     }),
-    regenerate: (planId, sectionId) => apiRequest(`/api/${planId}/sections/${sectionId}/regenerate`, {
-      method: 'POST'
+    regenerate: (planId, sectionId, options = {}) => apiRequest(`/api/${planId}/sections/${sectionId}/regenerate`, {
+      method: 'POST',
+      body: JSON.stringify(options)
     })
   },
   
@@ -194,5 +228,67 @@ export const api = {
       body: JSON.stringify({ package_id: packageId, origin_url: originUrl })
     }),
     getCheckoutStatus: (sessionId) => apiRequest(`/api/stripe/checkout/status/${sessionId}`)
+  },
+  
+  // Contact
+  contact: {
+    send: (formData) => apiRequest('/api/contact', {
+      method: 'POST',
+      body: JSON.stringify(formData)
+    })
+  },
+  
+  // Companies
+  companies: {
+    list: () => apiRequest('/api/companies'),
+    get: (companyId) => apiRequest(`/api/companies/${companyId}`),
+    create: (data) => apiRequest('/api/companies', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }),
+    update: (companyId, data) => apiRequest(`/api/companies/${companyId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data)
+    }),
+    delete: (companyId) => apiRequest(`/api/companies/${companyId}`, {
+      method: 'DELETE'
+    })
+  },
+  
+  // SWOT Analysis
+  swot: {
+    get: (planId) => apiRequest(`/api/${planId}/swot`),
+    regenerate: (planId) => apiRequest(`/api/${planId}/swot/regenerate`, {
+      method: 'POST'
+    })
+  },
+  
+  // Competitor Analysis
+  competitors: {
+    get: (planId) => apiRequest(`/api/${planId}/competitors`),
+    regenerate: (planId) => apiRequest(`/api/${planId}/competitors/regenerate`, {
+      method: 'POST'
+    })
+  },
+  
+  // Audit Logs
+  auditLogs: {
+    list: (params = {}) => {
+      const queryParams = new URLSearchParams(params).toString();
+      return apiRequest(`/api/audit-logs${queryParams ? '?' + queryParams : ''}`);
+    },
+    getEntity: (entityType, entityId, params = {}) => {
+      const queryParams = new URLSearchParams(params).toString();
+      return apiRequest(`/api/audit-logs/entity/${entityType}/${entityId}${queryParams ? '?' + queryParams : ''}`);
+    },
+    getStats: (days = 30) => apiRequest(`/api/audit-logs/stats?days=${days}`)
+  },
+  
+  // Business Model Canvas
+  canvas: {
+    get: (planId) => apiRequest(`/api/${planId}/canvas`),
+    generate: (planId) => apiRequest(`/api/${planId}/canvas/generate`, {
+      method: 'POST'
+    })
   }
 };

@@ -16,11 +16,10 @@ from emergentintegrations.payments.stripe.checkout import (
 
 from utils.serializers import serialize_doc, to_object_id
 from utils.auth import decode_token
+from utils.dependencies import get_db
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-
-from server import db
 
 # Stripe API Key from environment
 STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY", "sk_test_emergent")
@@ -70,7 +69,7 @@ class CheckoutRequest(BaseModel):
     origin_url: str
 
 @router.post("/checkout/session")
-async def create_checkout_session(checkout_req: CheckoutRequest, user_id: str = Depends(get_current_user_id)):
+async def create_checkout_session(checkout_req: CheckoutRequest, user_id: str = Depends(get_current_user_id), db = Depends(get_db)):
     """
     Create Stripe checkout session for subscription upgrade.
     SECURITY: Amount is determined server-side from SUBSCRIPTION_PACKAGES.
@@ -152,7 +151,7 @@ async def create_checkout_session(checkout_req: CheckoutRequest, user_id: str = 
         raise HTTPException(status_code=500, detail=f"Failed to create checkout session: {str(e)}")
 
 @router.get("/checkout/status/{session_id}")
-async def get_checkout_status(session_id: str, user_id: str = Depends(get_current_user_id)):
+async def get_checkout_status(session_id: str, user_id: str = Depends(get_current_user_id), db = Depends(get_db)):
     """
     Get checkout session status and update subscription if paid.
     Implements polling mechanism as per playbook.
@@ -235,7 +234,7 @@ async def get_checkout_status(session_id: str, user_id: str = Depends(get_curren
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/webhook/stripe")
-async def stripe_webhook(request: Request):
+async def stripe_webhook(request: Request, db = Depends(get_db)):
     """
     Handle Stripe webhook events.
     """

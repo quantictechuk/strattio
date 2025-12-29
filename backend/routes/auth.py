@@ -9,12 +9,11 @@ from bson import ObjectId
 
 from utils.auth import get_password_hash, verify_password, create_access_token, create_refresh_token, decode_token
 from utils.serializers import serialize_doc, to_object_id
+from utils.audit_logger import AuditLogger
+from utils.dependencies import get_db
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-
-# Get db from app state (injected at runtime)
-from server import db
 
 # ============================================================================
 # MODELS
@@ -40,7 +39,7 @@ class TokenResponse(BaseModel):
 # ============================================================================
 
 @router.post("/register", response_model=TokenResponse)
-async def register(user_data: UserRegister):
+async def register(user_data: UserRegister, db = Depends(get_db)):
     """Register a new user"""
     
     # Check if user exists
@@ -80,6 +79,16 @@ async def register(user_data: UserRegister):
     user_clean = serialize_doc(user_doc)
     del user_clean["password_hash"]
     
+    # Log activity
+    await AuditLogger.log_activity(
+        db=db,
+        user_id=user_id,
+        activity_type="user_registered",
+        entity_type="user",
+        entity_id=user_id,
+        details={"email": user_data.email, "name": user_data.name}
+    )
+    
     logger.info(f"New user registered: {user_data.email}")
     
     return {
@@ -89,7 +98,7 @@ async def register(user_data: UserRegister):
     }
 
 @router.post("/login", response_model=TokenResponse)
-async def login(credentials: UserLogin):
+async def login(credentials: UserLogin, db = Depends(get_db)):
     """Login user"""
     
     # Find user
@@ -115,6 +124,22 @@ async def login(credentials: UserLogin):
     user_clean = serialize_doc(user)
     del user_clean["password_hash"]
     
+    # Update last login
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {"$set": {"last_login_at": datetime.utcnow()}}
+    )
+    
+    # Log activity
+    await AuditLogger.log_activity(
+        db=db,
+        user_id=user_id,
+        activity_type="user_logged_in",
+        entity_type="user",
+        entity_id=user_id,
+        details={"email": credentials.email}
+    )
+    
     logger.info(f"User logged in: {credentials.email}")
     
     return {
@@ -124,7 +149,7 @@ async def login(credentials: UserLogin):
     }
 
 @router.post("/refresh")
-async def refresh_token(refresh_token: str):
+async def refresh_token(refresh_token: str, db = Depends(get_db)):
     """Refresh access token"""
     
     payload = decode_token(refresh_token)
@@ -140,7 +165,7 @@ async def refresh_token(refresh_token: str):
     }
 
 @router.get("/me")
-async def get_me(authorization: Optional[str] = Header(None)):
+async def get_me(authorization: Optional[str] = Header(None), db = Depends(get_db)):
     """Get current user"""
     
     if not authorization:

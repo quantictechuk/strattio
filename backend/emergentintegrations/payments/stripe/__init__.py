@@ -1,0 +1,1 @@
+# Stripe payments compatibility layer

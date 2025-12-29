@@ -10,8 +10,15 @@ import DashboardPage from './pages/DashboardPage';
 import IntakeWizardPage from './pages/IntakeWizardPage';
 import PlanEditorPage from './pages/PlanEditorPage';
 import FinancialsPage from './pages/FinancialsPage';
+import FeaturesPage from './pages/FeaturesPage';
+import FAQPage from './pages/FAQPage';
+import ContactPage from './pages/ContactPage';
+import CompaniesPage from './pages/CompaniesPage';
 import SubscriptionSuccessPage from './pages/SubscriptionSuccessPage';
 import SubscriptionCancelPage from './pages/SubscriptionCancelPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import TermsOfServicePage from './pages/TermsOfServicePage';
+import AboutUsPage from './pages/AboutUsPage';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -19,6 +26,33 @@ function App() {
   const [planId, setPlanId] = useState(null);
 
   useEffect(() => {
+    // Handle Google OAuth callback
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const refresh = urlParams.get('refresh');
+    
+    if (token && refresh) {
+      // Store tokens
+      authService.setTokens(token, refresh);
+      
+      // Get user info from token (decode JWT)
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const userData = { id: payload.sub, email: payload.email || '' };
+        authService.setUser(userData);
+        setUser(userData);
+        
+        // Clear URL params
+        window.history.replaceState({}, '', window.location.pathname);
+        
+        // Navigate to dashboard
+        setCurrentPage('dashboard');
+        return;
+      } catch (e) {
+        console.error('Error parsing token:', e);
+      }
+    }
+    
     // Check if user is logged in
     const storedUser = authService.getUser();
     if (storedUser) {
@@ -66,9 +100,9 @@ function App() {
       case 'home':
         return <HomePage navigate={navigate} user={user} />;
       case 'login':
-        return <LoginPage navigate={navigate} onLogin={handleLogin} />;
+        return <LoginPage navigate={navigate} onLogin={handleLogin} user={user} />;
       case 'register':
-        return <RegisterPage navigate={navigate} onLogin={handleLogin} />;
+        return <RegisterPage navigate={navigate} onLogin={handleLogin} user={user} />;
       case 'dashboard':
         return <DashboardPage navigate={navigate} user={user} onLogout={handleLogout} />;
       case 'intake-wizard':
@@ -77,10 +111,24 @@ function App() {
         return <PlanEditorPage navigate={navigate} user={user} planId={planId} />;
       case 'financials':
         return <FinancialsPage navigate={navigate} user={user} planId={planId} />;
+      case 'features':
+        return <FeaturesPage navigate={navigate} user={user} />;
+      case 'faq':
+        return <FAQPage navigate={navigate} user={user} />;
+      case 'contact':
+        return <ContactPage navigate={navigate} user={user} />;
+      case 'companies':
+        return <CompaniesPage navigate={navigate} user={user} />;
       case 'subscription-success':
         return <SubscriptionSuccessPage navigate={navigate} user={user} />;
       case 'subscription-cancel':
         return <SubscriptionCancelPage navigate={navigate} />;
+      case 'privacy':
+        return <PrivacyPolicyPage navigate={navigate} user={user} />;
+      case 'terms':
+        return <TermsOfServicePage navigate={navigate} user={user} />;
+      case 'about':
+        return <AboutUsPage navigate={navigate} user={user} />;
       default:
         return <HomePage navigate={navigate} user={user} />;
     }

@@ -7,11 +7,10 @@ from bson import ObjectId
 
 from utils.serializers import serialize_doc, to_object_id
 from utils.auth import decode_token
+from utils.dependencies import get_db
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-
-from server import db
 
 async def get_current_user_id(authorization: Optional[str] = Header(None)):
     """Extract user_id from JWT token"""
@@ -37,11 +36,17 @@ async def get_financials(plan_id: str, user_id: str = Depends(get_current_user_i
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
     
-    financial_model = await db.financial_models.find_one({"plan_id": plan_id})
-    if not financial_model:
+    financial_model_doc = await db.financial_models.find_one({"plan_id": plan_id})
+    if not financial_model_doc:
         raise HTTPException(status_code=404, detail="Financial model not found")
     
-    return serialize_doc(financial_model)
+    # Return the financial model with data field (frontend expects financialModel.data)
+    return {
+        "id": str(financial_model_doc["_id"]),
+        "plan_id": financial_model_doc.get("plan_id"),
+        "data": financial_model_doc.get("data", {}),
+        "created_at": financial_model_doc.get("created_at").isoformat() if financial_model_doc.get("created_at") else None
+    }
 
 @router.get("/{plan_id}/financials/charts")
 async def get_financial_charts_data(plan_id: str, user_id: str = Depends(get_current_user_id)):
@@ -52,9 +57,15 @@ async def get_financial_charts_data(plan_id: str, user_id: str = Depends(get_cur
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
     
-    financial_model = plan.get("financial_model", {})
-    if not financial_model:
+    # Get financial model from financial_models collection
+    financial_model_doc = await db.financial_models.find_one({"plan_id": plan_id})
+    if not financial_model_doc:
         raise HTTPException(status_code=404, detail="Financial model not found")
+    
+    # Extract the data field (financial model is stored with a "data" wrapper)
+    financial_model = financial_model_doc.get("data", {})
+    if not financial_model:
+        raise HTTPException(status_code=404, detail="Financial model data not found")
     
     # Extract data for charts
     pnl_annual = financial_model.get("pnl_annual", [])

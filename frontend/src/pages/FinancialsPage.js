@@ -1,12 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { api } from '../lib/api';
+import React, { useState, useEffect, useRef } from 'react';
+import { api, apiRequest } from '../lib/api';
 import FinancialCharts from '../components/FinancialCharts';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 function FinancialsPage({ navigate, user, planId }) {
   const [chartsData, setChartsData] = useState(null);
   const [financialModel, setFinancialModel] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const exportMenuRef = useRef(null);
 
   useEffect(() => {
     if (planId) {
@@ -14,12 +19,29 @@ function FinancialsPage({ navigate, user, planId }) {
     }
   }, [planId]);
 
+  // Close export menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target)) {
+        setShowExportMenu(false);
+      }
+    };
+
+    if (showExportMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showExportMenu]);
+
   const loadFinancialData = async () => {
     try {
       setLoading(true);
       const [chartsResponse, modelResponse] = await Promise.all([
-        api.get(`/api/plans/${planId}/financials/charts`),
-        api.get(`/api/plans/${planId}/financials`)
+        apiRequest(`/api/${planId}/financials/charts`),
+        api.financials.get(planId)
       ]);
       setChartsData(chartsResponse);
       setFinancialModel(modelResponse);
@@ -30,6 +52,340 @@ function FinancialsPage({ navigate, user, planId }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getFileName = (extension) => {
+    return `financial-analysis-${planId}-${new Date().toISOString().split('T')[0]}.${extension}`;
+  };
+
+  const exportToCSV = () => {
+    if (!chartsData && !financialModel) {
+      alert('No financial data available to export');
+      return;
+    }
+
+    let csvContent = 'Financial Analysis Export\n\n';
+
+    // Export KPIs
+    if (chartsData && chartsData.kpis) {
+      csvContent += 'Key Performance Indicators\n';
+      csvContent += 'Metric,Value\n';
+      csvContent += `Gross Margin,${chartsData.kpis.gross_margin}%\n`;
+      csvContent += `Net Margin,${chartsData.kpis.net_margin}%\n`;
+      csvContent += `ROI Year 1,${chartsData.kpis.roi_year1}%\n`;
+      csvContent += `Break-even,${chartsData.kpis.break_even_months} months\n\n`;
+    }
+
+    // Export Revenue Chart Data
+    if (chartsData && chartsData.revenue_chart) {
+      csvContent += 'Revenue & Costs (Annual)\n';
+      csvContent += 'Year,Revenue,COGS,Gross Profit\n';
+      chartsData.revenue_chart.forEach(row => {
+        csvContent += `${row.year},${row.revenue},${row.cogs},${row.gross_profit}\n`;
+      });
+      csvContent += '\n';
+    }
+
+    // Export Profit Chart Data
+    if (chartsData && chartsData.profit_chart) {
+      csvContent += 'Profitability (Annual)\n';
+      csvContent += 'Year,Gross Profit,Net Profit,Operating Expenses\n';
+      chartsData.profit_chart.forEach(row => {
+        csvContent += `${row.year},${row.gross_profit},${row.net_profit},${row.total_opex}\n`;
+      });
+      csvContent += '\n';
+    }
+
+    // Export Cash Flow Data
+    if (chartsData && chartsData.cashflow_chart) {
+      csvContent += 'Cash Flow (Annual)\n';
+      csvContent += 'Year,Operating CF,Net CF,Cumulative CF\n';
+      chartsData.cashflow_chart.forEach(row => {
+        csvContent += `${row.year},${row.operating_cf},${row.net_cf},${row.cumulative_cf}\n`;
+      });
+      csvContent += '\n';
+    }
+
+    // Export P&L Statement
+    if (financialModel && financialModel.data && financialModel.data.pnl_annual) {
+      csvContent += 'Profit & Loss Statement (Annual)\n';
+      csvContent += 'Year,Revenue,COGS,Gross Profit,Operating Expenses,Net Profit\n';
+      financialModel.data.pnl_annual.slice(0, 5).forEach(year => {
+        csvContent += `${year.year},${year.revenue},${year.cogs},${year.gross_profit},${year.total_opex},${year.net_profit}\n`;
+      });
+    }
+
+    // Create and download the file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', getFileName('csv'));
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setShowExportMenu(false);
+  };
+
+  const exportToXLSX = () => {
+    if (!XLSX) {
+      alert('XLSX library not available. Please install: npm install xlsx');
+      return;
+    }
+    
+    if (!chartsData && !financialModel) {
+      alert('No financial data available to export');
+      return;
+    }
+
+    const workbook = XLSX.utils.book_new();
+
+    // KPIs Sheet
+    if (chartsData && chartsData.kpis) {
+      const kpisData = [
+        ['Key Performance Indicators'],
+        ['Metric', 'Value'],
+        ['Gross Margin', `${chartsData.kpis.gross_margin}%`],
+        ['Net Margin', `${chartsData.kpis.net_margin}%`],
+        ['ROI Year 1', `${chartsData.kpis.roi_year1}%`],
+        ['Break-even', `${chartsData.kpis.break_even_months} months`]
+      ];
+      const kpisSheet = XLSX.utils.aoa_to_sheet(kpisData);
+      XLSX.utils.book_append_sheet(workbook, kpisSheet, 'KPIs');
+    }
+
+    // Revenue & Costs Sheet
+    if (chartsData && chartsData.revenue_chart) {
+      const revenueData = [
+        ['Year', 'Revenue', 'COGS', 'Gross Profit'],
+        ...chartsData.revenue_chart.map(row => [row.year, row.revenue, row.cogs, row.gross_profit])
+      ];
+      const revenueSheet = XLSX.utils.aoa_to_sheet(revenueData);
+      XLSX.utils.book_append_sheet(workbook, revenueSheet, 'Revenue & Costs');
+    }
+
+    // Profitability Sheet
+    if (chartsData && chartsData.profit_chart) {
+      const profitData = [
+        ['Year', 'Gross Profit', 'Net Profit', 'Operating Expenses'],
+        ...chartsData.profit_chart.map(row => [row.year, row.gross_profit, row.net_profit, row.total_opex])
+      ];
+      const profitSheet = XLSX.utils.aoa_to_sheet(profitData);
+      XLSX.utils.book_append_sheet(workbook, profitSheet, 'Profitability');
+    }
+
+    // Cash Flow Sheet
+    if (chartsData && chartsData.cashflow_chart) {
+      const cashflowData = [
+        ['Year', 'Operating CF', 'Net CF', 'Cumulative CF'],
+        ...chartsData.cashflow_chart.map(row => [row.year, row.operating_cf, row.net_cf, row.cumulative_cf])
+      ];
+      const cashflowSheet = XLSX.utils.aoa_to_sheet(cashflowData);
+      XLSX.utils.book_append_sheet(workbook, cashflowSheet, 'Cash Flow');
+    }
+
+    // P&L Statement Sheet
+    if (financialModel && financialModel.data && financialModel.data.pnl_annual) {
+      const pnlData = [
+        ['Year', 'Revenue', 'COGS', 'Gross Profit', 'Operating Expenses', 'Net Profit'],
+        ...financialModel.data.pnl_annual.slice(0, 5).map(year => [
+          year.year, year.revenue, year.cogs, year.gross_profit, year.total_opex, year.net_profit
+        ])
+      ];
+      const pnlSheet = XLSX.utils.aoa_to_sheet(pnlData);
+      XLSX.utils.book_append_sheet(workbook, pnlSheet, 'P&L Statement');
+    }
+
+    XLSX.writeFile(workbook, getFileName('xlsx'));
+    setShowExportMenu(false);
+  };
+
+  const exportToPDF = () => {
+    if (!jsPDF || !autoTable) {
+      alert('PDF library not available. Please install: npm install jspdf jspdf-autotable');
+      return;
+    }
+    
+    if (!chartsData && !financialModel) {
+      alert('No financial data available to export');
+      return;
+    }
+
+    const doc = new jsPDF();
+    let yPos = 20;
+
+    // Title
+    doc.setFontSize(18);
+    doc.text('Financial Analysis Report', 14, yPos);
+    yPos += 10;
+
+    // KPIs Table
+    if (chartsData && chartsData.kpis) {
+      doc.setFontSize(14);
+      doc.text('Key Performance Indicators', 14, yPos);
+      yPos += 8;
+
+      const kpisTableData = [
+        ['Gross Margin', `${chartsData.kpis.gross_margin}%`],
+        ['Net Margin', `${chartsData.kpis.net_margin}%`],
+        ['ROI Year 1', `${chartsData.kpis.roi_year1}%`],
+        ['Break-even', `${chartsData.kpis.break_even_months} months`]
+      ];
+
+      autoTable(doc, {
+        startY: yPos,
+        head: [['Metric', 'Value']],
+        body: kpisTableData,
+        theme: 'striped',
+        headStyles: { fillColor: [0, 22, 57] }
+      });
+      yPos = doc.lastAutoTable.finalY + 15;
+    }
+
+    // Revenue & Costs Table
+    if (chartsData && chartsData.revenue_chart && Array.isArray(chartsData.revenue_chart) && chartsData.revenue_chart.length > 0) {
+      if (yPos > 250) {
+        doc.addPage();
+        yPos = 20;
+      }
+      doc.setFontSize(14);
+      doc.text('Revenue & Costs (Annual)', 14, yPos);
+      yPos += 8;
+
+      const revenueTableData = chartsData.revenue_chart.map(row => [
+        row.year ? row.year.toString() : '',
+        `£${(row.revenue || 0).toLocaleString()}`,
+        `£${(row.cogs || 0).toLocaleString()}`,
+        `£${(row.gross_profit || 0).toLocaleString()}`
+      ]);
+
+      try {
+        autoTable(doc, {
+          startY: yPos,
+          head: [['Year', 'Revenue', 'COGS', 'Gross Profit']],
+          body: revenueTableData,
+          theme: 'striped',
+          headStyles: { fillColor: [0, 22, 57] },
+          styles: { fontSize: 9 }
+        });
+        yPos = doc.lastAutoTable.finalY + 15;
+      } catch (error) {
+        console.error('Error adding Revenue & Costs table:', error);
+        // Fallback: Add as text if table fails
+        doc.setFontSize(10);
+        chartsData.revenue_chart.forEach((row, idx) => {
+          if (yPos > 280) {
+            doc.addPage();
+            yPos = 20;
+          }
+          doc.text(`${row.year || ''}: Revenue £${(row.revenue || 0).toLocaleString()}, COGS £${(row.cogs || 0).toLocaleString()}, Gross Profit £${(row.gross_profit || 0).toLocaleString()}`, 14, yPos);
+          yPos += 6;
+        });
+        yPos += 5;
+      }
+    }
+
+    // Profitability Table
+    if (chartsData && chartsData.profit_chart && Array.isArray(chartsData.profit_chart) && chartsData.profit_chart.length > 0) {
+      if (yPos > 250) {
+        doc.addPage();
+        yPos = 20;
+      }
+      doc.setFontSize(14);
+      doc.text('Profitability (Annual)', 14, yPos);
+      yPos += 8;
+
+      const profitTableData = chartsData.profit_chart.map(row => [
+        row.year ? row.year.toString() : '',
+        `£${(row.gross_profit || 0).toLocaleString()}`,
+        `£${(row.net_profit || 0).toLocaleString()}`,
+        `£${(row.total_opex || 0).toLocaleString()}`
+      ]);
+
+      try {
+        autoTable(doc, {
+          startY: yPos,
+          head: [['Year', 'Gross Profit', 'Net Profit', 'Operating Expenses']],
+          body: profitTableData,
+          theme: 'striped',
+          headStyles: { fillColor: [0, 22, 57] },
+          styles: { fontSize: 9 }
+        });
+        yPos = doc.lastAutoTable.finalY + 15;
+      } catch (error) {
+        console.error('Error adding Profitability table:', error);
+        // Fallback: Add as text if table fails
+        doc.setFontSize(10);
+        chartsData.profit_chart.forEach((row, idx) => {
+          if (yPos > 280) {
+            doc.addPage();
+            yPos = 20;
+          }
+          doc.text(`${row.year || ''}: Gross Profit £${(row.gross_profit || 0).toLocaleString()}, Net Profit £${(row.net_profit || 0).toLocaleString()}, Operating Expenses £${(row.total_opex || 0).toLocaleString()}`, 14, yPos);
+          yPos += 6;
+        });
+        yPos += 5;
+      }
+    }
+
+    // Cash Flow Table
+    if (chartsData && chartsData.cashflow_chart) {
+      if (yPos > 250) {
+        doc.addPage();
+        yPos = 20;
+      }
+      doc.setFontSize(14);
+      doc.text('Cash Flow (Annual)', 14, yPos);
+      yPos += 8;
+
+      const cashflowTableData = chartsData.cashflow_chart.map(row => [
+        row.year.toString(),
+        `£${row.operating_cf.toLocaleString()}`,
+        `£${row.net_cf.toLocaleString()}`,
+        `£${row.cumulative_cf.toLocaleString()}`
+      ]);
+
+      autoTable(doc, {
+        startY: yPos,
+        head: [['Year', 'Operating CF', 'Net CF', 'Cumulative CF']],
+        body: cashflowTableData,
+        theme: 'striped',
+        headStyles: { fillColor: [0, 22, 57] }
+      });
+      yPos = doc.lastAutoTable.finalY + 15;
+    }
+
+    // P&L Statement Table
+    if (financialModel && financialModel.data && financialModel.data.pnl_annual) {
+      if (yPos > 250) {
+        doc.addPage();
+        yPos = 20;
+      }
+      doc.setFontSize(14);
+      doc.text('Profit & Loss Statement (Annual)', 14, yPos);
+      yPos += 8;
+
+      const pnlTableData = financialModel.data.pnl_annual.slice(0, 5).map(year => [
+        year.year.toString(),
+        `£${year.revenue.toLocaleString()}`,
+        `£${year.cogs.toLocaleString()}`,
+        `£${year.gross_profit.toLocaleString()}`,
+        `£${year.total_opex.toLocaleString()}`,
+        `£${year.net_profit.toLocaleString()}`
+      ]);
+
+      autoTable(doc, {
+        startY: yPos,
+        head: [['Year', 'Revenue', 'COGS', 'Gross Profit', 'Operating Expenses', 'Net Profit']],
+        body: pnlTableData,
+        theme: 'striped',
+        headStyles: { fillColor: [0, 22, 57] }
+      });
+    }
+
+    doc.save(getFileName('pdf'));
+    setShowExportMenu(false);
   };
 
   if (loading) {
@@ -72,12 +428,89 @@ function FinancialsPage({ navigate, user, planId }) {
               </button>
               <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Financial Analysis</h1>
             </div>
-            <button
-              className="btn btn-secondary"
-              data-testid="download-financials"
-            >
-              📥 Export Data
-            </button>
+            <div style={{ position: 'relative' }} ref={exportMenuRef}>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowExportMenu(!showExportMenu)}
+                data-testid="download-financials"
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              >
+                📥 Export Data
+                <span style={{ fontSize: '0.75rem' }}>▼</span>
+              </button>
+              
+              {showExportMenu && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: '0.5rem',
+                  background: 'white',
+                  border: '1px solid #E2E8F0',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                  minWidth: '180px',
+                  zIndex: 1000
+                }}>
+                  <button
+                    onClick={exportToCSV}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem 1rem',
+                      textAlign: 'left',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                      color: '#0F172A',
+                      transition: 'background 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.target.style.background = '#F8FAFC'}
+                    onMouseLeave={(e) => e.target.style.background = 'none'}
+                  >
+                    📄 Export as CSV
+                  </button>
+                  <button
+                    onClick={exportToXLSX}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem 1rem',
+                      textAlign: 'left',
+                      background: 'none',
+                      border: 'none',
+                      borderTop: '1px solid #E2E8F0',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                      color: '#0F172A',
+                      transition: 'background 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.target.style.background = '#F8FAFC'}
+                    onMouseLeave={(e) => e.target.style.background = 'none'}
+                  >
+                    📊 Export as XLSX
+                  </button>
+                  <button
+                    onClick={exportToPDF}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem 1rem',
+                      textAlign: 'left',
+                      background: 'none',
+                      border: 'none',
+                      borderTop: '1px solid #E2E8F0',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                      color: '#0F172A',
+                      transition: 'background 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.target.style.background = '#F8FAFC'}
+                    onMouseLeave={(e) => e.target.style.background = 'none'}
+                  >
+                    📑 Export as PDF
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

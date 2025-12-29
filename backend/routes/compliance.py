@@ -7,11 +7,10 @@ from bson import ObjectId
 
 from utils.serializers import serialize_doc, to_object_id
 from utils.auth import decode_token
+from utils.dependencies import get_db
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-
-from server import db
 
 async def get_current_user_id(authorization: Optional[str] = Header(None)):
     """Extract user_id from JWT token"""
@@ -29,7 +28,7 @@ async def get_current_user_id(authorization: Optional[str] = Header(None)):
         raise HTTPException(status_code=401, detail="Authentication failed")
 
 @router.get("/{plan_id}/compliance")
-async def get_compliance_report(plan_id: str, user_id: str = Depends(get_current_user_id)):
+async def get_compliance_report(plan_id: str, user_id: str = Depends(get_current_user_id), db = Depends(get_db)):
     """Get compliance report for a plan"""
     
     # Verify plan ownership

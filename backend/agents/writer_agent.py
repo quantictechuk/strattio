@@ -26,7 +26,7 @@ FORMAT: Professional, clear, suitable for business plan readers"""
 
 class WriterAgent:
     def __init__(self):
-        self.api_key = os.environ.get("EMERGENT_LLM_KEY")
+        self.api_key = os.environ.get("OPENAI_API_KEY")
         self.model = "gpt-4o"
     
     def _clean_output(self, text: str) -> str:

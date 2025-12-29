@@ -1,6 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { api, authService } from '../lib/api';
 import RichTextEditor from '../components/RichTextEditor';
+import SWOTAnalysis from '../components/SWOTAnalysis';
+import CompetitorAnalysis from '../components/CompetitorAnalysis';
+import EnhancedCompliance from '../components/EnhancedCompliance';
+import BusinessModelCanvas from '../components/BusinessModelCanvas';
 
 function PlanEditorPage({ navigate, user, planId }) {
   const [plan, setPlan] = useState(null);
@@ -8,6 +12,8 @@ function PlanEditorPage({ navigate, user, planId }) {
   const [selectedSection, setSelectedSection] = useState(null);
   const [financials, setFinancials] = useState(null);
   const [compliance, setCompliance] = useState(null);
+  const [swotData, setSwotData] = useState(null);
+  const [competitorData, setCompetitorData] = useState(null);
   const [activeTab, setActiveTab] = useState('sections');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -17,6 +23,28 @@ function PlanEditorPage({ navigate, user, planId }) {
   const [upgrading, setUpgrading] = useState(false);
   const [editingSection, setEditingSection] = useState(null);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isRegeneratingSwot, setIsRegeneratingSwot] = useState(false);
+  const [isRegeneratingCompetitor, setIsRegeneratingCompetitor] = useState(false);
+  const [isRegeneratingCanvas, setIsRegeneratingCanvas] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const exportMenuRef = useRef(null);
+
+  // Close export menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target)) {
+        setShowExportMenu(false);
+      }
+    };
+
+    if (showExportMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showExportMenu]);
 
   useEffect(() => {
     if (planId) {
@@ -103,15 +131,19 @@ function PlanEditorPage({ navigate, user, planId }) {
 
   const loadPlanContent = async () => {
     try {
-      const [sectionsData, financialsData, complianceData] = await Promise.all([
+      const [sectionsData, financialsData, complianceData, swotResponse, competitorResponse] = await Promise.all([
         api.sections.list(planId),
         api.financials.get(planId).catch(() => null),
-        api.compliance.get(planId).catch(() => null)
+        api.compliance.get(planId).catch(() => null),
+        api.swot.get(planId).catch(() => null),
+        api.competitors.get(planId).catch(() => null)
       ]);
 
       setSections(sectionsData.sections || []);
       if (financialsData) setFinancials(financialsData);
       if (complianceData) setCompliance(complianceData);
+      if (swotResponse && swotResponse.swot_data) setSwotData(swotResponse.swot_data);
+      if (competitorResponse && competitorResponse.competitor_data) setCompetitorData(competitorResponse.competitor_data);
 
       // Select first section by default
       if (sectionsData.sections && sectionsData.sections.length > 0) {
@@ -140,24 +172,11 @@ function PlanEditorPage({ navigate, user, planId }) {
     if (!editingSection) return;
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/${planId}/sections/${editingSection.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        },
-        body: JSON.stringify({ content })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || 'Failed to save section');
-      }
-      
-      const updated = await response.json();
+      const updated = await api.sections.update(planId, editingSection.id, { content });
       setSections(sections.map(s => s.id === editingSection.id ? updated : s));
       setSelectedSection(updated);
       setEditingSection(null);
+      setError(''); // Clear any previous errors
     } catch (err) {
       console.error('Save error:', err);
       setError(err.message || 'Failed to save section');
@@ -169,26 +188,13 @@ function PlanEditorPage({ navigate, user, planId }) {
     
     setIsRegenerating(true);
     try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/${planId}/sections/${editingSection.id}/regenerate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        },
-        body: JSON.stringify(options)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || 'Failed to regenerate section');
-      }
-      
-      const result = await response.json();
+      const result = await api.sections.regenerate(planId, editingSection.id, options);
       
       if (result.success && result.section) {
         setSections(sections.map(s => s.id === editingSection.id ? result.section : s));
         setSelectedSection(result.section);
         setEditingSection(result.section);
+        setError(''); // Clear any previous errors
       }
     } catch (err) {
       console.error('Regenerate error:', err);
@@ -202,12 +208,53 @@ function PlanEditorPage({ navigate, user, planId }) {
     setEditingSection(null);
   };
 
+  const handleRegenerateSwot = async () => {
+    setIsRegeneratingSwot(true);
+    setError('');
+    
+    try {
+      const response = await api.swot.regenerate(planId);
+      setSwotData(response.swot_data);
+    } catch (err) {
+      setError(err.message || 'Failed to regenerate SWOT analysis');
+    } finally {
+      setIsRegeneratingSwot(false);
+    }
+  };
+
+  const handleRegenerateCompetitor = async () => {
+    setIsRegeneratingCompetitor(true);
+    setError('');
+    
+    try {
+      const response = await api.competitors.regenerate(planId);
+      setCompetitorData(response.competitor_data);
+    } catch (err) {
+      setError(err.message || 'Failed to regenerate competitor analysis');
+    } finally {
+      setIsRegeneratingCompetitor(false);
+    }
+  };
+
+  const handleRegenerateCanvas = async () => {
+    setIsRegeneratingCanvas(true);
+    setError('');
+    
+    try {
+      await api.canvas.generate(planId);
+    } catch (err) {
+      setError(err.message || 'Failed to generate canvas');
+    } finally {
+      setIsRegeneratingCanvas(false);
+    }
+  };
+
   const handleEditSection = (section) => {
     setEditingSection(section);
     setSelectedSection(section);
   };
 
-  const handleExportPDF = async () => {
+  const handleExport = async (format = 'pdf') => {
     // Check subscription tier first
     if (!subscription) {
       setError('Loading subscription info...');
@@ -223,16 +270,18 @@ function PlanEditorPage({ navigate, user, planId }) {
     // Paid tiers: Proceed with export
     try {
       setError('');
-      const exportJob = await api.exports.create(planId, 'pdf');
+      setShowExportMenu(false);
+      const exportJob = await api.exports.create(planId, format);
       
       // Automatically trigger download
       if (exportJob && exportJob.id) {
-        const downloadUrl = `${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001'}/api/exports/${exportJob.id}/download`;
+        const downloadUrl = `${process.env.REACT_APP_BACKEND_URL || 'https://strattio-backend.vercel.app'}/api/exports/${exportJob.id}/download`;
         
         // Create hidden link and click it
         const link = document.createElement('a');
         link.href = downloadUrl;
-        link.download = exportJob.file_name || 'business_plan.pdf';
+        const extension = format === 'markdown' ? 'md' : format;
+        link.download = exportJob.file_name || `business_plan.${extension}`;
         
         // Add auth header by opening in new window with fetch
         const token = authService.getToken();
@@ -248,10 +297,8 @@ function PlanEditorPage({ navigate, user, planId }) {
           link.click();
           document.body.removeChild(link);
           window.URL.revokeObjectURL(url);
-          
-          alert('PDF downloaded successfully!');
         } else {
-          throw new Error('Failed to download PDF');
+          throw new Error(`Failed to download ${format.toUpperCase()}`);
         }
       }
     } catch (err) {
@@ -277,9 +324,9 @@ function PlanEditorPage({ navigate, user, planId }) {
         <h2 style={{ marginTop: '2rem', marginBottom: '1rem' }}>Generating Your Business Plan</h2>
         <p style={{ color: '#6B7A91', marginBottom: '1rem' }}>Running multi-agent pipeline...</p>
         <div style={{ maxWidth: '500px', textAlign: 'left' }}>
-          <div style={{ padding: '0.5rem', background: '#EBF5FF', borderRadius: '4px', marginBottom: '0.5rem' }}>✓ Research Agent - Fetching market data</div>
-          <div style={{ padding: '0.5rem', background: '#EBF5FF', borderRadius: '4px', marginBottom: '0.5rem' }}>✓ Validation Agent - Checking data quality</div>
-          <div style={{ padding: '0.5rem', background: '#EBF5FF', borderRadius: '4px', marginBottom: '0.5rem' }}>✓ Financial Engine - Calculating projections</div>
+          <div style={{ padding: '0.5rem', background: '#E6EBF0', borderRadius: '4px', marginBottom: '0.5rem' }}>✓ Research Agent - Fetching market data</div>
+          <div style={{ padding: '0.5rem', background: '#E6EBF0', borderRadius: '4px', marginBottom: '0.5rem' }}>✓ Validation Agent - Checking data quality</div>
+          <div style={{ padding: '0.5rem', background: '#E6EBF0', borderRadius: '4px', marginBottom: '0.5rem' }}>✓ Financial Engine - Calculating projections</div>
           <div style={{ padding: '0.5rem', background: '#F1F4F7', borderRadius: '4px', marginBottom: '0.5rem' }}>⏳ Plan Writer - Generating sections...</div>
           <div style={{ padding: '0.5rem', background: '#F1F4F7', borderRadius: '4px' }}>⏳ Compliance Agent - Validating requirements</div>
         </div>
@@ -307,8 +354,12 @@ function PlanEditorPage({ navigate, user, planId }) {
       <header style={{ padding: '1.5rem 0', borderBottom: '1px solid #E4E9EF', background: 'white' }}>
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1A85FF', fontFamily: 'IBM Plex Sans' }}>
-              STRATTIO
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <img 
+                src="/logo.png" 
+                alt="Strattio" 
+                style={{ height: '40px', width: 'auto' }}
+              />
             </div>
             <div style={{ fontSize: '1.125rem', color: '#2D3748', marginTop: '0.25rem' }}>{plan.name}</div>
           </div>
@@ -320,13 +371,85 @@ function PlanEditorPage({ navigate, user, planId }) {
             >
               📊 View Financials
             </button>
-            <button 
-              className="btn btn-secondary" 
-              onClick={handleExportPDF}
-              data-testid="export-pdf-btn"
-            >
-              📄 Export PDF
-            </button>
+            <div style={{ position: 'relative' }} ref={exportMenuRef}>
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => setShowExportMenu(!showExportMenu)}
+                data-testid="export-btn"
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              >
+                Export Plan
+                <span style={{ fontSize: '0.75rem' }}>▼</span>
+              </button>
+              {showExportMenu && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: '0.5rem',
+                  background: 'white',
+                  border: '1px solid #E2E8F0',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                  minWidth: '180px',
+                  zIndex: 1000
+                }}>
+                  <button
+                    onClick={() => handleExport('pdf')}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem 1rem',
+                      border: 'none',
+                      background: 'none',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                      color: '#374151'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = '#F3F4F6'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                  >
+                    📄 Export as PDF
+                  </button>
+                  <button
+                    onClick={() => handleExport('docx')}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem 1rem',
+                      border: 'none',
+                      background: 'none',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                      color: '#374151',
+                      borderTop: '1px solid #E2E8F0'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = '#F3F4F6'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                  >
+                    📝 Export as DOCX
+                  </button>
+                  <button
+                    onClick={() => handleExport('markdown')}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem 1rem',
+                      border: 'none',
+                      background: 'none',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                      color: '#374151',
+                      borderTop: '1px solid #E2E8F0'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = '#F3F4F6'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                  >
+                    📋 Export as Markdown
+                  </button>
+                </div>
+              )}
+            </div>
             <button 
               className="btn btn-ghost" 
               onClick={() => navigate('dashboard')}
@@ -353,8 +476,8 @@ function PlanEditorPage({ navigate, user, planId }) {
               padding: '1rem 1.5rem',
               background: 'none',
               border: 'none',
-              borderBottom: activeTab === 'sections' ? '2px solid #1A85FF' : '2px solid transparent',
-              color: activeTab === 'sections' ? '#1A85FF' : '#6B7A91',
+              borderBottom: activeTab === 'sections' ? '2px solid #001639' : '2px solid transparent',
+              color: activeTab === 'sections' ? '#001639' : '#6B7A91',
               fontWeight: '600',
               cursor: 'pointer',
               marginBottom: '-2px'
@@ -369,8 +492,8 @@ function PlanEditorPage({ navigate, user, planId }) {
               padding: '1rem 1.5rem',
               background: 'none',
               border: 'none',
-              borderBottom: activeTab === 'financials' ? '2px solid #1A85FF' : '2px solid transparent',
-              color: activeTab === 'financials' ? '#1A85FF' : '#6B7A91',
+              borderBottom: activeTab === 'financials' ? '2px solid #001639' : '2px solid transparent',
+              color: activeTab === 'financials' ? '#001639' : '#6B7A91',
               fontWeight: '600',
               cursor: 'pointer',
               marginBottom: '-2px'
@@ -385,8 +508,8 @@ function PlanEditorPage({ navigate, user, planId }) {
               padding: '1rem 1.5rem',
               background: 'none',
               border: 'none',
-              borderBottom: activeTab === 'compliance' ? '2px solid #1A85FF' : '2px solid transparent',
-              color: activeTab === 'compliance' ? '#1A85FF' : '#6B7A91',
+              borderBottom: activeTab === 'compliance' ? '2px solid #001639' : '2px solid transparent',
+              color: activeTab === 'compliance' ? '#001639' : '#6B7A91',
               fontWeight: '600',
               cursor: 'pointer',
               marginBottom: '-2px'
@@ -413,8 +536,8 @@ function PlanEditorPage({ navigate, user, planId }) {
                     padding: '0.75rem',
                     borderRadius: '6px',
                     cursor: 'pointer',
-                    background: selectedSection?.id === section.id ? '#EBF5FF' : 'transparent',
-                    border: selectedSection?.id === section.id ? '1px solid #1A85FF' : '1px solid transparent',
+                    background: selectedSection?.id === section.id ? '#E6EBF0' : 'transparent',
+                    border: selectedSection?.id === section.id ? '1px solid #001639' : '1px solid transparent',
                     marginBottom: '0.5rem'
                   }}
                 >
@@ -442,14 +565,18 @@ function PlanEditorPage({ navigate, user, planId }) {
                   </button>
                 </div>
                 
-                <div 
+                <div
                   style={{
                     padding: '1.5rem',
                     background: '#F9FAFB',
                     borderRadius: '8px',
                     lineHeight: '1.7'
                   }}
-                  dangerouslySetInnerHTML={{ __html: selectedSection.content }}
+                  dangerouslySetInnerHTML={{ 
+                    __html: selectedSection.content && selectedSection.content.includes('<') 
+                      ? selectedSection.content 
+                      : selectedSection.content.replace(/\n/g, '<br/>')
+                  }}
                   data-testid="section-content-display"
                 />
               </div>
@@ -486,7 +613,7 @@ function PlanEditorPage({ navigate, user, planId }) {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
                   <div className="card" style={{ background: 'var(--bg-secondary)', textAlign: 'center' }}>
                     <div style={{ fontSize: '0.875rem', color: '#6B7A91', marginBottom: '0.5rem' }}>Gross Margin</div>
-                    <div style={{ fontSize: '1.75rem', fontWeight: '700', color: '#1A85FF' }}>
+                    <div style={{ fontSize: '1.75rem', fontWeight: '700', color: '#001639' }}>
                       {financials.data.kpis?.gross_margin_percent?.toFixed(1)}%
                     </div>
                   </div>
@@ -595,55 +722,52 @@ function PlanEditorPage({ navigate, user, planId }) {
         {/* Compliance Tab */}
         {activeTab === 'compliance' && (
           <div className="card">
-            <h3 style={{ marginBottom: '1.5rem' }}>Compliance Report</h3>
-            
-            {!compliance && (
-              <p style={{ color: '#6B7A91' }}>Compliance data not available. Generate plan first.</p>
-            )}
+            <EnhancedCompliance
+              complianceData={compliance}
+              onRegenerate={async () => {
+                try {
+                  setError('');
+                  const complianceData = await api.compliance.get(planId);
+                  setCompliance(complianceData);
+                } catch (err) {
+                  setError(err.message || 'Failed to recheck compliance');
+                }
+              }}
+              isRegenerating={false}
+            />
+          </div>
+        )}
 
-            {compliance && compliance.data && (
-              <div>
-                <div style={{ marginBottom: '2rem' }}>
-                  <div style={{ fontSize: '0.875rem', color: '#6B7A91', marginBottom: '0.5rem' }}>Overall Status</div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: '700', color: compliance.data.overall_status === 'compliant' ? '#27AC85' : '#F59E0B' }}>
-                    {compliance.data.overall_status?.toUpperCase()}
-                  </div>
-                  <div style={{ fontSize: '0.875rem', color: '#6B7A91', marginTop: '0.5rem' }}>
-                    Score: {compliance.data.score}/100
-                  </div>
-                </div>
+        {/* SWOT Analysis Tab */}
+        {activeTab === 'swot' && (
+          <div className="card">
+            <SWOTAnalysis
+              swotData={swotData}
+              onRegenerate={handleRegenerateSwot}
+              isRegenerating={isRegeneratingSwot}
+            />
+          </div>
+        )}
 
-                <h4 style={{ marginBottom: '1rem' }}>Compliance Checks</h4>
-                {compliance.data.checks?.map((check, idx) => (
-                  <div 
-                    key={idx}
-                    className="card" 
-                    style={{ 
-                      marginBottom: '1rem', 
-                      background: check.status === 'pass' ? '#D1FAE5' : '#FEE2E2',
-                      borderLeft: `4px solid ${check.status === 'pass' ? '#10B981' : '#EF4444'}`
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                      <div>
-                        <div style={{ fontWeight: '600', marginBottom: '0.25rem' }}>
-                          {check.status === 'pass' ? '✅' : '❌'} {check.name}
-                        </div>
-                        <div style={{ fontSize: '0.875rem', color: '#4A5568' }}>{check.message}</div>
-                        {check.suggestion && (
-                          <div style={{ fontSize: '0.875rem', color: '#6B7A91', marginTop: '0.5rem', fontStyle: 'italic' }}>
-                            💡 {check.suggestion}
-                          </div>
-                        )}
-                      </div>
-                      <span className={`status-badge ${check.status === 'pass' ? 'status-complete' : 'status-failed'}`}>
-                        {check.status}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+        {/* Competitor Analysis Tab */}
+        {activeTab === 'competitors' && (
+          <div className="card">
+            <CompetitorAnalysis
+              competitorData={competitorData}
+              onRegenerate={handleRegenerateCompetitor}
+              isRegenerating={isRegeneratingCompetitor}
+            />
+          </div>
+        )}
+
+        {/* Business Model Canvas Tab */}
+        {activeTab === 'canvas' && (
+          <div className="card">
+            <BusinessModelCanvas
+              planId={planId}
+              onRegenerate={handleRegenerateCanvas}
+              isRegenerating={isRegeneratingCanvas}
+            />
           </div>
         )}
       </div>
@@ -667,63 +791,158 @@ function PlanEditorPage({ navigate, user, planId }) {
         >
           <div 
             className="card" 
-            style={{ maxWidth: '600px', padding: '2rem' }}
+            style={{ maxWidth: '1200px', width: '90%', padding: '2rem' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ marginBottom: '1rem', textAlign: 'center' }}>Choose Your Plan</h3>
-            <p style={{ color: '#6B7A91', marginBottom: '2rem', textAlign: 'center' }}>
-              Unlock PDF exports and advanced features
+            <h3 style={{ marginBottom: '1rem', textAlign: 'center', fontSize: '1.75rem' }}>Choose Your Plan</h3>
+            <p style={{ color: '#6B7A91', marginBottom: '2rem', textAlign: 'center', fontSize: '1rem' }}>
+              {subscription?.tier === 'free' ? 'Unlock PDF exports and advanced features' : 'Upgrade to unlock more features'}
             </p>
             
-            {/* Starter Plan */}
-            <div className="card" style={{ background: 'var(--bg-secondary)', marginBottom: '1rem', borderLeft: '4px solid #1A85FF' }}>
+            {/* Plans Grid */}
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(3, 1fr)', 
+              gap: '1.5rem',
+              marginBottom: '1.5rem'
+            }}>
+            {/* Free Plan */}
+            <div className="card" style={{ 
+              background: subscription?.tier === 'free' ? 'linear-gradient(135deg, #E6EBF0 0%, #E8F5F1 100%)' : 'var(--bg-secondary)', 
+              borderLeft: subscription?.tier === 'free' ? '4px solid #001639' : '4px solid #E4E9EF',
+              opacity: subscription?.tier === 'free' ? 1 : 0.8,
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%'
+            }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
                 <div>
-                  <h4 style={{ marginBottom: '0.5rem' }}>Starter Plan</h4>
-                  <div style={{ fontSize: '2rem', fontWeight: '700', color: '#1A85FF' }}>£12<span style={{ fontSize: '1rem', fontWeight: '400', color: '#6B7A91' }}>/month</span></div>
+                  <h4 style={{ marginBottom: '0.5rem' }}>
+                    Free Plan
+                    {subscription?.tier === 'free' && <span style={{ fontSize: '0.75rem', background: '#001639', color: 'white', padding: '0.25rem 0.5rem', borderRadius: '4px', marginLeft: '0.5rem' }}>CURRENT</span>}
+                  </h4>
+                  <div style={{ fontSize: '2rem', fontWeight: '700', color: '#001639' }}>£0<span style={{ fontSize: '1rem', fontWeight: '400', color: '#6B7A91' }}>/month</span></div>
                 </div>
               </div>
-              <ul style={{ color: '#4A5568', marginLeft: '1.5rem', marginBottom: '1rem' }}>
-                <li>3 plans per month</li>
-                <li>Full AI generation</li>
-                <li>PDF export</li>
-                <li>SWOT & competitor analysis</li>
+              <ul style={{ color: '#4A5568', marginLeft: '1.5rem', marginBottom: '1rem', flexGrow: 1 }}>
+                <li style={{ marginBottom: '0.5rem' }}>1 plan per month</li>
+                <li style={{ marginBottom: '0.5rem' }}>Basic AI generation</li>
+                <li style={{ marginBottom: '0.5rem' }}>Preview only</li>
+                <li style={{ marginBottom: '0.5rem' }}>No exports</li>
               </ul>
-              <button 
-                className="btn btn-primary" 
-                style={{ width: '100%' }}
-                onClick={() => handleUpgrade('starter')}
-                disabled={upgrading}
-                data-testid="upgrade-starter-btn"
-              >
-                {upgrading ? 'Redirecting to checkout...' : 'Choose Starter'}
-              </button>
+              {subscription?.tier === 'free' ? (
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ width: '100%', marginTop: 'auto' }}
+                  disabled
+                >
+                  Current Plan
+                </button>
+              ) : (
+                <button 
+                  className="btn btn-ghost" 
+                  style={{ width: '100%', marginTop: 'auto' }}
+                  disabled
+                  title="Downgrade not available"
+                >
+                  Downgrade (Contact Support)
+                </button>
+              )}
+            </div>
+            
+            {/* Starter Plan */}
+            <div className="card" style={{ 
+              background: subscription?.tier === 'starter' ? 'linear-gradient(135deg, #E6EBF0 0%, #E8F5F1 100%)' : 'var(--bg-secondary)', 
+              borderLeft: subscription?.tier === 'starter' ? '4px solid #001639' : '4px solid #001639',
+              opacity: subscription?.tier === 'starter' ? 1 : 1,
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
+                <div>
+                  <h4 style={{ marginBottom: '0.5rem' }}>
+                    Starter Plan
+                    {subscription?.tier === 'starter' && <span style={{ fontSize: '0.75rem', background: '#001639', color: 'white', padding: '0.25rem 0.5rem', borderRadius: '4px', marginLeft: '0.5rem' }}>CURRENT</span>}
+                  </h4>
+                  <div style={{ fontSize: '2rem', fontWeight: '700', color: '#001639' }}>£12<span style={{ fontSize: '1rem', fontWeight: '400', color: '#6B7A91' }}>/month</span></div>
+                </div>
+              </div>
+              <ul style={{ color: '#4A5568', marginLeft: '1.5rem', marginBottom: '1rem', flexGrow: 1 }}>
+                <li style={{ marginBottom: '0.5rem' }}>3 plans per month</li>
+                <li style={{ marginBottom: '0.5rem' }}>Full AI generation</li>
+                <li style={{ marginBottom: '0.5rem' }}>PDF export</li>
+                <li style={{ marginBottom: '0.5rem' }}>SWOT & competitor analysis</li>
+              </ul>
+              {subscription?.tier === 'starter' ? (
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ width: '100%', marginTop: 'auto' }}
+                  disabled
+                >
+                  Current Plan
+                </button>
+              ) : (
+                <button 
+                  className="btn btn-primary" 
+                  style={{ width: '100%', marginTop: 'auto' }}
+                  onClick={() => handleUpgrade('starter')}
+                  disabled={upgrading || subscription?.tier === 'professional'}
+                  data-testid="upgrade-starter-btn"
+                >
+                  {upgrading ? 'Redirecting to checkout...' : subscription?.tier === 'professional' ? 'Downgrade (Contact Support)' : 'Choose Starter'}
+                </button>
+              )}
             </div>
 
             {/* Professional Plan */}
-            <div className="card" style={{ background: 'linear-gradient(135deg, #EBF5FF 0%, #E8F5F1 100%)', marginBottom: '1rem', borderLeft: '4px solid #27AC85' }}>
+            <div className="card" style={{ 
+              background: subscription?.tier === 'professional' ? 'linear-gradient(135deg, #E6EBF0 0%, #E8F5F1 100%)' : 'linear-gradient(135deg, #E6EBF0 0%, #E8F5F1 100%)', 
+              borderLeft: '4px solid #27AC85',
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%'
+            }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
                 <div>
-                  <h4 style={{ marginBottom: '0.5rem' }}>Professional Plan <span style={{ fontSize: '0.75rem', background: '#27AC85', color: 'white', padding: '0.25rem 0.5rem', borderRadius: '4px', marginLeft: '0.5rem' }}>POPULAR</span></h4>
+                  <h4 style={{ marginBottom: '0.5rem' }}>
+                    Professional Plan 
+                    {subscription?.tier === 'professional' ? (
+                      <span style={{ fontSize: '0.75rem', background: '#27AC85', color: 'white', padding: '0.25rem 0.5rem', borderRadius: '4px', marginLeft: '0.5rem' }}>CURRENT</span>
+                    ) : (
+                      <span style={{ fontSize: '0.75rem', background: '#27AC85', color: 'white', padding: '0.25rem 0.5rem', borderRadius: '4px', marginLeft: '0.5rem' }}>POPULAR</span>
+                    )}
+                  </h4>
                   <div style={{ fontSize: '2rem', fontWeight: '700', color: '#27AC85' }}>£29<span style={{ fontSize: '1rem', fontWeight: '400', color: '#6B7A91' }}>/month</span></div>
                 </div>
               </div>
-              <ul style={{ color: '#4A5568', marginLeft: '1.5rem', marginBottom: '1rem' }}>
-                <li><strong>Unlimited plans</strong></li>
-                <li>All export formats (PDF, DOCX)</li>
-                <li>Financial projections & charts</li>
-                <li>Compliance checking</li>
-                <li>Pitch deck generator</li>
+              <ul style={{ color: '#4A5568', marginLeft: '1.5rem', marginBottom: '1rem', flexGrow: 1 }}>
+                <li style={{ marginBottom: '0.5rem' }}><strong>Unlimited plans</strong></li>
+                <li style={{ marginBottom: '0.5rem' }}>All export formats (PDF, DOCX)</li>
+                <li style={{ marginBottom: '0.5rem' }}>Financial projections & charts</li>
+                <li style={{ marginBottom: '0.5rem' }}>Compliance checking</li>
+                <li style={{ marginBottom: '0.5rem' }}>Pitch deck generator</li>
               </ul>
-              <button 
-                className="btn btn-primary" 
-                style={{ width: '100%', background: '#27AC85' }}
-                onClick={() => handleUpgrade('professional')}
-                disabled={upgrading}
-                data-testid="upgrade-professional-btn"
-              >
-                {upgrading ? 'Redirecting to checkout...' : 'Choose Professional'}
-              </button>
+              {subscription?.tier === 'professional' ? (
+                <button 
+                  className="btn btn-secondary" 
+                  style={{ width: '100%', background: '#27AC85', marginTop: 'auto' }}
+                  disabled
+                >
+                  Current Plan
+                </button>
+              ) : (
+                <button 
+                  className="btn btn-primary" 
+                  style={{ width: '100%', background: '#27AC85', marginTop: 'auto' }}
+                  onClick={() => handleUpgrade('professional')}
+                  disabled={upgrading}
+                  data-testid="upgrade-professional-btn"
+                >
+                  {upgrading ? 'Redirecting to checkout...' : 'Choose Professional'}
+                </button>
+              )}
+            </div>
             </div>
 
             {/* Cancel Button */}

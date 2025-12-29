@@ -8,14 +8,33 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from reportlab.lib import colors
 from datetime import datetime
 import os
+import re
 from pathlib import Path
-import sys
-sys.path.append('/app/backend')
+
 from agents.templates import TemplateFactory
 
-# Create exports directory
-EXPORTS_DIR = Path("/app/backend/exports")
-EXPORTS_DIR.mkdir(exist_ok=True)
+# Use /tmp for exports in Vercel (writable), or local exports directory for development
+# Vercel serverless functions have a read-only filesystem except for /tmp
+# Vercel automatically sets VERCEL=1 environment variable
+def get_exports_dir():
+    """Get the exports directory path, using /tmp in Vercel"""
+    if os.environ.get("VERCEL") or os.environ.get("VERCEL_ENV"):
+        return Path("/tmp/exports")
+    else:
+        BACKEND_DIR = Path(__file__).parent.parent
+        return BACKEND_DIR / "exports"
+
+# Create exports directory lazily (only when needed, not at import time)
+def ensure_exports_dir():
+    """Ensure exports directory exists"""
+    exports_dir = get_exports_dir()
+    try:
+        exports_dir.mkdir(exist_ok=True, parents=True)
+    except (OSError, PermissionError):
+        # If we can't create the directory, try /tmp as fallback
+        exports_dir = Path("/tmp/exports")
+        exports_dir.mkdir(exist_ok=True, parents=True)
+    return exports_dir
 
 def generate_business_plan_pdf(plan_data, sections_data, financial_data=None):
     """
@@ -30,10 +49,13 @@ def generate_business_plan_pdf(plan_data, sections_data, financial_data=None):
         str: Path to generated PDF file
     """
     
+    # Ensure exports directory exists and get path
+    exports_dir = ensure_exports_dir()
+    
     # Generate filename
     timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
     filename = f"business_plan_{plan_data.get('id', 'unknown')}_{timestamp}.pdf"
-    filepath = EXPORTS_DIR / filename
+    filepath = exports_dir / filename
     
     # Create PDF document
     doc = SimpleDocTemplate(
@@ -122,15 +144,40 @@ def generate_business_plan_pdf(plan_data, sections_data, financial_data=None):
         if not content or content.strip() == "":
             content = f"[{section.get('title')} content to be added]"
         
-        # Clean up content for PDF
-        content = content.replace('\n', '<br/>')
+        # If content is HTML, use it directly (ReportLab Paragraph supports basic HTML)
+        # If content is plain text or markdown, convert to HTML
+        if not ('<' in content and '>' in content):
+            # Convert markdown-style formatting to HTML
+            content = content.replace('\n', '<br/>')
+            # Convert **bold** to <b>bold</b>
+            content = re.sub(r'\*\*([^*]+)\*\*', r'<b>\1</b>', content)
+            # Convert *italic* to <i>italic</i> (but not if it's part of **)
+            content = re.sub(r'(?<!\*)\*([^*]+?)\*(?!\*)', r'<i>\1</i>', content)
         
-        # Split into paragraphs
-        paragraphs = content.split('<br/><br/>')
+        # Clean up HTML for ReportLab (it supports basic HTML tags)
+        # ReportLab supports: <b>, <i>, <u>, <br/>, <font>, <para>
+        # Remove unsupported tags and convert to supported ones
+        content = content.replace('<strong>', '<b>').replace('</strong>', '</b>')
+        content = content.replace('<em>', '<i>').replace('</em>', '</i>')
+        
+        # Split into paragraphs (by <p> tags or double <br/>)
+        if '<p>' in content:
+            paragraphs = re.split(r'</?p>', content)
+            paragraphs = [p.strip() for p in paragraphs if p.strip() and p.strip() != '<br/>']
+        else:
+            paragraphs = content.split('<br/><br/>')
+        
         for para in paragraphs:
-            if para.strip():
-                story.append(Paragraph(para, body_style))
-                story.append(Spacer(1, 6))
+            if para.strip() and para.strip() != '<br/>':
+                # Remove leading/trailing <br/> tags
+                para = para.strip()
+                if para.startswith('<br/>'):
+                    para = para[5:]
+                if para.endswith('<br/>'):
+                    para = para[:-5]
+                if para.strip():
+                    story.append(Paragraph(para.strip(), body_style))
+                    story.append(Spacer(1, 6))
         
         # Add some space after section
         story.append(Spacer(1, 0.3*inch))
