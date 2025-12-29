@@ -113,7 +113,7 @@ function AdminDashboardPage({ navigate, user, onLogout }) {
     };
     
     checkAdminAccess();
-  }, [activeTab, usersPage, usersSearch, user]);
+  }, [activeTab, usersPage, usersSearch, ticketsPage, ticketStatusFilter, ticketPriorityFilter, ticketAssignedFilter, user]);
 
   const loadData = async () => {
     try {
