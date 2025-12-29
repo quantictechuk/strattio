@@ -26,6 +26,11 @@ class AdminPasswordChange(BaseModel):
 class UserPasswordChange(BaseModel):
     new_password: str
 
+class AdminCreate(BaseModel):
+    email: EmailStr
+    password: str
+    name: Optional[str] = None
+
 # ============================================================================
 # ANALYTICS ROUTES
 # ============================================================================
@@ -361,3 +366,86 @@ async def change_admin_password(
     logger.info(f"Admin changed own password: {admin_user['email']}")
     
     return {"message": "Password changed successfully"}
+
+# ============================================================================
+# ADMIN USER MANAGEMENT ROUTES
+# ============================================================================
+
+@router.get("/admins")
+async def list_admins(
+    admin_user = Depends(get_current_admin_user),
+    db = Depends(get_db)
+):
+    """List all admin users"""
+    
+    logger.info(f"Admin list requested by: {admin_user.get('email')}")
+    
+    # Find all users with admin role
+    admin_users = await db.users.find({"role": "admin"}).to_list(None)
+    
+    # Serialize and clean up
+    admins_list = []
+    for admin in admin_users:
+        admin_clean = serialize_doc(admin)
+        # Remove sensitive data
+        if "password_hash" in admin_clean:
+            del admin_clean["password_hash"]
+        admins_list.append(admin_clean)
+    
+    return {
+        "admins": admins_list,
+        "total": len(admins_list)
+    }
+
+@router.post("/admins")
+async def create_admin(
+    admin_data: AdminCreate,
+    admin_user = Depends(get_current_admin_user),
+    db = Depends(get_db)
+):
+    """Create a new admin user"""
+    
+    logger.info(f"Admin creation requested by: {admin_user.get('email')} for email: {admin_data.email}")
+    
+    # Validate password
+    if len(admin_data.password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+    
+    # Check if user already exists
+    existing_user = await db.users.find_one({"email": admin_data.email})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="User with this email already exists")
+    
+    # Create admin user
+    admin_doc = {
+        "email": admin_data.email,
+        "password_hash": get_password_hash(admin_data.password),
+        "name": admin_data.name or admin_data.email.split("@")[0],
+        "role": "admin",
+        "subscription_tier": "enterprise",
+        "email_verified": False,  # Admin can verify later
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow()
+    }
+    
+    result = await db.users.insert_one(admin_doc)
+    admin_doc["_id"] = result.inserted_id
+    
+    # Create subscription for admin
+    await db.subscriptions.insert_one({
+        "user_id": str(result.inserted_id),
+        "tier": "enterprise",
+        "status": "active",
+        "plans_created_this_month": 0,
+        "plan_limit": 999,
+        "created_at": datetime.utcnow()
+    })
+    
+    logger.info(f"Admin user created: {admin_data.email} by {admin_user.get('email')}")
+    
+    # Return created admin (without password hash)
+    admin_clean = serialize_doc(admin_doc)
+    if "password_hash" in admin_clean:
+        del admin_clean["password_hash"]
+    
+    return admin_clean

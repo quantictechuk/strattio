@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Users, FileText, DollarSign, TrendingUp, Shield, LogOut, 
   Search, Eye, Key, Save, AlertCircle, CheckCircle2, X,
-  BarChart3, PieChart, Calendar, CreditCard
+  BarChart3, PieChart, Calendar, CreditCard, UserPlus, Mail
 } from 'lucide-react';
 import { api, authService } from '../lib/api';
 
@@ -31,6 +31,14 @@ function AdminDashboardPage({ navigate, user, onLogout }) {
   const [adminNewPassword, setAdminNewPassword] = useState('');
   const [adminConfirmPassword, setAdminConfirmPassword] = useState('');
   const [changingAdminPassword, setChangingAdminPassword] = useState(false);
+  
+  // Admin management
+  const [admins, setAdmins] = useState([]);
+  const [showCreateAdminModal, setShowCreateAdminModal] = useState(false);
+  const [newAdminEmail, setNewAdminEmail] = useState('');
+  const [newAdminPassword, setNewAdminPassword] = useState('');
+  const [newAdminName, setNewAdminName] = useState('');
+  const [creatingAdmin, setCreatingAdmin] = useState(false);
 
   useEffect(() => {
     const checkAdminAccess = async () => {
@@ -123,6 +131,12 @@ function AdminDashboardPage({ navigate, user, onLogout }) {
         });
         setUsers(usersData.users || []);
         setUsersTotal(usersData.total || 0);
+      } else if (activeTab === 'admins') {
+        const adminsData = await api.admin.admins.list().catch(e => {
+          console.error('Admins list error:', e);
+          throw new Error(`Failed to load admins: ${e.message}`);
+        });
+        setAdmins(adminsData.admins || []);
       }
     } catch (err) {
       console.error('Error loading admin data:', err);
@@ -190,6 +204,46 @@ function AdminDashboardPage({ navigate, user, onLogout }) {
       setError(err.message || 'Failed to change password');
     } finally {
       setChangingAdminPassword(false);
+    }
+  };
+
+  const handleCreateAdmin = async () => {
+    if (!newAdminEmail || !newAdminPassword) {
+      setError('Email and password are required');
+      return;
+    }
+    
+    if (newAdminPassword.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+    
+    try {
+      setCreatingAdmin(true);
+      setError('');
+      await api.admin.admins.create({
+        email: newAdminEmail,
+        password: newAdminPassword,
+        name: newAdminName || undefined
+      });
+      
+      // Reset form
+      setNewAdminEmail('');
+      setNewAdminPassword('');
+      setNewAdminName('');
+      setShowCreateAdminModal(false);
+      
+      // Reload admins list
+      if (activeTab === 'admins') {
+        const adminsData = await api.admin.admins.list();
+        setAdmins(adminsData.admins || []);
+      }
+      
+      alert('Admin user created successfully');
+    } catch (err) {
+      setError(err.message || 'Failed to create admin user');
+    } finally {
+      setCreatingAdmin(false);
     }
   };
 
@@ -275,7 +329,8 @@ function AdminDashboardPage({ navigate, user, onLogout }) {
           <div style={{ display: 'flex', gap: '2rem' }}>
             {[
               { id: 'overview', label: 'Overview', icon: BarChart3 },
-              { id: 'users', label: 'Users', icon: Users }
+              { id: 'users', label: 'Users', icon: Users },
+              { id: 'admins', label: 'Admins', icon: Shield }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -532,8 +587,241 @@ function AdminDashboardPage({ navigate, user, onLogout }) {
               )}
             </div>
           )}
+
+          {activeTab === 'admins' && (
+            <div>
+              {/* Header with Create Button */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#001639', margin: 0 }}>
+                  Admin Users
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowCreateAdminModal(true);
+                    setNewAdminEmail('');
+                    setNewAdminPassword('');
+                    setNewAdminName('');
+                    setError('');
+                  }}
+                  style={{
+                    padding: '0.625rem 1.25rem',
+                    background: '#001639',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '0.9375rem',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  <UserPlus size={18} />
+                  Add Admin User
+                </button>
+              </div>
+
+              {/* Admins Table */}
+              <div className="card" style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '600', color: '#475569' }}>Email</th>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '600', color: '#475569' }}>Name</th>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '600', color: '#475569' }}>Created</th>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '600', color: '#475569' }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {admins.map((admin) => (
+                      <tr key={admin.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                        <td style={{ padding: '0.75rem', fontSize: '0.875rem', color: '#1E293B', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <Mail size={16} color="#64748B" />
+                          {admin.email}
+                        </td>
+                        <td style={{ padding: '0.75rem', fontSize: '0.875rem', color: '#1E293B' }}>{admin.name || 'N/A'}</td>
+                        <td style={{ padding: '0.75rem', fontSize: '0.875rem', color: '#64748B' }}>
+                          {admin.created_at ? new Date(admin.created_at).toLocaleDateString() : 'N/A'}
+                        </td>
+                        <td style={{ padding: '0.75rem' }}>
+                          <span style={{
+                            padding: '0.25rem 0.75rem',
+                            background: '#E6F7F0',
+                            color: '#27AC85',
+                            borderRadius: '12px',
+                            fontSize: '0.75rem',
+                            fontWeight: '600',
+                            textTransform: 'uppercase'
+                          }}>
+                            Admin
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                
+                {admins.length === 0 && (
+                  <div style={{ padding: '2rem', textAlign: 'center', color: '#94A3B8' }}>
+                    No admin users found. Click "Add Admin User" to create one.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Create Admin Modal */}
+      {showCreateAdminModal && (
+        <Modal
+          title="Create New Admin User"
+          onClose={() => {
+            setShowCreateAdminModal(false);
+            setNewAdminEmail('');
+            setNewAdminPassword('');
+            setNewAdminName('');
+            setError('');
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {error && (
+              <div style={{
+                padding: '0.75rem',
+                background: '#FEF2F2',
+                border: '1px solid #EF4444',
+                borderRadius: '6px',
+                color: '#DC2626',
+                fontSize: '0.875rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                <AlertCircle size={16} />
+                {error}
+              </div>
+            )}
+            
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500', color: '#475569' }}>
+                Email Address <span style={{ color: '#EF4444' }}>*</span>
+              </label>
+              <input
+                type="email"
+                value={newAdminEmail}
+                onChange={(e) => setNewAdminEmail(e.target.value)}
+                placeholder="admin@example.com"
+                required
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '1px solid #E2E8F0',
+                  borderRadius: '6px',
+                  fontSize: '0.9375rem'
+                }}
+              />
+            </div>
+            
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500', color: '#475569' }}>
+                Password <span style={{ color: '#EF4444' }}>*</span>
+              </label>
+              <input
+                type="password"
+                value={newAdminPassword}
+                onChange={(e) => setNewAdminPassword(e.target.value)}
+                placeholder="At least 8 characters"
+                required
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '1px solid #E2E8F0',
+                  borderRadius: '6px',
+                  fontSize: '0.9375rem'
+                }}
+              />
+              <p style={{ marginTop: '0.25rem', fontSize: '0.75rem', color: '#64748B' }}>
+                Password must be at least 8 characters long
+              </p>
+            </div>
+            
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500', color: '#475569' }}>
+                Name (Optional)
+              </label>
+              <input
+                type="text"
+                value={newAdminName}
+                onChange={(e) => setNewAdminName(e.target.value)}
+                placeholder="Admin Name"
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '1px solid #E2E8F0',
+                  borderRadius: '6px',
+                  fontSize: '0.9375rem'
+                }}
+              />
+            </div>
+            
+            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+              <button
+                onClick={handleCreateAdmin}
+                disabled={creatingAdmin || !newAdminEmail || !newAdminPassword}
+                style={{
+                  flex: 1,
+                  padding: '0.75rem',
+                  background: creatingAdmin || !newAdminEmail || !newAdminPassword ? '#F1F5F9' : '#001639',
+                  color: creatingAdmin || !newAdminEmail || !newAdminPassword ? '#94A3B8' : 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: creatingAdmin || !newAdminEmail || !newAdminPassword ? 'not-allowed' : 'pointer',
+                  fontSize: '0.9375rem',
+                  fontWeight: '600',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem'
+                }}
+              >
+                {creatingAdmin ? (
+                  <>
+                    <div className="loading-spinner" style={{ width: '16px', height: '16px', borderWidth: '2px' }}></div>
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <UserPlus size={18} />
+                    Create Admin
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  setShowCreateAdminModal(false);
+                  setNewAdminEmail('');
+                  setNewAdminPassword('');
+                  setNewAdminName('');
+                  setError('');
+                }}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  background: '#F1F5F9',
+                  color: '#475569',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '0.9375rem',
+                  fontWeight: '500'
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* Change User Password Modal */}
       {showPasswordModal && selectedUser && (

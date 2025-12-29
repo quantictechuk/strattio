@@ -326,6 +326,13 @@ export const api = {
     changePassword: (newPassword) => apiRequest('/api/admin/admin/password', {
       method: 'POST',
       body: JSON.stringify({ new_password: newPassword })
-    })
+    }),
+    admins: {
+      list: () => apiRequest('/api/admin/admins'),
+      create: (adminData) => apiRequest('/api/admin/admins', {
+        method: 'POST',
+        body: JSON.stringify(adminData)
+      })
+    }
   }
 };
