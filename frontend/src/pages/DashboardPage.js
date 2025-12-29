@@ -14,13 +14,15 @@ import {
   LogOut,
   Building2,
   Menu,
-  Settings
+  Settings,
+  GitCompare
 } from 'lucide-react';
 import { api } from '../lib/api';
 import Footer from '../components/Footer';
 import MobileMenu from '../components/MobileMenu';
 import SupportTickets from '../components/SupportTickets';
 import Achievements from '../components/Achievements';
+import PlanComparison from '../components/PlanComparison';
 
 function DashboardPage({ navigate, user, onLogout }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -33,6 +35,8 @@ function DashboardPage({ navigate, user, onLogout }) {
   const [upgrading, setUpgrading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [selectedPlans, setSelectedPlans] = useState([]);
+  const [showComparison, setShowComparison] = useState(false);
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -592,6 +596,22 @@ function DashboardPage({ navigate, user, onLogout }) {
 
           {/* Action Buttons */}
           <div style={{ display: 'flex', gap: '0.75rem', flex: '0 0 auto' }}>
+            {selectedPlans.length >= 2 && (
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowComparison(true)}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.5rem', 
+                  whiteSpace: 'nowrap',
+                  padding: '0.625rem 1rem'
+                }}
+              >
+                <GitCompare size={18} />
+                Compare ({selectedPlans.length})
+              </button>
+            )}
             <button
               className="btn btn-secondary"
               onClick={() => navigate('companies')}

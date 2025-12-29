@@ -419,6 +419,12 @@ export const api = {
       method: 'POST'
     })
   },
+  comparison: {
+    compare: (planIds) => apiRequest('/api/plans/compare', {
+      method: 'POST',
+      body: JSON.stringify({ plan_ids: planIds })
+    })
+  },
   sharing: {
     createShare: (planId, shareData) => apiRequest(`/api/plans/${planId}/share`, {
       method: 'POST',
