@@ -8,6 +8,7 @@ import BusinessModelCanvas from '../components/BusinessModelCanvas';
 import PlanAnalytics from '../components/PlanAnalytics';
 import PlanChat from '../components/PlanChat';
 import PlanSharing from '../components/PlanSharing';
+import ReadinessScore from '../components/ReadinessScore';
 import { Share2 } from 'lucide-react';
 
 function PlanEditorPage({ navigate, user, planId }) {
@@ -726,6 +727,12 @@ function PlanEditorPage({ navigate, user, planId }) {
         {activeTab === 'analytics' && (
           <div>
             <PlanAnalytics planId={planId} />
+          </div>
+        )}
+
+        {activeTab === 'readiness' && (
+          <div>
+            <ReadinessScore planId={planId} />
           </div>
         )}
 

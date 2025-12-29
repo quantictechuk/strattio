@@ -380,6 +380,9 @@ export const api = {
     }),
     getHistory: (planId, limit = 50) => apiRequest(`/api/plans/${planId}/chat/history?limit=${limit}`)
   },
+  readinessScore: {
+    get: (planId) => apiRequest(`/api/plans/${planId}/readiness-score`)
+  },
   sharing: {
     createShare: (planId, shareData) => apiRequest(`/api/plans/${planId}/share`, {
       method: 'POST',

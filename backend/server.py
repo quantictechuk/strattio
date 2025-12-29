@@ -131,6 +131,7 @@ try:
     from routes.analytics import router as analytics_router
     from routes.plan_chat import router as plan_chat_router
     from routes.plan_sharing import router as plan_sharing_router
+    from routes.readiness_score import router as readiness_score_router
     
     api_router.include_router(oauth_router, prefix="/auth", tags=["OAuth"])
     api_router.include_router(admin_router, prefix="/admin", tags=["Admin"])
@@ -138,6 +139,7 @@ try:
     api_router.include_router(analytics_router, tags=["Analytics"])
     api_router.include_router(plan_chat_router, tags=["Plan Chat"])
     api_router.include_router(plan_sharing_router, tags=["Plan Sharing"])
+    api_router.include_router(readiness_score_router, tags=["Readiness Score"])
     api_router.include_router(plans_router, prefix="/plans", tags=["Plans"])
     api_router.include_router(sections_router, tags=["Sections"])
     api_router.include_router(financials_router, tags=["Financials"])
