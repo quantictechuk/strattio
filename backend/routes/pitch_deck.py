@@ -10,6 +10,7 @@ import io
 from pptx import Presentation
 from pptx.util import Inches, Pt
 from pptx.enum.text import PP_ALIGN
+from pptx.enum.shapes import MSO_SHAPE
 from pptx.dml.color import RGBColor
 
 from utils.serializers import serialize_doc, to_object_id
@@ -75,34 +76,93 @@ async def generate_pitch_deck(
     # Set branding colors
     primary_color = RGBColor(0, 22, 57) if not branding or not branding.primary_color else _hex_to_rgb(branding.primary_color)
     secondary_color = RGBColor(59, 130, 246) if not branding or not branding.secondary_color else _hex_to_rgb(branding.secondary_color)
+    accent_color = RGBColor(39, 172, 133)  # Green accent
+    background_color = RGBColor(248, 250, 252)  # Light gray background
+    text_color = RGBColor(71, 85, 105)  # Slate gray text
     
-    # Create slides
-    for slide_data in slides_data:
+    # Create slides with professional design
+    for idx, slide_data in enumerate(slides_data):
         slide = prs.slides.add_slide(prs.slide_layouts[6])  # Blank layout
         
-        # Add title
+        # Add background rectangle for visual appeal
+        if idx == 0:  # Title slide gets special treatment
+            bg_shape = slide.shapes.add_shape(
+                1,  # MSO_SHAPE.RECTANGLE
+                Inches(0), Inches(0), Inches(10), Inches(2.5)
+            )
+            bg_shape.fill.solid()
+            bg_shape.fill.fore_color.rgb = primary_color
+            bg_shape.line.fill.background()
+        else:
+            # Subtle top accent bar for other slides
+            accent_bar = slide.shapes.add_shape(
+                1,  # MSO_SHAPE.RECTANGLE
+                Inches(0), Inches(0), Inches(10), Inches(0.3)
+            )
+            accent_bar.fill.solid()
+            accent_bar.fill.fore_color.rgb = secondary_color
+            accent_bar.line.fill.background()
+        
+        # Add title with better styling
         if slide_data.get("title"):
-            title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.5), Inches(9), Inches(1))
+            title_y = Inches(0.6) if idx == 0 else Inches(0.5)
+            title_height = Inches(1.2) if idx == 0 else Inches(0.8)
+            title_box = slide.shapes.add_textbox(Inches(0.75), title_y, Inches(8.5), title_height)
             title_frame = title_box.text_frame
             title_frame.text = slide_data["title"]
             title_para = title_frame.paragraphs[0]
-            title_para.font.size = Pt(32)
+            title_para.font.size = Pt(44) if idx == 0 else Pt(36)
             title_para.font.bold = True
-            title_para.font.color.rgb = primary_color
+            title_para.font.color.rgb = RGBColor(255, 255, 255) if idx == 0 else primary_color
             title_para.alignment = PP_ALIGN.LEFT
+            title_para.space_after = Pt(0)
         
-        # Add content
+        # Add content with better formatting
         if slide_data.get("content"):
-            content_box = slide.shapes.add_textbox(Inches(0.5), Inches(1.8), Inches(9), Inches(5))
+            content_y = Inches(2.8) if idx == 0 else Inches(1.6)
+            content_height = Inches(4.5) if idx == 0 else Inches(5.5)
+            content_box = slide.shapes.add_textbox(Inches(0.75), content_y, Inches(8.5), content_height)
             content_frame = content_box.text_frame
             content_frame.word_wrap = True
-            content_frame.text = slide_data["content"]
+            content_frame.margin_left = Inches(0)
+            content_frame.margin_right = Inches(0)
+            content_frame.margin_top = Inches(0)
+            content_frame.margin_bottom = Inches(0)
             
-            # Format content
-            for para in content_frame.paragraphs:
-                para.font.size = Pt(16)
-                para.font.color.rgb = RGBColor(71, 85, 105)
-                para.space_after = Pt(12)
+            # Parse content into paragraphs
+            content_lines = slide_data["content"].split('\n')
+            for line_idx, line in enumerate(content_lines):
+                if line.strip():
+                    if line_idx > 0:
+                        p = content_frame.add_paragraph()
+                    else:
+                        p = content_frame.paragraphs[0]
+                    
+                    # Handle bullet points
+                    if line.strip().startswith('•') or line.strip().startswith('-'):
+                        p.text = line.strip().lstrip('•-').strip()
+                        p.level = 0
+                        p.font.size = Pt(20) if idx == 0 else Pt(18)
+                        p.font.color.rgb = RGBColor(255, 255, 255) if idx == 0 else text_color
+                        p.space_after = Pt(14)
+                        p.space_before = Pt(0)
+                    else:
+                        p.text = line.strip()
+                        p.level = 0
+                        p.font.size = Pt(20) if idx == 0 else Pt(18)
+                        p.font.color.rgb = RGBColor(255, 255, 255) if idx == 0 else text_color
+                        p.space_after = Pt(14)
+                        p.space_before = Pt(0)
+        
+        # Add slide number (except on title slide)
+        if idx > 0:
+            slide_num_shape = slide.shapes.add_textbox(Inches(9), Inches(7), Inches(0.8), Inches(0.3))
+            slide_num_frame = slide_num_shape.text_frame
+            slide_num_frame.text = f"{idx}"
+            slide_num_para = slide_num_frame.paragraphs[0]
+            slide_num_para.font.size = Pt(14)
+            slide_num_para.font.color.rgb = RGBColor(148, 163, 184)
+            slide_num_para.alignment = PP_ALIGN.RIGHT
     
     # Save to bytes
     deck_bytes = io.BytesIO()
@@ -172,28 +232,93 @@ async def download_pitch_deck(
     primary_color = RGBColor(0, 22, 57)
     secondary_color = RGBColor(59, 130, 246)
     
-    for slide_data in slides_data:
+    # Use the same improved design as in generate endpoint
+    primary_color = RGBColor(0, 22, 57)
+    secondary_color = RGBColor(59, 130, 246)
+    text_color = RGBColor(71, 85, 105)
+    
+    for idx, slide_data in enumerate(slides_data):
         slide = prs.slides.add_slide(prs.slide_layouts[6])
         
+        # Add background rectangle for visual appeal
+        if idx == 0:  # Title slide gets special treatment
+            bg_shape = slide.shapes.add_shape(
+                1,  # MSO_SHAPE.RECTANGLE
+                Inches(0), Inches(0), Inches(10), Inches(2.5)
+            )
+            bg_shape.fill.solid()
+            bg_shape.fill.fore_color.rgb = primary_color
+            bg_shape.line.fill.background()
+        else:
+            # Subtle top accent bar for other slides
+            accent_bar = slide.shapes.add_shape(
+                1,  # MSO_SHAPE.RECTANGLE
+                Inches(0), Inches(0), Inches(10), Inches(0.3)
+            )
+            accent_bar.fill.solid()
+            accent_bar.fill.fore_color.rgb = secondary_color
+            accent_bar.line.fill.background()
+        
+        # Add title with better styling
         if slide_data.get("title"):
-            title_box = slide.shapes.add_textbox(Inches(0.5), Inches(0.5), Inches(9), Inches(1))
+            title_y = Inches(0.6) if idx == 0 else Inches(0.5)
+            title_height = Inches(1.2) if idx == 0 else Inches(0.8)
+            title_box = slide.shapes.add_textbox(Inches(0.75), title_y, Inches(8.5), title_height)
             title_frame = title_box.text_frame
             title_frame.text = slide_data["title"]
             title_para = title_frame.paragraphs[0]
-            title_para.font.size = Pt(32)
+            title_para.font.size = Pt(44) if idx == 0 else Pt(36)
             title_para.font.bold = True
-            title_para.font.color.rgb = primary_color
+            title_para.font.color.rgb = RGBColor(255, 255, 255) if idx == 0 else primary_color
+            title_para.alignment = PP_ALIGN.LEFT
+            title_para.space_after = Pt(0)
         
+        # Add content with better formatting
         if slide_data.get("content"):
-            content_box = slide.shapes.add_textbox(Inches(0.5), Inches(1.8), Inches(9), Inches(5))
+            content_y = Inches(2.8) if idx == 0 else Inches(1.6)
+            content_height = Inches(4.5) if idx == 0 else Inches(5.5)
+            content_box = slide.shapes.add_textbox(Inches(0.75), content_y, Inches(8.5), content_height)
             content_frame = content_box.text_frame
             content_frame.word_wrap = True
-            content_frame.text = slide_data["content"]
+            content_frame.margin_left = Inches(0)
+            content_frame.margin_right = Inches(0)
+            content_frame.margin_top = Inches(0)
+            content_frame.margin_bottom = Inches(0)
             
-            for para in content_frame.paragraphs:
-                para.font.size = Pt(16)
-                para.font.color.rgb = RGBColor(71, 85, 105)
-                para.space_after = Pt(12)
+            # Parse content into paragraphs
+            content_lines = slide_data["content"].split('\n')
+            for line_idx, line in enumerate(content_lines):
+                if line.strip():
+                    if line_idx > 0:
+                        p = content_frame.add_paragraph()
+                    else:
+                        p = content_frame.paragraphs[0]
+                    
+                    # Handle bullet points
+                    if line.strip().startswith('•') or line.strip().startswith('-'):
+                        p.text = line.strip().lstrip('•-').strip()
+                        p.level = 0
+                        p.font.size = Pt(20) if idx == 0 else Pt(18)
+                        p.font.color.rgb = RGBColor(255, 255, 255) if idx == 0 else text_color
+                        p.space_after = Pt(14)
+                        p.space_before = Pt(0)
+                    else:
+                        p.text = line.strip()
+                        p.level = 0
+                        p.font.size = Pt(20) if idx == 0 else Pt(18)
+                        p.font.color.rgb = RGBColor(255, 255, 255) if idx == 0 else text_color
+                        p.space_after = Pt(14)
+                        p.space_before = Pt(0)
+        
+        # Add slide number (except on title slide)
+        if idx > 0:
+            slide_num_shape = slide.shapes.add_textbox(Inches(9), Inches(7), Inches(0.8), Inches(0.3))
+            slide_num_frame = slide_num_shape.text_frame
+            slide_num_frame.text = f"{idx}"
+            slide_num_para = slide_num_frame.paragraphs[0]
+            slide_num_para.font.size = Pt(14)
+            slide_num_para.font.color.rgb = RGBColor(148, 163, 184)
+            slide_num_para.alignment = PP_ALIGN.RIGHT
     
     # Save to bytes
     deck_bytes = io.BytesIO()

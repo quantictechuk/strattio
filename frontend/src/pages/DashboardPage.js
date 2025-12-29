@@ -15,7 +15,8 @@ import {
   Building2,
   Menu,
   Settings,
-  GitCompare
+  GitCompare,
+  X
 } from 'lucide-react';
 import { api } from '../lib/api';
 import Footer from '../components/Footer';
@@ -596,22 +597,29 @@ function DashboardPage({ navigate, user, onLogout }) {
 
           {/* Action Buttons */}
           <div style={{ display: 'flex', gap: '0.75rem', flex: '0 0 auto' }}>
-            {selectedPlans.length >= 2 && (
-              <button
-                className="btn btn-secondary"
-                onClick={() => setShowComparison(true)}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '0.5rem', 
-                  whiteSpace: 'nowrap',
-                  padding: '0.625rem 1rem'
-                }}
-              >
-                <GitCompare size={18} />
-                Compare ({selectedPlans.length})
-              </button>
-            )}
+            <button
+              className="btn btn-secondary"
+              onClick={() => {
+                if (selectedPlans.length >= 2) {
+                  setShowComparison(true);
+                } else {
+                  alert('Please select at least 2 plans to compare. Use the checkboxes on plan cards.');
+                }
+              }}
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.5rem', 
+                whiteSpace: 'nowrap',
+                padding: '0.625rem 1rem',
+                opacity: selectedPlans.length >= 2 ? 1 : 0.6,
+                cursor: selectedPlans.length >= 2 ? 'pointer' : 'not-allowed'
+              }}
+              title={selectedPlans.length >= 2 ? `Compare ${selectedPlans.length} plans` : 'Select 2 or more plans to compare'}
+            >
+              <GitCompare size={18} />
+              {selectedPlans.length >= 2 ? `Compare (${selectedPlans.length})` : 'Compare Plans'}
+            </button>
             <button
               className="btn btn-secondary"
               onClick={() => navigate('companies')}
@@ -1294,6 +1302,127 @@ function DashboardPage({ navigate, user, onLogout }) {
                 Maybe Later
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Plan Comparison Section */}
+      {plans.length >= 2 && (
+        <div className="container" style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1rem 3rem' }}>
+          <div className="card" style={{ 
+            padding: '2rem',
+            background: 'linear-gradient(135deg, #F8FAFC 0%, #FFFFFF 100%)',
+            border: '1px solid #E2E8F0',
+            borderRadius: '16px'
+          }}>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              marginBottom: '1.5rem'
+            }}>
+              <div>
+                <h3 style={{ 
+                  fontSize: '1.5rem', 
+                  fontWeight: '700', 
+                  color: '#001639', 
+                  margin: 0, 
+                  marginBottom: '0.5rem',
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.75rem' 
+                }}>
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #001639 0%, #003366 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <GitCompare size={20} color="white" />
+                  </div>
+                  Plan Comparison
+                </h3>
+                <p style={{ margin: 0, fontSize: '0.875rem', color: '#64748B' }}>
+                  Select 2-4 plans to compare side-by-side and identify differences
+                </p>
+              </div>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  if (selectedPlans.length >= 2) {
+                    setShowComparison(true);
+                  } else {
+                    alert('Please select at least 2 plans using the checkboxes on plan cards above.');
+                  }
+                }}
+                disabled={selectedPlans.length < 2}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.5rem',
+                  padding: '0.75rem 1.5rem',
+                  borderRadius: '8px',
+                  opacity: selectedPlans.length >= 2 ? 1 : 0.5,
+                  cursor: selectedPlans.length >= 2 ? 'pointer' : 'not-allowed'
+                }}
+              >
+                <GitCompare size={18} />
+                {selectedPlans.length >= 2 ? `Compare ${selectedPlans.length} Plans` : 'Select Plans to Compare'}
+              </button>
+            </div>
+            {selectedPlans.length > 0 && (
+              <div style={{
+                padding: '1rem',
+                background: '#F1F5F9',
+                borderRadius: '8px',
+                border: '1px solid #E2E8F0'
+              }}>
+                <div style={{ fontSize: '0.875rem', fontWeight: '600', color: '#001639', marginBottom: '0.5rem' }}>
+                  Selected Plans ({selectedPlans.length} of 4)
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  {selectedPlans.map(planId => {
+                    const plan = plans.find(p => p.id === planId);
+                    return plan ? (
+                      <div key={planId} style={{
+                        padding: '0.5rem 0.75rem',
+                        background: 'white',
+                        borderRadius: '6px',
+                        border: '1px solid #E2E8F0',
+                        fontSize: '0.8125rem',
+                        color: '#001639',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                      }}>
+                        {plan.name || 'Untitled Plan'}
+                        <button
+                          onClick={() => setSelectedPlans(selectedPlans.filter(id => id !== planId))}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: 0,
+                            display: 'flex',
+                            alignItems: 'center'
+                          }}
+                        >
+                          <X size={14} color="#64748B" />
+                        </button>
+                      </div>
+                    ) : null;
+                  })}
+                </div>
+                {selectedPlans.length < 2 && (
+                  <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '0.5rem' }}>
+                    Select {2 - selectedPlans.length} more plan{2 - selectedPlans.length > 1 ? 's' : ''} to compare
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

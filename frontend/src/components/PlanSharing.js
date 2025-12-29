@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Share2, Users, MessageSquare, History, X, Copy, Check, Eye, Edit, Shield, Trash2, Send, Clock } from 'lucide-react';
 import { api } from '../lib/api';
 
-function PlanSharing({ planId, user, isOpen, onClose }) {
+function PlanSharing({ planId, user, isOpen, onClose, isInTab = false }) {
   const [activeTab, setActiveTab] = useState('share');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -184,31 +184,45 @@ function PlanSharing({ planId, user, isOpen, onClose }) {
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return (
+      <div style={{ padding: '2rem', textAlign: 'center', color: '#64748B' }}>
+        <Share2 size={48} color="#CBD4E0" style={{ marginBottom: '1rem', margin: '0 auto' }} />
+        <p>Share & Collaborate features will appear here.</p>
+      </div>
+    );
+  }
 
   return (
     <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000,
-      padding: '1rem'
-    }} onClick={onClose}>
+      ...(isInTab ? {} : {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        padding: '1rem'
+      }),
+      ...(isInTab ? {
+        width: '100%',
+        height: '100%',
+        minHeight: '600px'
+      } : {})
+    }} onClick={isInTab ? undefined : onClose}>
       <div style={{
         background: 'white',
         borderRadius: '16px',
         width: '100%',
-        maxWidth: '800px',
-        maxHeight: '90vh',
+        maxWidth: isInTab ? '100%' : '800px',
+        maxHeight: isInTab ? '100%' : '90vh',
         display: 'flex',
         flexDirection: 'column',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+        boxShadow: isInTab ? 'none' : '0 20px 60px rgba(0, 0, 0, 0.3)'
       }} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div style={{
@@ -221,9 +235,11 @@ function PlanSharing({ planId, user, isOpen, onClose }) {
           <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#001639', margin: 0 }}>
             Share & Collaborate
           </h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-            <X size={24} color="#64748B" />
-          </button>
+          {!isInTab && (
+            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+              <X size={24} color="#64748B" />
+            </button>
+          )}
         </div>
 
         {/* Tabs */}

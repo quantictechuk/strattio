@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, Send, X, Bot, User, Loader2 } from 'lucide-react';
 import { api } from '../lib/api';
 
-function PlanChat({ planId, currentSectionId = null, isOpen, onClose }) {
+function PlanChat({ planId, currentSectionId = null, isOpen, onClose, isInTab = false }) {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [sending, setSending] = useState(false);
@@ -87,23 +87,38 @@ function PlanChat({ planId, currentSectionId = null, isOpen, onClose }) {
     "How can I make my plan more investor-ready?"
   ];
 
-  if (!isOpen) return null;
+  // If not in modal mode, render inline
+  if (!isOpen) {
+    return (
+      <div style={{ padding: '2rem', textAlign: 'center', color: '#64748B' }}>
+        <Bot size={48} color="#CBD4E0" style={{ marginBottom: '1rem', margin: '0 auto' }} />
+        <p>AI Chat will appear here when you start a conversation.</p>
+      </div>
+    );
+  }
 
   return (
     <div style={{
-      position: 'fixed',
-      bottom: '20px',
-      right: '20px',
-      width: '400px',
-      maxWidth: 'calc(100vw - 40px)',
-      height: '600px',
-      maxHeight: 'calc(100vh - 40px)',
+      ...(isInTab ? {} : {
+        position: 'fixed',
+        bottom: '20px',
+        right: '20px',
+        width: '400px',
+        maxWidth: 'calc(100vw - 40px)',
+        height: '600px',
+        maxHeight: 'calc(100vh - 40px)',
+        zIndex: 1000,
+      }),
+      ...(isInTab ? {
+        width: '100%',
+        height: '100%',
+        minHeight: '600px'
+      } : {}),
       background: 'white',
       borderRadius: '16px',
-      boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+      boxShadow: isInTab ? 'none' : '0 20px 60px rgba(0, 0, 0, 0.3)',
       display: 'flex',
       flexDirection: 'column',
-      zIndex: 1000,
       border: '1px solid #E2E8F0'
     }}>
       {/* Header */}
@@ -133,25 +148,27 @@ function PlanChat({ planId, currentSectionId = null, isOpen, onClose }) {
             <p style={{ margin: 0, fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.8)' }}>AI Assistant</p>
           </div>
         </div>
-        <button
-          onClick={onClose}
-          style={{
-            background: 'rgba(255, 255, 255, 0.2)',
-            border: 'none',
-            borderRadius: '6px',
-            width: '28px',
-            height: '28px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            transition: 'background 0.2s'
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
-          onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}
-        >
-          <X size={16} color="white" />
-        </button>
+        {!isInTab && (
+          <button
+            onClick={onClose}
+            style={{
+              background: 'rgba(255, 255, 255, 0.2)',
+              border: 'none',
+              borderRadius: '6px',
+              width: '28px',
+              height: '28px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'background 0.2s'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}
+          >
+            <X size={16} color="white" />
+          </button>
+        )}
       </div>
 
       {/* Messages */}

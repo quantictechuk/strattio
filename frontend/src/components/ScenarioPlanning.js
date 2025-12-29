@@ -61,14 +61,19 @@ function ScenarioPlanning({ planId }) {
   }
 
   if (!scenarios) {
-    return null;
+    return (
+      <div className="card" style={{ padding: '2rem', textAlign: 'center' }}>
+        <p style={{ color: '#64748B' }}>No scenario data available. Please generate scenarios first.</p>
+      </div>
+    );
   }
 
-  const scenarioData = scenarios.scenarios || {};
-  const bestCase = scenarioData.best_case;
-  const worstCase = scenarioData.worst_case;
-  const realistic = scenarioData.realistic;
-  const sensitivity = scenarios.sensitivity_analysis || [];
+  // Handle both direct scenarios object and nested structure
+  const scenarioData = scenarios.scenarios || scenarios.data?.scenarios || scenarios;
+  const bestCase = scenarioData?.best_case || scenarioData?.best_case?.data;
+  const worstCase = scenarioData?.worst_case || scenarioData?.worst_case?.data;
+  const realistic = scenarioData?.realistic || scenarioData?.realistic?.data || scenarioData;
+  const sensitivity = scenarios.sensitivity_analysis || scenarios.data?.sensitivity_analysis || [];
 
   const getScenarioData = () => {
     if (customResult) return customResult.scenario;
@@ -81,8 +86,16 @@ function ScenarioPlanning({ planId }) {
   };
 
   const currentData = getScenarioData();
-  const pnl = currentData?.pnl_monthly || [];
-  const cashflow = currentData?.cashflow_monthly || [];
+  if (!currentData) {
+    return (
+      <div className="card" style={{ padding: '2rem', textAlign: 'center' }}>
+        <p style={{ color: '#64748B' }}>Unable to load scenario data. Please try refreshing.</p>
+      </div>
+    );
+  }
+  
+  const pnl = currentData?.pnl_monthly || currentData?.data?.pnl_monthly || [];
+  const cashflow = currentData?.cashflow_monthly || currentData?.data?.cashflow_monthly || [];
 
   // Calculate totals
   const totalRevenue = pnl.reduce((sum, m) => sum + (m.revenue || 0), 0);

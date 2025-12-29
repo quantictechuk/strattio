@@ -841,6 +841,18 @@ function PlanEditorPage({ navigate, user, planId }) {
           </div>
         )}
 
+        {activeTab === 'chat' && (
+          <div className="card" style={{ minHeight: '600px', padding: 0, overflow: 'hidden' }}>
+            <PlanChat planId={planId} isOpen={true} onClose={() => {}} isInTab={true} />
+          </div>
+        )}
+
+        {activeTab === 'sharing' && (
+          <div className="card" style={{ minHeight: '600px', padding: 0, overflow: 'hidden' }}>
+            <PlanSharing planId={planId} user={user} isOpen={true} onClose={() => {}} isInTab={true} />
+          </div>
+        )}
+
         {activeTab === 'sections' && (
           <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '2rem' }}>
             {/* Sections List */}
