@@ -724,6 +724,96 @@ function PlanEditorPage({ navigate, user, planId }) {
           >
             Compliance
           </button>
+          <button
+            style={{
+              padding: '1rem 1.5rem',
+              background: 'none',
+              border: 'none',
+              borderBottom: activeTab === 'analytics' ? '2px solid #001639' : '2px solid transparent',
+              color: activeTab === 'analytics' ? '#001639' : '#6B7A91',
+              fontWeight: '600',
+              cursor: 'pointer',
+              marginBottom: '-2px'
+            }}
+            onClick={() => setActiveTab('analytics')}
+          >
+            Analytics
+          </button>
+          <button
+            style={{
+              padding: '1rem 1.5rem',
+              background: 'none',
+              border: 'none',
+              borderBottom: activeTab === 'readiness' ? '2px solid #001639' : '2px solid transparent',
+              color: activeTab === 'readiness' ? '#001639' : '#6B7A91',
+              fontWeight: '600',
+              cursor: 'pointer',
+              marginBottom: '-2px'
+            }}
+            onClick={() => setActiveTab('readiness')}
+          >
+            Investment Readiness
+          </button>
+          <button
+            style={{
+              padding: '1rem 1.5rem',
+              background: 'none',
+              border: 'none',
+              borderBottom: activeTab === 'pitch-deck' ? '2px solid #001639' : '2px solid transparent',
+              color: activeTab === 'pitch-deck' ? '#001639' : '#6B7A91',
+              fontWeight: '600',
+              cursor: 'pointer',
+              marginBottom: '-2px'
+            }}
+            onClick={() => setActiveTab('pitch-deck')}
+          >
+            Pitch Deck
+          </button>
+          <button
+            style={{
+              padding: '1rem 1.5rem',
+              background: 'none',
+              border: 'none',
+              borderBottom: activeTab === 'insights' ? '2px solid #001639' : '2px solid transparent',
+              color: activeTab === 'insights' ? '#001639' : '#6B7A91',
+              fontWeight: '600',
+              cursor: 'pointer',
+              marginBottom: '-2px'
+            }}
+            onClick={() => setActiveTab('insights')}
+          >
+            AI Insights
+          </button>
+          <button
+            style={{
+              padding: '1rem 1.5rem',
+              background: 'none',
+              border: 'none',
+              borderBottom: activeTab === 'chat' ? '2px solid #001639' : '2px solid transparent',
+              color: activeTab === 'chat' ? '#001639' : '#6B7A91',
+              fontWeight: '600',
+              cursor: 'pointer',
+              marginBottom: '-2px'
+            }}
+            onClick={() => setActiveTab('chat')}
+          >
+            AI Chat
+          </button>
+          <button
+            style={{
+              padding: '1rem 1.5rem',
+              background: 'none',
+              border: 'none',
+              borderBottom: activeTab === 'sharing' ? '2px solid #001639' : '2px solid transparent',
+              color: activeTab === 'sharing' ? '#001639' : '#6B7A91',
+              fontWeight: '600',
+              cursor: 'pointer',
+              marginBottom: '-2px'
+            }}
+            onClick={() => setActiveTab('sharing')}
+          >
+            Share & Collaborate
+          </button>
         </div>
 
         {/* Sections Tab */}
@@ -946,6 +1036,13 @@ function PlanEditorPage({ navigate, user, planId }) {
               </div>
             )}
           </div>
+          
+          {/* Scenario Planning */}
+          {financials && financials.data && (
+            <div style={{ marginTop: '2rem' }}>
+              <ScenarioPlanning planId={planId} />
+            </div>
+          )}
         )}
 
         {/* Compliance Tab */}

@@ -1275,6 +1275,11 @@ function DashboardPage({ navigate, user, onLogout }) {
         </div>
       )}
 
+      {/* Achievements Section */}
+      <div className="container" style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1rem 3rem' }}>
+        <Achievements userId={user?.id} />
+      </div>
+
       {/* Support Tickets Section */}
       <div className="container" style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1rem 3rem' }}>
         <SupportTickets user={user} />
@@ -1282,6 +1287,17 @@ function DashboardPage({ navigate, user, onLogout }) {
 
       {/* Footer */}
       <Footer navigate={navigate} user={user} />
+
+      {/* Plan Comparison Modal */}
+      {showComparison && selectedPlans.length >= 2 && (
+        <PlanComparison
+          planIds={selectedPlans}
+          onClose={() => {
+            setShowComparison(false);
+            setSelectedPlans([]);
+          }}
+        />
+      )}
     </div>
   );
 }
