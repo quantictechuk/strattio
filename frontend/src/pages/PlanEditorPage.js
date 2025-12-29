@@ -5,6 +5,7 @@ import SWOTAnalysis from '../components/SWOTAnalysis';
 import CompetitorAnalysis from '../components/CompetitorAnalysis';
 import EnhancedCompliance from '../components/EnhancedCompliance';
 import BusinessModelCanvas from '../components/BusinessModelCanvas';
+import PlanAnalytics from '../components/PlanAnalytics';
 
 function PlanEditorPage({ navigate, user, planId }) {
   const [plan, setPlan] = useState(null);
@@ -710,6 +711,12 @@ function PlanEditorPage({ navigate, user, planId }) {
         </div>
 
         {/* Sections Tab */}
+        {activeTab === 'analytics' && (
+          <div>
+            <PlanAnalytics planId={planId} />
+          </div>
+        )}
+
         {activeTab === 'sections' && (
           <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '2rem' }}>
             {/* Sections List */}
