@@ -29,6 +29,7 @@ function PlanEditorPage({ navigate, user, planId }) {
   const [isRegeneratingCanvas, setIsRegeneratingCanvas] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [showSharing, setShowSharing] = useState(false);
   const exportMenuRef = useRef(null);
 
   // Close export menu when clicking outside
@@ -560,6 +561,13 @@ function PlanEditorPage({ navigate, user, planId }) {
               data-testid="view-financials-btn"
             >
               📊 View Financials
+            </button>
+            <button 
+              className="btn btn-secondary"
+              onClick={() => setShowSharing(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            >
+              <Share2 size={18} /> Share & Collaborate
             </button>
             <div style={{ position: 'relative' }} ref={exportMenuRef}>
               <button 
