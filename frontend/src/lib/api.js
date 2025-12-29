@@ -383,6 +383,23 @@ export const api = {
   readinessScore: {
     get: (planId) => apiRequest(`/api/plans/${planId}/readiness-score`)
   },
+  pitchDeck: {
+    generate: (planId, branding = null) => apiRequest(`/api/plans/${planId}/pitch-deck/generate`, {
+      method: 'POST',
+      body: JSON.stringify(branding || {})
+    }),
+    download: (planId, format = 'pptx') => {
+      const url = buildApiUrl(`/api/plans/${planId}/pitch-deck/download?format=${format}`);
+      return fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${authService.getToken()}`
+        }
+      }).then(response => {
+        if (!response.ok) throw new Error('Download failed');
+        return response.blob();
+      });
+    }
+  },
   sharing: {
     createShare: (planId, shareData) => apiRequest(`/api/plans/${planId}/share`, {
       method: 'POST',
