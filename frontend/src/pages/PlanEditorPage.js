@@ -28,6 +28,7 @@ function PlanEditorPage({ navigate, user, planId }) {
   const [isRegeneratingCompetitor, setIsRegeneratingCompetitor] = useState(false);
   const [isRegeneratingCanvas, setIsRegeneratingCanvas] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showChat, setShowChat] = useState(false);
   const exportMenuRef = useRef(null);
 
   // Close export menu when clicking outside

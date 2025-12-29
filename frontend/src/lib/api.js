@@ -372,5 +372,12 @@ export const api = {
   },
   analytics: {
     getPlanAnalytics: (planId) => apiRequest(`/api/plans/${planId}/analytics`)
+  },
+  planChat: {
+    send: (planId, message, sectionId = null) => apiRequest(`/api/plans/${planId}/chat`, {
+      method: 'POST',
+      body: JSON.stringify({ message, section_id: sectionId })
+    }),
+    getHistory: (planId, limit = 50) => apiRequest(`/api/plans/${planId}/chat/history?limit=${limit}`)
   }
 };
