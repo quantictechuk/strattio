@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, User, Lock, CreditCard, Trash2, Save, Eye, EyeOff, AlertTriangle, Menu } from 'lucide-react';
+import { ArrowLeft, User, Lock, CreditCard, Trash2, Save, Eye, EyeOff, AlertTriangle, Menu, LogOut, Settings, LayoutDashboard } from 'lucide-react';
 import { api, authService } from '../lib/api';
 import Footer from '../components/Footer';
 import MobileMenu from '../components/MobileMenu';
@@ -148,47 +148,186 @@ function SettingsPage({ navigate, user, onLogout }) {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-secondary)' }}>
       {/* Header */}
       <header style={{ 
-        padding: '1.25rem 0', 
-        background: 'rgba(255, 255, 255, 0.98)', 
+        background: 'white', 
+        borderBottom: '1px solid #E2E8F0', 
         position: 'sticky', 
         top: 0, 
-        zIndex: 1000,
-        borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)'
+        zIndex: 30 
       }}>
-        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div className="container" style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '64px', flexWrap: 'wrap' }}>
+            {/* Logo */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', cursor: 'pointer' }} onClick={() => navigate('home')}>
+              <img 
+                src="/logo.png" 
+                alt="Strattio" 
+                style={{ height: '36px', width: 'auto' }} 
+              />
+            </div>
+
+            {/* Navigation */}
+            <nav className="desktop-nav" style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+              <a 
+                href="#" 
+                onClick={(e) => { e.preventDefault(); navigate('home'); }}
+                style={{ 
+                  color: '#64748B', 
+                  textDecoration: 'none', 
+                  fontSize: '0.875rem', 
+                  fontWeight: '500',
+                  transition: 'color 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.color = '#001639'}
+                onMouseLeave={(e) => e.target.style.color = '#64748B'}
+              >
+                Home
+              </a>
+              <a 
+                href="#" 
+                onClick={(e) => { e.preventDefault(); navigate('features'); }}
+                style={{ 
+                  color: '#64748B', 
+                  textDecoration: 'none', 
+                  fontSize: '0.875rem', 
+                  fontWeight: '500',
+                  transition: 'color 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.color = '#001639'}
+                onMouseLeave={(e) => e.target.style.color = '#64748B'}
+              >
+                Features
+              </a>
+              <a 
+                href="#pricing-section" 
+                onClick={(e) => { 
+                  e.preventDefault(); 
+                  navigate('home');
+                  setTimeout(() => {
+                    const pricingSection = document.getElementById('pricing-section');
+                    if (pricingSection) {
+                      pricingSection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }, 100);
+                }}
+                style={{ 
+                  color: '#64748B', 
+                  textDecoration: 'none', 
+                  fontSize: '0.875rem', 
+                  fontWeight: '500',
+                  transition: 'color 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.color = '#001639'}
+                onMouseLeave={(e) => e.target.style.color = '#64748B'}
+              >
+                Pricing
+              </a>
+              <a 
+                href="#" 
+                onClick={(e) => { e.preventDefault(); navigate('faq'); }}
+                style={{ 
+                  color: '#64748B', 
+                  textDecoration: 'none', 
+                  fontSize: '0.875rem', 
+                  fontWeight: '500',
+                  transition: 'color 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.color = '#001639'}
+                onMouseLeave={(e) => e.target.style.color = '#64748B'}
+              >
+                FAQ
+              </a>
+              <a 
+                href="#" 
+                onClick={(e) => { e.preventDefault(); navigate('contact'); }}
+                style={{ 
+                  color: '#64748B', 
+                  textDecoration: 'none', 
+                  fontSize: '0.875rem', 
+                  fontWeight: '500',
+                  transition: 'color 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.color = '#001639'}
+                onMouseLeave={(e) => e.target.style.color = '#64748B'}
+              >
+                Contact
+              </a>
+            </nav>
+
+            {/* Right Actions */}
+            <div className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+              <button 
+                onClick={() => navigate('dashboard')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  color: '#64748B',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'color 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.color = '#001639'}
+                onMouseLeave={(e) => e.target.style.color = '#64748B'}
+              >
+                <LayoutDashboard size={18} style={{ marginRight: '0.5rem' }} />
+                Dashboard
+              </button>
+              <button 
+                onClick={() => navigate('settings')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  color: '#001639',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'color 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.color = '#001639'}
+                onMouseLeave={(e) => e.target.style.color = '#001639'}
+              >
+                <Settings size={18} style={{ marginRight: '0.5rem' }} />
+                Settings
+              </button>
+              <button 
+                onClick={onLogout}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  color: '#64748B',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'color 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.color = '#EF4444'}
+                onMouseLeave={(e) => e.target.style.color = '#64748B'}
+              >
+                <LogOut size={18} style={{ marginRight: '0.5rem' }} />
+                Log Out
+              </button>
+            </div>
             <button
-              onClick={() => navigate('dashboard')}
+              className="mobile-menu-button"
+              onClick={() => setMobileMenuOpen(true)}
               style={{
+                display: 'none',
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                color: '#4A5568',
-                padding: '0.5rem'
+                padding: '0.5rem',
+                color: '#64748B'
               }}
             >
-              <ArrowLeft size={20} />
+              <Menu size={24} />
             </button>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#001639', margin: 0 }}>Settings</h1>
           </div>
-          <button
-            className="mobile-menu-button"
-            onClick={() => setMobileMenuOpen(true)}
-            style={{
-              display: 'none',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '0.5rem',
-              color: '#2D3748'
-            }}
-          >
-            <Menu size={24} />
-          </button>
         </div>
       </header>
 
