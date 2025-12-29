@@ -154,7 +154,7 @@ function HomePage({ navigate, user }) {
                   data-testid="goto-register-btn"
                   style={{ padding: '0.625rem 1.5rem', fontSize: '0.9375rem' }}
                 >
-                  Start Free Trial
+                  Get Started for Free
                 </button>
               </>
             )}
@@ -1160,7 +1160,7 @@ function HomePage({ navigate, user }) {
                 price: '£12',
                 period: '/mo',
                 description: 'Essential tools for early-stage validation.',
-                cta: 'Start Trial',
+                cta: 'Get Started',
                 features: [
                   '3 Business Plans',
                   'Standard PDF Export',

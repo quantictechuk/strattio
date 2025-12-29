@@ -844,4 +844,12 @@ html, body {
   header[style*="padding: '0 1rem'"] {
     padding: 0 1rem !important;
   }
+  
+  /* Back to top button mobile adjustments */
+  .back-to-top-button {
+    bottom: 1.5rem !important;
+    right: 1.5rem !important;
+    width: 44px !important;
+    height: 44px !important;
+  }
 }

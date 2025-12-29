@@ -19,6 +19,8 @@ import SubscriptionCancelPage from './pages/SubscriptionCancelPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsOfServicePage from './pages/TermsOfServicePage';
 import AboutUsPage from './pages/AboutUsPage';
+import SettingsPage from './pages/SettingsPage';
+import BackToTop from './components/BackToTop';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -37,6 +39,7 @@ function App() {
       '/login': 'login',
       '/register': 'register',
       '/dashboard': 'dashboard',
+      '/settings': 'settings',
       '/subscription/success': 'subscription-success',
       '/subscription/cancel': 'subscription-cancel'
     };
@@ -128,6 +131,7 @@ function App() {
       'login': '/login',
       'register': '/register',
       'dashboard': '/dashboard',
+      'settings': '/settings',
       'subscription-success': '/subscription/success',
       'subscription-cancel': '/subscription/cancel'
     };
@@ -189,6 +193,8 @@ function App() {
         return <TermsOfServicePage navigate={navigate} user={user} />;
       case 'about':
         return <AboutUsPage navigate={navigate} user={user} />;
+      case 'settings':
+        return <SettingsPage navigate={navigate} user={user} onLogout={handleLogout} />;
       default:
         return <HomePage navigate={navigate} user={user} />;
     }
@@ -197,6 +203,7 @@ function App() {
   return (
     <div className="App">
       {renderPage()}
+      <BackToTop />
     </div>
   );
 }

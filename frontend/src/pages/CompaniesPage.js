@@ -323,7 +323,7 @@ function CompaniesPage({ navigate, user }) {
                   onClick={() => navigate('register')}
                   style={{ whiteSpace: 'nowrap' }}
                 >
-                  Start Free Trial
+                  Get Started for Free
                 </button>
               </>
             )}

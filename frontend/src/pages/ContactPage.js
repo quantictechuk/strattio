@@ -183,7 +183,7 @@ function ContactPage({ navigate, user }) {
                   onClick={() => navigate('register')}
                   style={{ padding: '0.625rem 1.5rem', fontSize: '0.9375rem' }}
                 >
-                  Start Free Trial
+                  Get Started for Free
                 </button>
               </>
             )}

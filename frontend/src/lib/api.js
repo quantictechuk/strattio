@@ -291,5 +291,18 @@ export const api = {
     generate: (planId) => apiRequest(`/api/${planId}/canvas/generate`, {
       method: 'POST'
     })
+  },
+  users: {
+    update: (data) => apiRequest('/api/auth/me', {
+      method: 'PATCH',
+      body: JSON.stringify(data)
+    }),
+    changePassword: (data) => apiRequest('/api/auth/me/password', {
+      method: 'PATCH',
+      body: JSON.stringify(data)
+    }),
+    delete: () => apiRequest('/api/auth/me', {
+      method: 'DELETE'
+    })
   }
 };

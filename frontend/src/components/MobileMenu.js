@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, LogOut } from 'lucide-react';
+import { X, LogOut, Settings } from 'lucide-react';
 
 function MobileMenu({ isOpen, onClose, navigate, user, onLogout }) {
   if (!isOpen) return null;
@@ -137,6 +137,21 @@ function MobileMenu({ isOpen, onClose, navigate, user, onLogout }) {
             >
               Dashboard
             </button>
+            <button
+              className="btn btn-secondary"
+              onClick={() => { navigate('settings'); onClose(); }}
+              style={{
+                width: '100%',
+                padding: '0.75rem 1.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              <Settings size={18} />
+              Settings
+            </button>
             {onLogout && (
               <button
                 className="btn btn-ghost"
@@ -178,7 +193,7 @@ function MobileMenu({ isOpen, onClose, navigate, user, onLogout }) {
               onClick={() => { navigate('register'); onClose(); }}
               style={{ width: '100%', padding: '0.75rem 1.5rem' }}
             >
-              Start Free Trial
+              Get Started for Free
             </button>
           </>
         )}

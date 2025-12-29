@@ -13,7 +13,8 @@ import {
   Loader2,
   LogOut,
   Building2,
-  Menu
+  Menu,
+  Settings
 } from 'lucide-react';
 import { api } from '../lib/api';
 import Footer from '../components/Footer';
@@ -361,6 +362,25 @@ function DashboardPage({ navigate, user, onLogout }) {
                 <span style={{ fontSize: '0.75rem', color: '#64748B' }}>{user?.email || ''}</span>
               </div>
               <div className="dashboard-divider" style={{ height: '32px', width: '1px', background: '#E2E8F0', display: 'none' }}></div>
+              <button 
+                onClick={() => navigate('settings')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  color: '#64748B',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'color 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.color = '#001639'}
+                onMouseLeave={(e) => e.target.style.color = '#64748B'}
+              >
+                <Settings size={18} style={{ marginRight: '0.5rem' }} />
+                Settings
+              </button>
               <button 
                 onClick={onLogout}
                 style={{
