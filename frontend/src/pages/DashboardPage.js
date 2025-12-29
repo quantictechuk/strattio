@@ -709,8 +709,31 @@ function DashboardPage({ navigate, user, onLogout }) {
                   borderBottom: '1px solid #F1F5F9',
                   display: 'flex',
                   justifyContent: 'space-between',
-                  alignItems: 'flex-start'
+                  alignItems: 'flex-start',
+                  gap: '0.75rem'
                 }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedPlans.includes(plan.id)}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      if (e.target.checked) {
+                        if (selectedPlans.length < 4) {
+                          setSelectedPlans([...selectedPlans, plan.id]);
+                        }
+                      } else {
+                        setSelectedPlans(selectedPlans.filter(id => id !== plan.id));
+                      }
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      width: '18px',
+                      height: '18px',
+                      cursor: 'pointer',
+                      marginTop: '0.25rem',
+                      flexShrink: 0
+                    }}
+                  />
                   <div style={{
                     width: '40px',
                     height: '40px',
