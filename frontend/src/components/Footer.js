@@ -111,7 +111,7 @@ function Footer({ navigate, user }) {
             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
               <li style={{ marginBottom: '0.75rem' }}>
                 <a 
-                  href="#" 
+                  href="/faq" 
                   onClick={(e) => { e.preventDefault(); navigate('faq'); }}
                   style={{ 
                     color: '#9BA9BC', 
@@ -239,7 +239,7 @@ function Footer({ navigate, user }) {
           </p>
           <div style={{ display: 'flex', gap: '1.5rem' }}>
             <a 
-              href="#" 
+              href="/privacy" 
               onClick={(e) => { e.preventDefault(); navigate('privacy'); }}
               style={{ 
                 color: '#9BA9BC', 
@@ -253,7 +253,7 @@ function Footer({ navigate, user }) {
               Privacy Policy
             </a>
             <a 
-              href="#" 
+              href="/terms" 
               onClick={(e) => { e.preventDefault(); navigate('terms'); }}
               style={{ 
                 color: '#9BA9BC', 

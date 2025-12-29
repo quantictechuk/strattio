@@ -1,6 +1,6 @@
 """Plans routes - Core plan management and generation"""
 
-from fastapi import APIRouter, HTTPException, Depends, Header
+from fastapi import APIRouter, HTTPException, Depends, Header, BackgroundTasks
 from pydantic import BaseModel
 from typing import Dict, List, Optional
 from datetime import datetime
@@ -158,35 +158,23 @@ async def delete_plan(plan_id: str, user_id: str = Depends(get_current_user_id),
     
     return {"message": "Plan deleted successfully"}
 
-@router.post("/{plan_id}/generate")
-async def generate_plan(plan_id: str, user_id: str = Depends(get_current_user_id), db = Depends(get_db)):
-    """Generate business plan content using multi-agent pipeline"""
-    
-    # Get plan
-    plan = await db.plans.find_one({"_id": to_object_id(plan_id), "user_id": user_id})
-    if not plan:
-        raise HTTPException(status_code=404, detail="Plan not found")
-    
-    # Update status to generating
-    await db.plans.update_one(
-        {"_id": to_object_id(plan_id)},
-        {"$set": {"status": "generating", "updated_at": datetime.utcnow()}}
-    )
-    
+async def _run_generation(plan_id: str, user_id: str, intake_data: Dict, plan_purpose: str, db):
+    """Background task to run plan generation"""
     try:
         # Run orchestrator
         orchestrator = PlanOrchestrator()
         result = await orchestrator.generate_plan(
-            intake_data=plan["intake_data"],
-            plan_purpose=plan.get("plan_purpose", "generic")
+            intake_data=intake_data,
+            plan_purpose=plan_purpose
         )
         
         if result["status"] == "failed":
             await db.plans.update_one(
                 {"_id": to_object_id(plan_id)},
-                {"$set": {"status": "failed", "error": result.get("error")}}
+                {"$set": {"status": "failed", "error": result.get("error"), "updated_at": datetime.utcnow()}}
             )
-            raise HTTPException(status_code=500, detail=result.get("error", "Generation failed"))
+            logger.error(f"Plan generation failed for {plan_id}: {result.get('error')}")
+            return
         
         # Store results
         # 1. Research Pack
@@ -241,6 +229,7 @@ async def generate_plan(plan_id: str, user_id: str = Depends(get_current_user_id
             {"$set": {
                 "status": "complete",
                 "completed_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
                 "generation_metadata": result["generation_metadata"]
             }}
         )
@@ -257,19 +246,62 @@ async def generate_plan(plan_id: str, user_id: str = Depends(get_current_user_id
         
         logger.info(f"Plan generation complete: {plan_id}")
         
-        return {
-            "status": "complete",
-            "plan_id": plan_id,
-            "generation_metadata": result["generation_metadata"]
-        }
-        
     except Exception as e:
         logger.error(f"Generation error for plan {plan_id}: {e}")
         await db.plans.update_one(
             {"_id": to_object_id(plan_id)},
-            {"$set": {"status": "failed", "error": str(e)}}
+            {"$set": {"status": "failed", "error": str(e), "updated_at": datetime.utcnow()}}
         )
-        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/{plan_id}/generate")
+async def generate_plan(
+    plan_id: str, 
+    background_tasks: BackgroundTasks,
+    user_id: str = Depends(get_current_user_id), 
+    db = Depends(get_db)
+):
+    """Generate business plan content using multi-agent pipeline (async)"""
+    
+    # Get plan
+    plan = await db.plans.find_one({"_id": to_object_id(plan_id), "user_id": user_id})
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+    
+    # Check if already generating
+    if plan.get("status") == "generating":
+        return {
+            "status": "generating",
+            "plan_id": plan_id,
+            "message": "Generation already in progress"
+        }
+    
+    # Update status to generating
+    await db.plans.update_one(
+        {"_id": to_object_id(plan_id)},
+        {"$set": {"status": "generating", "updated_at": datetime.utcnow()}}
+    )
+    
+    # Start generation in background
+    # Note: BackgroundTasks will run after the response is sent
+    # In serverless, this may not complete if the function terminates
+    # So we also increased the timeout to 300s as a fallback
+    background_tasks.add_task(
+        _run_generation,
+        plan_id=plan_id,
+        user_id=user_id,
+        intake_data=plan["intake_data"],
+        plan_purpose=plan.get("plan_purpose", "generic"),
+        db=db
+    )
+    
+    logger.info(f"Plan generation started for {plan_id}")
+    
+    # Return immediately - frontend should poll for status
+    return {
+        "status": "generating",
+        "plan_id": plan_id,
+        "message": "Generation started. Please check status endpoint for progress."
+    }
 
 @router.get("/{plan_id}/status")
 async def get_generation_status(plan_id: str, user_id: str = Depends(get_current_user_id), db = Depends(get_db)):

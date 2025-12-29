@@ -28,7 +28,7 @@ async def get_current_user_id(authorization: Optional[str] = Header(None)):
         raise HTTPException(status_code=401, detail="Authentication failed")
 
 @router.get("/{plan_id}/financials")
-async def get_financials(plan_id: str, user_id: str = Depends(get_current_user_id)):
+async def get_financials(plan_id: str, user_id: str = Depends(get_current_user_id), db = Depends(get_db)):
     """Get financial model for a plan"""
     
     # Verify plan ownership
@@ -49,7 +49,7 @@ async def get_financials(plan_id: str, user_id: str = Depends(get_current_user_i
     }
 
 @router.get("/{plan_id}/financials/charts")
-async def get_financial_charts_data(plan_id: str, user_id: str = Depends(get_current_user_id)):
+async def get_financial_charts_data(plan_id: str, user_id: str = Depends(get_current_user_id), db = Depends(get_db)):
     """Get financial data formatted for charts"""
     
     # Verify plan ownership

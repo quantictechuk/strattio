@@ -9,6 +9,7 @@ function RegisterPage({ navigate, onLogin, user }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -16,6 +17,12 @@ function RegisterPage({ navigate, onLogin, user }) {
     e.preventDefault();
     setError('');
     setLoading(true);
+
+    if (!agreedToTerms) {
+      setError('Please agree to the Privacy Policy and Terms of Service to continue');
+      setLoading(false);
+      return;
+    }
 
     if (password.length < 8) {
       setError('Password must be at least 8 characters');
@@ -292,13 +299,82 @@ function RegisterPage({ navigate, onLogin, user }) {
               />
               <small style={{ color: '#6B7A91', display: 'block', marginTop: '0.25rem' }}>Must be at least 8 characters</small>
             </div>
+
+            {/* Terms and Privacy Agreement */}
+            <div className="form-group" style={{ marginTop: '1.5rem' }}>
+              <label style={{ 
+                display: 'flex', 
+                alignItems: 'flex-start', 
+                gap: '0.75rem',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+                color: '#4A5568',
+                lineHeight: '1.5'
+              }}>
+                <input
+                  type="checkbox"
+                  checked={agreedToTerms}
+                  onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  required
+                  style={{
+                    marginTop: '0.125rem',
+                    width: '18px',
+                    height: '18px',
+                    cursor: 'pointer',
+                    flexShrink: 0
+                  }}
+                  data-testid="terms-checkbox"
+                />
+                <span>
+                  I agree to the{' '}
+                  <a
+                    href="/terms"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate('terms');
+                    }}
+                    style={{
+                      color: '#001639',
+                      textDecoration: 'underline',
+                      fontWeight: '500'
+                    }}
+                    onMouseEnter={(e) => e.target.style.color = '#27AC85'}
+                    onMouseLeave={(e) => e.target.style.color = '#001639'}
+                  >
+                    Terms of Service
+                  </a>
+                  {' '}and{' '}
+                  <a
+                    href="/privacy"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate('privacy');
+                    }}
+                    style={{
+                      color: '#001639',
+                      textDecoration: 'underline',
+                      fontWeight: '500'
+                    }}
+                    onMouseEnter={(e) => e.target.style.color = '#27AC85'}
+                    onMouseLeave={(e) => e.target.style.color = '#001639'}
+                  >
+                    Privacy Policy
+                  </a>
+                </span>
+              </label>
+            </div>
             
             <button 
               type="submit" 
               className="btn btn-primary" 
-              disabled={loading}
+              disabled={loading || !agreedToTerms}
               data-testid="register-submit-btn"
-              style={{ width: '100%', marginBottom: '1rem' }}
+              style={{ 
+                width: '100%', 
+                marginBottom: '1rem',
+                opacity: (!agreedToTerms && !loading) ? 0.6 : 1,
+                cursor: (!agreedToTerms && !loading) ? 'not-allowed' : 'pointer'
+              }}
             >
               {loading ? 'Creating account...' : 'Create Account'}
             </button>

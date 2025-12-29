@@ -38,6 +38,18 @@ async def get_compliance_report(plan_id: str, user_id: str = Depends(get_current
     
     report = await db.compliance_reports.find_one({"plan_id": plan_id})
     if not report:
-        raise HTTPException(status_code=404, detail="Compliance report not found")
+        raise HTTPException(status_code=404, detail="Compliance report not found. Please generate the plan first.")
     
-    return serialize_doc(report)
+    # Ensure the report has the expected structure
+    serialized = serialize_doc(report)
+    
+    # Validate that the data field exists
+    if "data" not in serialized:
+        logger.warning(f"Compliance report for plan {plan_id} missing 'data' field")
+        raise HTTPException(
+            status_code=500, 
+            detail="Compliance report data is malformed. Please regenerate the plan."
+        )
+    
+    # Return the serialized report (frontend expects complianceData.data)
+    return serialized

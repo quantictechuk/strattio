@@ -25,6 +25,41 @@ function App() {
   const [user, setUser] = useState(null);
   const [planId, setPlanId] = useState(null);
 
+  const handleRouteChange = () => {
+    const path = window.location.pathname;
+    const pathToPage = {
+      '/faq': 'faq',
+      '/privacy': 'privacy',
+      '/terms': 'terms',
+      '/about': 'about',
+      '/contact': 'contact',
+      '/features': 'features',
+      '/login': 'login',
+      '/register': 'register',
+      '/dashboard': 'dashboard',
+      '/subscription/success': 'subscription-success',
+      '/subscription/cancel': 'subscription-cancel'
+    };
+    
+    // Check URL path first
+    if (pathToPage[path]) {
+      setCurrentPage(pathToPage[path]);
+    } else if (path.includes('/subscription/success')) {
+      setCurrentPage('subscription-success');
+    } else if (path.includes('/subscription/cancel')) {
+      setCurrentPage('subscription-cancel');
+    } else if (path === '/' || path === '') {
+      // Check if user is logged in
+      const storedUser = authService.getUser();
+      if (storedUser) {
+        setUser(storedUser);
+        setCurrentPage('dashboard');
+      } else {
+        setCurrentPage('home');
+      }
+    }
+  };
+
   useEffect(() => {
     // Handle Google OAuth callback
     const urlParams = new URLSearchParams(window.location.search);
@@ -53,32 +88,44 @@ function App() {
       }
     }
     
-    // Check if user is logged in
-    const storedUser = authService.getUser();
-    if (storedUser) {
-      setUser(storedUser);
-      
-      // Check URL path for subscription success/cancel
-      const path = window.location.pathname;
-      if (path.includes('/subscription/success')) {
-        setCurrentPage('subscription-success');
-      } else if (path.includes('/subscription/cancel')) {
-        setCurrentPage('subscription-cancel');
-      } else {
-        setCurrentPage('dashboard');
-      }
-    }
+    // Handle initial route
+    handleRouteChange();
+    
+    // Handle browser back/forward buttons
+    window.addEventListener('popstate', handleRouteChange);
+    
+    return () => {
+      window.removeEventListener('popstate', handleRouteChange);
+    };
   }, []);
 
   const navigate = (page, data = {}) => {
     setCurrentPage(page);
     if (data.planId) setPlanId(data.planId);
     
-    // Update URL for subscription pages
-    if (page === 'subscription-success') {
-      window.history.pushState({}, '', '/subscription/success' + window.location.search);
-    } else if (page === 'subscription-cancel') {
-      window.history.pushState({}, '', '/subscription/cancel');
+    // Update URL based on page
+    const pageToPath = {
+      'home': '/',
+      'faq': '/faq',
+      'privacy': '/privacy',
+      'terms': '/terms',
+      'about': '/about',
+      'contact': '/contact',
+      'features': '/features',
+      'login': '/login',
+      'register': '/register',
+      'dashboard': '/dashboard',
+      'subscription-success': '/subscription/success',
+      'subscription-cancel': '/subscription/cancel'
+    };
+    
+    const path = pageToPath[page];
+    if (path) {
+      if (page === 'subscription-success') {
+        window.history.pushState({}, '', path + window.location.search);
+      } else {
+        window.history.pushState({}, '', path);
+      }
     }
   };
 

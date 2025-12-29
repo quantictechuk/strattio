@@ -318,19 +318,207 @@ function PlanEditorPage({ navigate, user, planId }) {
   }
 
   if (polling) {
+    const steps = [
+      { id: 'research', label: 'Research Agent', description: 'Fetching market data', completed: true },
+      { id: 'validation', label: 'Validation Agent', description: 'Checking data quality', completed: true },
+      { id: 'financial', label: 'Financial Engine', description: 'Calculating projections', completed: true },
+      { id: 'writer', label: 'Plan Writer', description: 'Generating sections...', completed: false, active: true },
+      { id: 'compliance', label: 'Compliance Agent', description: 'Validating requirements', completed: false }
+    ];
+
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-        <div className="loading-spinner" style={{ margin: '0 auto' }}></div>
-        <h2 style={{ marginTop: '2rem', marginBottom: '1rem' }}>Generating Your Business Plan</h2>
-        <p style={{ color: '#6B7A91', marginBottom: '1rem' }}>Running multi-agent pipeline...</p>
-        <div style={{ maxWidth: '500px', textAlign: 'left' }}>
-          <div style={{ padding: '0.5rem', background: '#E6EBF0', borderRadius: '4px', marginBottom: '0.5rem' }}>✓ Research Agent - Fetching market data</div>
-          <div style={{ padding: '0.5rem', background: '#E6EBF0', borderRadius: '4px', marginBottom: '0.5rem' }}>✓ Validation Agent - Checking data quality</div>
-          <div style={{ padding: '0.5rem', background: '#E6EBF0', borderRadius: '4px', marginBottom: '0.5rem' }}>✓ Financial Engine - Calculating projections</div>
-          <div style={{ padding: '0.5rem', background: '#F1F4F7', borderRadius: '4px', marginBottom: '0.5rem' }}>⏳ Plan Writer - Generating sections...</div>
-          <div style={{ padding: '0.5rem', background: '#F1F4F7', borderRadius: '4px' }}>⏳ Compliance Agent - Validating requirements</div>
+      <div style={{ 
+        minHeight: '100vh', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        flexDirection: 'column',
+        background: 'linear-gradient(135deg, #F8FAFB 0%, #E6EBF0 100%)',
+        padding: '2rem 1rem'
+      }}>
+        {/* Logo and Branding */}
+        <div style={{ marginBottom: '3rem', textAlign: 'center' }}>
+          <img 
+            src="/logo.png" 
+            alt="Strattio" 
+            style={{ 
+              height: '48px', 
+              marginBottom: '1rem',
+              filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))'
+            }} 
+          />
         </div>
-        <p style={{ fontSize: '0.875rem', color: '#9BA9BC', marginTop: '1rem' }}>Estimated time: 60-90 seconds</p>
+
+        {/* Main Content Card */}
+        <div className="generation-card" style={{
+          background: 'white',
+          borderRadius: '16px',
+          padding: '3rem 2.5rem',
+          maxWidth: '600px',
+          width: '100%',
+          boxShadow: '0 20px 60px rgba(0, 22, 57, 0.15)',
+          border: '1px solid rgba(0, 22, 57, 0.08)'
+        }}>
+          {/* Animated Spinner */}
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <div className="plan-generation-spinner" style={{ margin: '0 auto' }}></div>
+          </div>
+
+          {/* Title */}
+          <h2 style={{ 
+            marginTop: '0',
+            marginBottom: '0.5rem',
+            fontSize: '1.75rem',
+            fontWeight: '700',
+            color: '#001639',
+            textAlign: 'center'
+          }}>
+            Generating Your Business Plan
+          </h2>
+          
+          <p style={{ 
+            color: '#6B7A91', 
+            marginBottom: '2rem',
+            textAlign: 'center',
+            fontSize: '1rem'
+          }}>
+            Our AI agents are working together to create your comprehensive business plan
+          </p>
+
+          {/* Progress Steps */}
+          <div style={{ marginBottom: '2rem' }}>
+            {steps.map((step, index) => (
+              <div 
+                key={step.id}
+                className={`generation-step ${step.completed ? 'completed' : ''} ${step.active ? 'active' : ''}`}
+                style={{
+                  padding: '1rem 1.25rem',
+                  background: step.completed 
+                    ? 'linear-gradient(135deg, #E6F7F0 0%, #D1F2E5 100%)'
+                    : step.active
+                    ? 'linear-gradient(135deg, #EBF5FF 0%, #D6EAFF 100%)'
+                    : '#F8FAFB',
+                  borderRadius: '12px',
+                  marginBottom: '0.75rem',
+                  border: step.completed 
+                    ? '2px solid #27AC85'
+                    : step.active
+                    ? '2px solid #3B82F6'
+                    : '2px solid #E4E9EF',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1rem',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+              >
+                {/* Step Icon */}
+                <div 
+                  className={step.active ? 'rotating-icon' : ''}
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    background: step.completed 
+                      ? '#27AC85'
+                      : step.active
+                      ? '#3B82F6'
+                      : '#CBD4E0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    fontSize: '18px',
+                    fontWeight: 'bold',
+                    color: 'white',
+                    boxShadow: step.active ? '0 4px 12px rgba(59, 130, 246, 0.3)' : 'none'
+                  }}
+                >
+                  {step.completed ? '✓' : step.active ? '⟳' : index + 1}
+                </div>
+
+                {/* Step Content */}
+                <div style={{ flex: 1 }}>
+                  <div style={{
+                    fontWeight: '600',
+                    color: step.completed ? '#1F8A6A' : step.active ? '#001639' : '#6B7A91',
+                    fontSize: '0.9375rem',
+                    marginBottom: '0.25rem'
+                  }}>
+                    {step.label}
+                  </div>
+                  <div style={{
+                    fontSize: '0.875rem',
+                    color: step.completed ? '#27AC85' : step.active ? '#6B7A91' : '#9BA9BC'
+                  }}>
+                    {step.description}
+                  </div>
+                </div>
+
+                {/* Active Pulse Animation */}
+                {step.active && (
+                  <div className="pulse-dot" style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: '#3B82F6',
+                    animation: 'pulse 2s infinite'
+                  }}></div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Progress Bar */}
+          <div style={{ marginBottom: '1.5rem' }}>
+            <div style={{
+              height: '6px',
+              background: '#E4E9EF',
+              borderRadius: '3px',
+              overflow: 'hidden',
+              marginBottom: '0.5rem'
+            }}>
+              <div 
+                className="progress-bar-fill"
+                style={{
+                  height: '100%',
+                  width: '60%',
+                  background: 'linear-gradient(90deg, #27AC85 0%, #3B82F6 100%)',
+                  borderRadius: '3px',
+                  animation: 'progressPulse 2s ease-in-out infinite',
+                  transition: 'width 0.3s ease'
+                }}
+              ></div>
+            </div>
+            <p style={{ 
+              fontSize: '0.875rem', 
+              color: '#9BA9BC',
+              textAlign: 'center',
+              margin: 0
+            }}>
+              Estimated time: 60-90 seconds
+            </p>
+          </div>
+
+          {/* Fun Fact / Tip */}
+          <div style={{
+            padding: '1rem',
+            background: '#F8FAFB',
+            borderRadius: '8px',
+            border: '1px solid #E4E9EF',
+            textAlign: 'center'
+          }}>
+            <p style={{
+              fontSize: '0.875rem',
+              color: '#6B7A91',
+              margin: 0,
+              fontStyle: 'italic'
+            }}>
+              💡 Did you know? Our AI analyzes thousands of data points to create your personalized plan
+            </p>
+          </div>
+        </div>
       </div>
     );
   }

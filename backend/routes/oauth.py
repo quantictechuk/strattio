@@ -15,6 +15,7 @@ from utils.auth import create_access_token, create_refresh_token
 from utils.serializers import serialize_doc, to_object_id
 from utils.audit_logger import AuditLogger
 from utils.dependencies import get_db
+from urllib.parse import urlparse
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -27,6 +28,38 @@ GOOGLE_REDIRECT_URI = os.environ.get("GOOGLE_REDIRECT_URI", "http://localhost:30
 GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_USER_INFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
+
+def _get_frontend_url():
+    """Get and validate frontend URL from environment"""
+    frontend_url_raw = os.environ.get("FRONTEND_URL", "http://localhost:3000")
+    
+    # Clean up the URL - handle common misconfigurations
+    # Remove any commas and extra spaces
+    frontend_url = frontend_url_raw.split(',')[0].strip()
+    
+    # If it doesn't start with http:// or https://, try to fix it
+    if not frontend_url.startswith(('http://', 'https://')):
+        # If it looks like a domain, add https://
+        if '.' in frontend_url and not frontend_url.startswith('//'):
+            frontend_url = f"https://{frontend_url}"
+        else:
+            # Fallback to production URL
+            logger.warning(f"Invalid FRONTEND_URL format: {frontend_url_raw}, using default")
+            frontend_url = "https://www.strattio.com"
+    
+    # Validate URL format
+    try:
+        parsed = urlparse(frontend_url)
+        if not parsed.scheme or not parsed.netloc:
+            raise ValueError("Invalid URL format")
+    except Exception as e:
+        logger.error(f"Invalid FRONTEND_URL: {frontend_url_raw}, error: {e}, using default")
+        frontend_url = "https://www.strattio.com"
+    
+    # Remove trailing slash
+    frontend_url = frontend_url.rstrip('/')
+    
+    return frontend_url
 
 class TokenResponse(BaseModel):
     access_token: str
@@ -61,14 +94,15 @@ async def google_oauth_start():
 @router.get("/google/callback")
 async def google_oauth_callback(
     code: Optional[str] = Query(None),
-    error: Optional[str] = Query(None)
+    error: Optional[str] = Query(None),
+    db = Depends(get_db)
 ):
     """Handle Google OAuth callback"""
     
     if error:
         logger.error(f"Google OAuth error: {error}")
         # Redirect to frontend with error
-        frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
+        frontend_url = _get_frontend_url()
         return RedirectResponse(url=f"{frontend_url}/login?error=oauth_failed")
     
     if not code:
@@ -117,7 +151,22 @@ async def google_oauth_callback(
             user_info = user_info_response.json()
             google_id = user_info.get("id")
             email = user_info.get("email")
-            name = user_info.get("name", "")
+            
+            # Extract name information - Google provides given_name, family_name, and name
+            given_name = user_info.get("given_name", "")
+            family_name = user_info.get("family_name", "")
+            full_name = user_info.get("name", "")
+            
+            # Use given_name and family_name if available, otherwise fall back to full name
+            if given_name or family_name:
+                name = f"{given_name} {family_name}".strip()
+            else:
+                name = full_name
+            
+            # Store first and last name separately if available
+            first_name = given_name if given_name else (full_name.split()[0] if full_name else "")
+            last_name = family_name if family_name else (" ".join(full_name.split()[1:]) if full_name and len(full_name.split()) > 1 else "")
+            
             picture = user_info.get("picture")
             
             if not email:
@@ -129,15 +178,25 @@ async def google_oauth_callback(
             if user:
                 # Existing user - check if Google auth is linked
                 if user.get("auth_provider") != "google" or user.get("auth_provider_id") != google_id:
-                    # Link Google account
+                    # Link Google account and update name if not set or if Google provides better info
+                    update_data = {
+                        "auth_provider": "google",
+                        "auth_provider_id": google_id,
+                        "avatar_url": picture,
+                        "updated_at": datetime.utcnow()
+                    }
+                    
+                    # Update name if current name is empty or if we have better info from Google
+                    if not user.get("name") or (name and name.strip()):
+                        update_data["name"] = name
+                    if first_name:
+                        update_data["first_name"] = first_name
+                    if last_name:
+                        update_data["last_name"] = last_name
+                    
                     await db.users.update_one(
                         {"_id": user["_id"]},
-                        {"$set": {
-                            "auth_provider": "google",
-                            "auth_provider_id": google_id,
-                            "avatar_url": picture,
-                            "updated_at": datetime.utcnow()
-                        }}
+                        {"$set": update_data}
                     )
                 
                 user_id = str(user["_id"])
@@ -155,6 +214,12 @@ async def google_oauth_callback(
                     "created_at": datetime.utcnow(),
                     "last_login_at": datetime.utcnow()
                 }
+                
+                # Add first_name and last_name if available
+                if first_name:
+                    user_doc["first_name"] = first_name
+                if last_name:
+                    user_doc["last_name"] = last_name
                 
                 result = await db.users.insert_one(user_doc)
                 user_doc["_id"] = result.inserted_id
@@ -207,7 +272,7 @@ async def google_oauth_callback(
                 del user_clean["password_hash"]
             
             # Redirect to frontend with tokens
-            frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
+            frontend_url = _get_frontend_url()
             
             # Store tokens in query params (frontend will handle storing them)
             # In production, use secure httpOnly cookies instead
