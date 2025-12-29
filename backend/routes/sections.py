@@ -82,6 +82,9 @@ async def update_section(plan_id: str, section_id: str, section_update: SectionU
         section_object_id = to_object_id(section_id)
         logger.info(f"Updating section {section_id} (ObjectId: {section_object_id}) for plan {plan_id}")
         
+        # Get current section for version tracking
+        current_section = await db.sections.find_one({"_id": section_object_id, "plan_id": plan_id})
+        
         # Update section
         result = await db.sections.update_one(
             {"_id": section_object_id, "plan_id": plan_id},
@@ -91,6 +94,28 @@ async def update_section(plan_id: str, section_id: str, section_update: SectionU
                 "edited_by_user": True
             }}
         )
+        
+        # Create version snapshot if content changed
+        if current_section and current_section.get("content") != section_update.content:
+            # Get all sections for snapshot
+            all_sections = await db.sections.find({"plan_id": plan_id}).to_list(None)
+            sections_snapshot = [serialize_doc(s) for s in all_sections]
+            
+            # Create version
+            version_number = await db.plan_versions.count_documents({"plan_id": plan_id}) + 1
+            await db.plan_versions.insert_one({
+                "plan_id": plan_id,
+                "version_number": version_number,
+                "created_by": user_id,
+                "changes": [{
+                    "section_id": section_id,
+                    "field": "content",
+                    "old_value": current_section.get("content", "")[:200],  # First 200 chars
+                    "new_value": section_update.content[:200]
+                }],
+                "sections_snapshot": sections_snapshot,
+                "created_at": datetime.utcnow()
+            })
         
         if result.matched_count == 0:
             logger.warning(f"Section not found: {section_id} for plan {plan_id}")

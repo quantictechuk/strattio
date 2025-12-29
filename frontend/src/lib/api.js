@@ -379,5 +379,46 @@ export const api = {
       body: JSON.stringify({ message, section_id: sectionId })
     }),
     getHistory: (planId, limit = 50) => apiRequest(`/api/plans/${planId}/chat/history?limit=${limit}`)
+  },
+  sharing: {
+    createShare: (planId, shareData) => apiRequest(`/api/plans/${planId}/share`, {
+      method: 'POST',
+      body: JSON.stringify(shareData)
+    }),
+    listShares: (planId) => apiRequest(`/api/plans/${planId}/shares`),
+    revokeShare: (planId, shareToken) => apiRequest(`/api/plans/${planId}/shares/${shareToken}`, {
+      method: 'DELETE'
+    }),
+    getSharedPlan: (shareToken, password = null) => {
+      const params = password ? `?password=${encodeURIComponent(password)}` : '';
+      return apiRequest(`/api/plans/shared/${shareToken}${params}`);
+    },
+    inviteCollaborator: (planId, email, role) => apiRequest(`/api/plans/${planId}/collaborators`, {
+      method: 'POST',
+      body: JSON.stringify({ email, role })
+    }),
+    listCollaborators: (planId) => apiRequest(`/api/plans/${planId}/collaborators`),
+    removeCollaborator: (planId, collaboratorId) => apiRequest(`/api/plans/${planId}/collaborators/${collaboratorId}`, {
+      method: 'DELETE'
+    }),
+    addComment: (planId, content, sectionId = null, parentId = null) => apiRequest(`/api/plans/${planId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify({ content, section_id: sectionId, parent_comment_id: parentId })
+    }),
+    listComments: (planId, sectionId = null) => {
+      const params = sectionId ? `?section_id=${sectionId}` : '';
+      return apiRequest(`/api/plans/${planId}/comments${params}`);
+    },
+    updateComment: (planId, commentId, content) => apiRequest(`/api/plans/${planId}/comments/${commentId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ content })
+    }),
+    deleteComment: (planId, commentId) => apiRequest(`/api/plans/${planId}/comments/${commentId}`, {
+      method: 'DELETE'
+    }),
+    getVersions: (planId) => apiRequest(`/api/plans/${planId}/versions`),
+    restoreVersion: (planId, versionId) => apiRequest(`/api/plans/${planId}/restore/${versionId}`, {
+      method: 'POST'
+    })
   }
 };
