@@ -33,12 +33,65 @@ function AdminDashboardPage({ navigate, user, onLogout }) {
   const [changingAdminPassword, setChangingAdminPassword] = useState(false);
 
   useEffect(() => {
-    if (user?.role !== 'admin') {
-      navigate('admin-login');
-      return;
-    }
-    loadData();
-  }, [activeTab, usersPage, usersSearch]);
+    const checkAdminAccess = async () => {
+      // Wait a bit for user state to be restored from parent component
+      // If user is not loaded after a short delay, try to get from storage or fetch from API
+      if (!user) {
+        // Give parent component time to restore user state
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const storedUser = authService.getUser();
+        const token = authService.getToken();
+        
+        if (!token) {
+          navigate('admin-login');
+          return;
+        }
+        
+        if (storedUser) {
+          // Verify user is still admin by fetching fresh data
+          try {
+            const userData = await api.auth.me();
+            if (userData.role === 'admin') {
+              authService.setUser(userData);
+              // User will be set by parent App.js, but we can proceed
+              loadData();
+            } else {
+              navigate('admin-login');
+            }
+          } catch (e) {
+            console.error('Error verifying admin access:', e);
+            navigate('admin-login');
+          }
+        } else {
+          // No stored user, fetch from API
+          try {
+            const userData = await api.auth.me();
+            if (userData.role === 'admin') {
+              authService.setUser(userData);
+              loadData();
+            } else {
+              navigate('admin-login');
+            }
+          } catch (e) {
+            console.error('Error fetching user data:', e);
+            navigate('admin-login');
+          }
+        }
+        return;
+      }
+      
+      // User is loaded, check role
+      if (user.role !== 'admin') {
+        navigate('admin-login');
+        return;
+      }
+      
+      loadData();
+    };
+    
+    checkAdminAccess();
+  }, [activeTab, usersPage, usersSearch, user]);
 
   const loadData = async () => {
     try {

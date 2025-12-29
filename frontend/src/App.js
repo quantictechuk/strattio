@@ -26,10 +26,14 @@ import BackToTop from './components/BackToTop';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
-  const [user, setUser] = useState(null);
+  // Initialize user from localStorage on mount
+  const [user, setUser] = useState(() => {
+    const storedUser = authService.getUser();
+    return storedUser || null;
+  });
   const [planId, setPlanId] = useState(null);
 
-  const handleRouteChange = () => {
+  const handleRouteChange = async () => {
     const path = window.location.pathname;
     const pathToPage = {
       '/faq': 'faq',
@@ -51,7 +55,64 @@ function App() {
     
     // Check URL path first
     if (pathToPage[path]) {
-      setCurrentPage(pathToPage[path]);
+      const page = pathToPage[path];
+      setCurrentPage(page);
+      
+      // For protected routes, restore user state from storage or fetch from API
+      if (page === 'admin-dashboard' || page === 'dashboard' || page === 'settings') {
+        const token = authService.getToken();
+        const storedUser = authService.getUser();
+        
+        if (token) {
+          // If we have a token but no user in state, try to restore
+          if (!user && storedUser) {
+            setUser(storedUser);
+          } else if (!user && !storedUser) {
+            // Fetch user from API
+            try {
+              const userData = await api.auth.me();
+              authService.setUser(userData);
+              setUser(userData);
+              
+              // For admin dashboard, verify admin role
+              if (page === 'admin-dashboard' && userData.role !== 'admin') {
+                setUser(null);
+                setCurrentPage('admin-login');
+              }
+            } catch (e) {
+              console.error('Error fetching user data:', e);
+              if (page === 'admin-dashboard') {
+                setCurrentPage('admin-login');
+              } else {
+                setCurrentPage('login');
+              }
+            }
+          } else if (user && page === 'admin-dashboard' && user.role !== 'admin') {
+            // User exists but not admin, verify with API
+            try {
+              const userData = await api.auth.me();
+              if (userData.role === 'admin') {
+                authService.setUser(userData);
+                setUser(userData);
+              } else {
+                setUser(null);
+                setCurrentPage('admin-login');
+              }
+            } catch (e) {
+              console.error('Error verifying admin access:', e);
+              setUser(null);
+              setCurrentPage('admin-login');
+            }
+          }
+        } else {
+          // No token, redirect to login
+          if (page === 'admin-dashboard') {
+            setCurrentPage('admin-login');
+          } else {
+            setCurrentPage('login');
+          }
+        }
+      }
     } else if (path.includes('/subscription/success')) {
       setCurrentPage('subscription-success');
     } else if (path.includes('/subscription/cancel')) {
@@ -89,7 +150,11 @@ function App() {
           window.history.replaceState({}, '', window.location.pathname);
           
           // Navigate to dashboard
-          setCurrentPage('dashboard');
+          if (userData.role === 'admin') {
+            setCurrentPage('admin-dashboard');
+          } else {
+            setCurrentPage('dashboard');
+          }
         } catch (e) {
           console.error('Error fetching user data:', e);
           // Fallback: use token payload if API call fails
@@ -109,8 +174,75 @@ function App() {
       return;
     }
     
-    // Handle initial route
-    handleRouteChange();
+    // Handle initial route - restore user state first if needed
+    const restoreUserAndRoute = async () => {
+      const path = window.location.pathname;
+      const isAdminRoute = path === '/admin' || path === '/admin/dashboard';
+      const isProtectedRoute = isAdminRoute || path === '/dashboard' || path === '/settings';
+      
+      if (isProtectedRoute) {
+        const token = authService.getToken();
+        if (token) {
+          const storedUser = authService.getUser();
+          if (storedUser) {
+            setUser(storedUser);
+            // For admin routes, verify user is still admin
+            if (isAdminRoute && storedUser.role !== 'admin') {
+              try {
+                const userData = await api.auth.me();
+                if (userData.role === 'admin') {
+                  authService.setUser(userData);
+                  setUser(userData);
+                } else {
+                  setUser(null);
+                  setCurrentPage('admin-login');
+                  return;
+                }
+              } catch (e) {
+                console.error('Error verifying admin access:', e);
+                setUser(null);
+                setCurrentPage('admin-login');
+                return;
+              }
+            }
+          } else {
+            // No stored user, fetch from API
+            try {
+              const userData = await api.auth.me();
+              authService.setUser(userData);
+              setUser(userData);
+              if (isAdminRoute && userData.role !== 'admin') {
+                setUser(null);
+                setCurrentPage('admin-login');
+                return;
+              }
+            } catch (e) {
+              console.error('Error fetching user data:', e);
+              if (isAdminRoute) {
+                setCurrentPage('admin-login');
+              } else {
+                setCurrentPage('login');
+              }
+              return;
+            }
+          }
+        } else {
+          // No token, redirect to login
+          if (isAdminRoute) {
+            setCurrentPage('admin-login');
+            return;
+          } else {
+            setCurrentPage('login');
+            return;
+          }
+        }
+      }
+      
+      // Now handle the route change
+      await handleRouteChange();
+    };
+    
+    restoreUserAndRoute();
     
     // Handle browser back/forward buttons
     window.addEventListener('popstate', handleRouteChange);
@@ -156,7 +288,12 @@ function App() {
   const handleLogin = (userData) => {
     setUser(userData);
     authService.setUser(userData);
-    navigate('dashboard');
+    // Navigate to appropriate dashboard based on user role
+    if (userData.role === 'admin') {
+      navigate('admin-dashboard');
+    } else {
+      navigate('dashboard');
+    }
   };
 
   const handleLogout = () => {
