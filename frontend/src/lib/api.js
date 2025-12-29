@@ -400,6 +400,19 @@ export const api = {
       });
     }
   },
+  scenarios: {
+    get: (planId) => apiRequest(`/api/plans/${planId}/scenarios`),
+    create: (planId) => apiRequest(`/api/plans/${planId}/scenarios`, {
+      method: 'POST'
+    }),
+    analyze: (planId, revenueMultiplier, costMultiplier) => apiRequest(`/api/plans/${planId}/scenarios/analyze`, {
+      method: 'POST',
+      body: JSON.stringify({
+        revenue_multiplier: revenueMultiplier,
+        cost_multiplier: costMultiplier
+      })
+    })
+  },
   sharing: {
     createShare: (planId, shareData) => apiRequest(`/api/plans/${planId}/share`, {
       method: 'POST',

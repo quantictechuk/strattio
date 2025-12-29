@@ -133,6 +133,7 @@ try:
     from routes.plan_sharing import router as plan_sharing_router
     from routes.readiness_score import router as readiness_score_router
     from routes.pitch_deck import router as pitch_deck_router
+    from routes.scenarios import router as scenarios_router
     
     api_router.include_router(oauth_router, prefix="/auth", tags=["OAuth"])
     api_router.include_router(admin_router, prefix="/admin", tags=["Admin"])
@@ -142,6 +143,7 @@ try:
     api_router.include_router(plan_sharing_router, tags=["Plan Sharing"])
     api_router.include_router(readiness_score_router, tags=["Readiness Score"])
     api_router.include_router(pitch_deck_router, tags=["Pitch Deck"])
+    api_router.include_router(scenarios_router, tags=["Scenarios"])
     api_router.include_router(plans_router, prefix="/plans", tags=["Plans"])
     api_router.include_router(sections_router, tags=["Sections"])
     api_router.include_router(financials_router, tags=["Financials"])
