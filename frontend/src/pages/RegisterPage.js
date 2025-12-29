@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Menu } from 'lucide-react';
 import { api, authService } from '../lib/api';
 import Footer from '../components/Footer';
+import MobileMenu from '../components/MobileMenu';
 
 function RegisterPage({ navigate, onLogin, user }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -58,7 +60,7 @@ function RegisterPage({ navigate, onLogin, user }) {
               style={{ height: '36px', width: 'auto' }}
             />
           </div>
-          <nav style={{ display: 'flex', gap: '2.5rem', alignItems: 'center' }}>
+          <nav className="desktop-nav" style={{ display: 'flex', gap: '2.5rem', alignItems: 'center' }}>
             <a 
               href="#" 
               onClick={(e) => { e.preventDefault(); navigate('home'); }}
@@ -149,7 +151,7 @@ function RegisterPage({ navigate, onLogin, user }) {
               Contact
             </a>
           </nav>
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <div className="desktop-nav" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
             {user ? (
               <button 
                 className="btn btn-primary" 
@@ -182,12 +184,33 @@ function RegisterPage({ navigate, onLogin, user }) {
               </>
             )}
           </div>
+          <button
+            className="mobile-menu-button"
+            onClick={() => setMobileMenuOpen(true)}
+            style={{
+              display: 'none',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '0.5rem',
+              color: '#2D3748'
+            }}
+          >
+            <Menu size={24} />
+          </button>
         </div>
       </header>
 
+      <MobileMenu 
+        isOpen={mobileMenuOpen} 
+        onClose={() => setMobileMenuOpen(false)} 
+        navigate={navigate} 
+        user={user} 
+      />
+
       {/* Main Content */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-secondary)', padding: '2rem 0' }}>
-        <div className="card" style={{ maxWidth: '450px', width: '100%', position: 'relative' }}>
+        <div className="card" style={{ maxWidth: '450px', width: '100%', position: 'relative', margin: '0 1rem' }}>
           {/* Go Back Button */}
           <button
             type="button"

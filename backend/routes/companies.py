@@ -87,14 +87,14 @@ class CompanyUpdate(BaseModel):
 # ============================================================================
 
 @router.get("")
-async def list_companies(user_id: str = Depends(get_current_user_id)):
+async def list_companies(user_id: str = Depends(get_current_user_id), db = Depends(get_db)):
     """List all companies for a user"""
     
     companies = await db.companies.find({"user_id": user_id}).sort("created_at", -1).to_list(100)
     return {"companies": [serialize_doc(c) for c in companies]}
 
 @router.post("")
-async def create_company(company_data: CompanyCreate, user_id: str = Depends(get_current_user_id)):
+async def create_company(company_data: CompanyCreate, user_id: str = Depends(get_current_user_id), db = Depends(get_db)):
     """Create a new company"""
     
     # Check if company with same name already exists for this user
@@ -139,7 +139,7 @@ async def create_company(company_data: CompanyCreate, user_id: str = Depends(get
     return serialize_doc(company_doc)
 
 @router.get("/{company_id}")
-async def get_company(company_id: str, user_id: str = Depends(get_current_user_id)):
+async def get_company(company_id: str, user_id: str = Depends(get_current_user_id), db = Depends(get_db)):
     """Get a specific company"""
     
     company = await db.companies.find_one({
@@ -156,7 +156,8 @@ async def get_company(company_id: str, user_id: str = Depends(get_current_user_i
 async def update_company(
     company_id: str,
     company_data: CompanyUpdate,
-    user_id: str = Depends(get_current_user_id)
+    user_id: str = Depends(get_current_user_id),
+    db = Depends(get_db)
 ):
     """Update a company"""
     
@@ -209,7 +210,7 @@ async def update_company(
     return serialize_doc(updated_company)
 
 @router.delete("/{company_id}")
-async def delete_company(company_id: str, user_id: str = Depends(get_current_user_id)):
+async def delete_company(company_id: str, user_id: str = Depends(get_current_user_id), db = Depends(get_db)):
     """Delete a company"""
     
     company = await db.companies.find_one({

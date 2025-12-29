@@ -12,12 +12,15 @@ import {
   Clock,
   Loader2,
   LogOut,
-  Building2
+  Building2,
+  Menu
 } from 'lucide-react';
 import { api } from '../lib/api';
 import Footer from '../components/Footer';
+import MobileMenu from '../components/MobileMenu';
 
 function DashboardPage({ navigate, user, onLogout }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [plans, setPlans] = useState([]);
   const [allPlans, setAllPlans] = useState([]); // Store all plans for filtering
   const [loading, setLoading] = useState(true);
@@ -252,8 +255,8 @@ function DashboardPage({ navigate, user, onLogout }) {
         top: 0, 
         zIndex: 30 
       }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '64px' }}>
+        <div className="container" style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '64px', flexWrap: 'wrap' }}>
             {/* Logo */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', cursor: 'pointer' }} onClick={() => navigate('home')}>
               <img 
@@ -264,7 +267,7 @@ function DashboardPage({ navigate, user, onLogout }) {
             </div>
 
             {/* Navigation */}
-            <nav style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+            <nav className="desktop-nav" style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
               <a 
                 href="#" 
                 onClick={(e) => { e.preventDefault(); navigate('home'); }}
@@ -352,7 +355,7 @@ function DashboardPage({ navigate, user, onLogout }) {
             </nav>
 
             {/* Right Actions */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
               <div className="dashboard-user-info" style={{ display: 'none', flexDirection: 'column', alignItems: 'flex-end' }}>
                 <span style={{ fontSize: '0.875rem', fontWeight: '600', color: '#0F172A' }}>Welcome, {user?.name || 'User'}</span>
                 <span style={{ fontSize: '0.75rem', color: '#64748B' }}>{user?.email || ''}</span>
@@ -379,9 +382,31 @@ function DashboardPage({ navigate, user, onLogout }) {
                 Log Out
               </button>
             </div>
+            <button
+              className="mobile-menu-button"
+              onClick={() => setMobileMenuOpen(true)}
+              style={{
+                display: 'none',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '0.5rem',
+                color: '#64748B'
+              }}
+            >
+              <Menu size={24} />
+            </button>
           </div>
         </div>
       </header>
+
+      <MobileMenu 
+        isOpen={mobileMenuOpen} 
+        onClose={() => setMobileMenuOpen(false)} 
+        navigate={navigate} 
+        user={user}
+        onLogout={onLogout}
+      />
 
       <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '2.5rem 1rem', width: '100%' }}>
         {/* Usage Banner */}

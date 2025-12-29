@@ -1,10 +1,13 @@
-import React from 'react';
-import { FileText, Bot, Download, BarChart3, ShieldCheck, Target, Globe2, Check, CheckCircle2, ShieldCheck as ShieldCheckIcon, Zap, ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { FileText, Bot, Download, BarChart3, ShieldCheck, Target, Globe2, Check, CheckCircle2, ShieldCheck as ShieldCheckIcon, Zap, ArrowRight, Menu } from 'lucide-react';
 import Footer from '../components/Footer';
+import MobileMenu from '../components/MobileMenu';
 
 function HomePage({ navigate, user }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
-    <div style={{ minHeight: '100vh', background: '#FFFFFF', display: 'flex', flexDirection: 'column' }}>
+    <div className="home-page-container" style={{ minHeight: '100vh', background: '#FFFFFF', display: 'flex', flexDirection: 'column' }}>
       {/* Premium Header */}
       <header style={{ 
         padding: '1.25rem 0', 
@@ -24,7 +27,7 @@ function HomePage({ navigate, user }) {
               style={{ height: '36px', width: 'auto' }}
             />
           </div>
-          <nav style={{ display: 'flex', gap: '2.5rem', alignItems: 'center' }}>
+          <nav className="desktop-nav" style={{ display: 'flex', gap: '2.5rem', alignItems: 'center' }}>
             <a 
               href="#" 
               onClick={(e) => { e.preventDefault(); navigate('home'); }}
@@ -120,7 +123,7 @@ function HomePage({ navigate, user }) {
               Contact
             </a>
           </nav>
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <div className="desktop-nav" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
             {user ? (
               <button 
                 className="btn btn-primary" 
@@ -156,11 +159,32 @@ function HomePage({ navigate, user }) {
               </>
             )}
           </div>
+          <button
+            className="mobile-menu-button"
+            onClick={() => setMobileMenuOpen(true)}
+            style={{
+              display: 'none',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '0.5rem',
+              color: '#2D3748'
+            }}
+          >
+            <Menu size={24} />
+          </button>
         </div>
       </header>
 
+      <MobileMenu 
+        isOpen={mobileMenuOpen} 
+        onClose={() => setMobileMenuOpen(false)} 
+        navigate={navigate} 
+        user={user} 
+      />
+
       {/* Hero Section - Split Layout */}
-      <section style={{ 
+      <section className="section-padding" style={{ 
         background: '#F8FAFC',
         padding: '8rem 0 5rem',
         position: 'relative',
@@ -213,7 +237,7 @@ function HomePage({ navigate, user }) {
         </div>
 
         <div className="container" style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{
+          <div className="grid-responsive" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
             gap: '4rem',
@@ -564,14 +588,14 @@ function HomePage({ navigate, user }) {
           </div>
 
           {/* Bento Grid Layout */}
-          <div style={{
+          <div className="grid-responsive" style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(3, 1fr)',
             gap: '1.5rem',
             gridAutoRows: 'minmax(200px, auto)'
           }}>
               {/* Feature 1: Deterministic Financials - Large Box (spans 2 columns) */}
-              <div style={{
+              <div className="mobile-full-width financials-card" style={{
                 gridColumn: 'span 2',
                 borderRadius: '16px',
                 background: '#F8FAFC',
@@ -582,6 +606,7 @@ function HomePage({ navigate, user }) {
                 alignItems: 'center',
                 gap: '2rem',
                 overflow: 'hidden',
+                flexWrap: 'wrap',
                 transition: 'border-color 0.3s'
               }}
               onMouseEnter={(e) => e.currentTarget.style.borderColor = '#CBD5E1'}
@@ -700,7 +725,7 @@ function HomePage({ navigate, user }) {
               </div>
 
               {/* Feature 2: Visa & Loan Compliance - Tall Box (spans 2 rows) */}
-              <div style={{
+              <div className="mobile-full-width" style={{
                 gridRow: 'span 2',
                 borderRadius: '16px',
                 background: '#0F172A',
@@ -906,14 +931,14 @@ function HomePage({ navigate, user }) {
       {/* The Process Section */}
       <section style={{ padding: '6rem 0', background: '#F8FAFC' }}>
         <div className="container" style={{ maxWidth: '1280px' }}>
-          <div style={{
+          <div className="flex-responsive" style={{
             display: 'flex',
             flexDirection: 'row',
             gap: '4rem',
             alignItems: 'flex-start'
           }}>
             {/* Left Header */}
-            <div style={{ flex: '0 0 33.333%', position: 'sticky', top: '8rem' }}>
+            <div className="mobile-full-width" style={{ flex: '0 0 33.333%', position: 'sticky', top: '8rem' }}>
               <div style={{
                 fontSize: '0.875rem',
                 color: '#001639',
@@ -964,7 +989,7 @@ function HomePage({ navigate, user }) {
             </div>
 
             {/* Right Timeline */}
-            <div style={{ flex: '0 0 66.666%', position: 'relative' }}>
+            <div className="mobile-full-width" style={{ flex: '0 0 66.666%', position: 'relative' }}>
               {/* Vertical Line */}
               <div style={{
                 position: 'absolute',
@@ -996,7 +1021,7 @@ function HomePage({ navigate, user }) {
                     icon: Download
                   }
                 ].map((step) => (
-                  <div key={step.id} style={{ position: 'relative', paddingLeft: '6rem' }}>
+                  <div key={step.id} className="process-step" style={{ position: 'relative', paddingLeft: '6rem' }}>
                     {/* Icon Marker */}
                     <div style={{
                       position: 'absolute',
@@ -1108,7 +1133,7 @@ function HomePage({ navigate, user }) {
             </p>
           </div>
 
-          <div style={{
+          <div className="pricing-grid" style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(4, 1fr)',
             gap: '2rem',
