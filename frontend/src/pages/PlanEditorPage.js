@@ -9,6 +9,9 @@ import PlanAnalytics from '../components/PlanAnalytics';
 import PlanChat from '../components/PlanChat';
 import PlanSharing from '../components/PlanSharing';
 import ReadinessScore from '../components/ReadinessScore';
+import PitchDeckGenerator from '../components/PitchDeckGenerator';
+import ScenarioPlanning from '../components/ScenarioPlanning';
+import AIInsights from '../components/AIInsights';
 import { Share2 } from 'lucide-react';
 
 function PlanEditorPage({ navigate, user, planId }) {
