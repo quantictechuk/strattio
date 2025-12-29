@@ -425,6 +425,9 @@ export const api = {
       body: JSON.stringify({ plan_ids: planIds })
     })
   },
+  insights: {
+    get: (planId) => apiRequest(`/api/plans/${planId}/insights`)
+  },
   sharing: {
     createShare: (planId, shareData) => apiRequest(`/api/plans/${planId}/share`, {
       method: 'POST',

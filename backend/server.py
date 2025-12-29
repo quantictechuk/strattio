@@ -136,6 +136,7 @@ try:
     from routes.scenarios import router as scenarios_router
     from routes.achievements import router as achievements_router
     from routes.plan_comparison import router as plan_comparison_router
+    from routes.ai_insights import router as ai_insights_router
     
     api_router.include_router(oauth_router, prefix="/auth", tags=["OAuth"])
     api_router.include_router(admin_router, prefix="/admin", tags=["Admin"])
@@ -148,6 +149,7 @@ try:
     api_router.include_router(scenarios_router, tags=["Scenarios"])
     api_router.include_router(achievements_router, tags=["Achievements"])
     api_router.include_router(plan_comparison_router, tags=["Plan Comparison"])
+    api_router.include_router(ai_insights_router, tags=["AI Insights"])
     api_router.include_router(plans_router, prefix="/plans", tags=["Plans"])
     api_router.include_router(sections_router, tags=["Sections"])
     api_router.include_router(financials_router, tags=["Financials"])
