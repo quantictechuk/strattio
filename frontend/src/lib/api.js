@@ -333,6 +333,41 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(adminData)
       })
+    },
+    tickets: {
+      list: (status, priority, assignedTo, skip = 0, limit = 50) => {
+        const params = new URLSearchParams();
+        if (status) params.append('status', status);
+        if (priority) params.append('priority', priority);
+        if (assignedTo) params.append('assigned_to', assignedTo);
+        params.append('skip', skip.toString());
+        params.append('limit', limit.toString());
+        return apiRequest(`/api/admin/tickets?${params.toString()}`);
+      },
+      get: (ticketId) => apiRequest(`/api/admin/tickets/${ticketId}`),
+      update: (ticketId, data) => apiRequest(`/api/admin/tickets/${ticketId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data)
+      }),
+      respond: (ticketId, message, isInternal = false) => apiRequest(`/api/admin/tickets/${ticketId}/respond`, {
+        method: 'POST',
+        body: JSON.stringify({ message, is_internal: isInternal })
+      })
     }
+  },
+  tickets: {
+    create: (ticketData) => apiRequest('/api/tickets', {
+      method: 'POST',
+      body: JSON.stringify(ticketData)
+    }),
+    list: (status) => {
+      const params = status ? `?status=${status}` : '';
+      return apiRequest(`/api/tickets${params}`);
+    },
+    get: (ticketId) => apiRequest(`/api/tickets/${ticketId}`),
+    respond: (ticketId, message) => apiRequest(`/api/tickets/${ticketId}/respond`, {
+      method: 'POST',
+      body: JSON.stringify({ message })
+    })
   }
 };

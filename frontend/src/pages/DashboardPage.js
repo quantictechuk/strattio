@@ -19,6 +19,7 @@ import {
 import { api } from '../lib/api';
 import Footer from '../components/Footer';
 import MobileMenu from '../components/MobileMenu';
+import SupportTickets from '../components/SupportTickets';
 
 function DashboardPage({ navigate, user, onLogout }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -1252,6 +1253,11 @@ function DashboardPage({ navigate, user, onLogout }) {
           </div>
         </div>
       )}
+
+      {/* Support Tickets Section */}
+      <div className="container" style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1rem 3rem' }}>
+        <SupportTickets user={user} />
+      </div>
 
       {/* Footer */}
       <Footer navigate={navigate} user={user} />

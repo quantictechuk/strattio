@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   Users, FileText, DollarSign, TrendingUp, Shield, LogOut, 
   Search, Eye, Key, Save, AlertCircle, CheckCircle2, X,
-  BarChart3, PieChart, Calendar, CreditCard, UserPlus, Mail
+  BarChart3, PieChart, Calendar, CreditCard, UserPlus, Mail,
+  MessageSquare, Filter, Send, Clock
 } from 'lucide-react';
 import { api, authService } from '../lib/api';
 
@@ -39,6 +40,19 @@ function AdminDashboardPage({ navigate, user, onLogout }) {
   const [newAdminPassword, setNewAdminPassword] = useState('');
   const [newAdminName, setNewAdminName] = useState('');
   const [creatingAdmin, setCreatingAdmin] = useState(false);
+  
+  // Ticket management
+  const [tickets, setTickets] = useState([]);
+  const [ticketsTotal, setTicketsTotal] = useState(0);
+  const [ticketsPage, setTicketsPage] = useState(0);
+  const [ticketStatusFilter, setTicketStatusFilter] = useState('');
+  const [ticketPriorityFilter, setTicketPriorityFilter] = useState('');
+  const [ticketAssignedFilter, setTicketAssignedFilter] = useState('');
+  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [ticketResponse, setTicketResponse] = useState('');
+  const [ticketResponseInternal, setTicketResponseInternal] = useState(false);
+  const [respondingToTicket, setRespondingToTicket] = useState(false);
+  const [updatingTicket, setUpdatingTicket] = useState(false);
 
   useEffect(() => {
     const checkAdminAccess = async () => {
@@ -137,6 +151,19 @@ function AdminDashboardPage({ navigate, user, onLogout }) {
           throw new Error(`Failed to load admins: ${e.message}`);
         });
         setAdmins(adminsData.admins || []);
+      } else if (activeTab === 'tickets') {
+        const ticketsData = await api.admin.tickets.list(
+          ticketStatusFilter || undefined,
+          ticketPriorityFilter || undefined,
+          ticketAssignedFilter || undefined,
+          ticketsPage * 50,
+          50
+        ).catch(e => {
+          console.error('Tickets list error:', e);
+          throw new Error(`Failed to load tickets: ${e.message}`);
+        });
+        setTickets(ticketsData.tickets || []);
+        setTicketsTotal(ticketsData.total || 0);
       }
     } catch (err) {
       console.error('Error loading admin data:', err);
@@ -247,6 +274,61 @@ function AdminDashboardPage({ navigate, user, onLogout }) {
     }
   };
 
+  const handleViewTicket = async (ticketId) => {
+    try {
+      const ticket = await api.admin.tickets.get(ticketId);
+      setSelectedTicket(ticket);
+      setTicketResponse('');
+      setTicketResponseInternal(false);
+    } catch (err) {
+      setError(err.message || 'Failed to load ticket');
+    }
+  };
+
+  const handleUpdateTicket = async (ticketId, updates) => {
+    try {
+      setUpdatingTicket(true);
+      setError('');
+      await api.admin.tickets.update(ticketId, updates);
+      await loadData(); // Reload tickets
+      if (selectedTicket && selectedTicket.id === ticketId) {
+        const updated = await api.admin.tickets.get(ticketId);
+        setSelectedTicket(updated);
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to update ticket');
+    } finally {
+      setUpdatingTicket(false);
+    }
+  };
+
+  const handleRespondToTicket = async (e) => {
+    e.preventDefault();
+    if (!ticketResponse.trim()) {
+      setError('Message is required');
+      return;
+    }
+    
+    try {
+      setRespondingToTicket(true);
+      setError('');
+      await api.admin.tickets.respond(selectedTicket.id, ticketResponse.trim(), ticketResponseInternal);
+      setTicketResponse('');
+      setTicketResponseInternal(false);
+      
+      // Reload ticket
+      const updated = await api.admin.tickets.get(selectedTicket.id);
+      setSelectedTicket(updated);
+      
+      // Reload tickets list
+      await loadData();
+    } catch (err) {
+      setError(err.message || 'Failed to send response');
+    } finally {
+      setRespondingToTicket(false);
+    }
+  };
+
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-GB', {
       style: 'currency',
@@ -330,7 +412,8 @@ function AdminDashboardPage({ navigate, user, onLogout }) {
             {[
               { id: 'overview', label: 'Overview', icon: BarChart3 },
               { id: 'users', label: 'Users', icon: Users },
-              { id: 'admins', label: 'Admins', icon: Shield }
+              { id: 'admins', label: 'Admins', icon: Shield },
+              { id: 'tickets', label: 'Tickets', icon: MessageSquare }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -670,8 +753,354 @@ function AdminDashboardPage({ navigate, user, onLogout }) {
               </div>
             </div>
           )}
+
+          {activeTab === 'tickets' && (
+            <div>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#001639', marginBottom: '1.5rem' }}>
+                Support Tickets
+              </h2>
+
+              {/* Filters */}
+              <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Filter size={18} color="#64748B" />
+                  <select
+                    value={ticketStatusFilter}
+                    onChange={(e) => { setTicketStatusFilter(e.target.value); setTicketsPage(0); }}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      border: '1px solid #E2E8F0',
+                      borderRadius: '6px',
+                      fontSize: '0.875rem',
+                      background: 'white',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <option value="">All Status</option>
+                    <option value="open">Open</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="resolved">Resolved</option>
+                    <option value="closed">Closed</option>
+                  </select>
+                </div>
+                <select
+                  value={ticketPriorityFilter}
+                  onChange={(e) => { setTicketPriorityFilter(e.target.value); setTicketsPage(0); }}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    border: '1px solid #E2E8F0',
+                    borderRadius: '6px',
+                    fontSize: '0.875rem',
+                    background: 'white',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="">All Priorities</option>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="urgent">Urgent</option>
+                </select>
+                <select
+                  value={ticketAssignedFilter}
+                  onChange={(e) => { setTicketAssignedFilter(e.target.value); setTicketsPage(0); }}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    border: '1px solid #E2E8F0',
+                    borderRadius: '6px',
+                    fontSize: '0.875rem',
+                    background: 'white',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="">All Assignments</option>
+                  <option value="unassigned">Unassigned</option>
+                  {admins.map(admin => (
+                    <option key={admin.id} value={admin.id}>{admin.name || admin.email}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Tickets Table */}
+              <div className="card" style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '600', color: '#475569' }}>ID</th>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '600', color: '#475569' }}>Subject</th>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '600', color: '#475569' }}>User</th>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '600', color: '#475569' }}>Priority</th>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '600', color: '#475569' }}>Status</th>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '600', color: '#475569' }}>Assigned</th>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '600', color: '#475569' }}>Created</th>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', fontSize: '0.875rem', fontWeight: '600', color: '#475569' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tickets.map((ticket) => (
+                      <tr key={ticket.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                        <td style={{ padding: '0.75rem', fontSize: '0.875rem', color: '#64748B' }}>#{ticket.id.substring(0, 8)}</td>
+                        <td style={{ padding: '0.75rem', fontSize: '0.875rem', color: '#1E293B', fontWeight: '500' }}>{ticket.subject}</td>
+                        <td style={{ padding: '0.75rem', fontSize: '0.875rem', color: '#1E293B' }}>{ticket.user?.email || 'N/A'}</td>
+                        <td style={{ padding: '0.75rem' }}>
+                          <span style={{
+                            padding: '0.25rem 0.75rem',
+                            background: ticket.priority === 'urgent' ? '#FEF2F2' : ticket.priority === 'high' ? '#FFFBEB' : ticket.priority === 'medium' ? '#EFF6FF' : '#F1F5F9',
+                            color: ticket.priority === 'urgent' ? '#DC2626' : ticket.priority === 'high' ? '#D97706' : ticket.priority === 'medium' ? '#2563EB' : '#64748B',
+                            borderRadius: '12px',
+                            fontSize: '0.75rem',
+                            fontWeight: '600',
+                            textTransform: 'capitalize'
+                          }}>
+                            {ticket.priority}
+                          </span>
+                        </td>
+                        <td style={{ padding: '0.75rem' }}>
+                          <span style={{
+                            padding: '0.25rem 0.75rem',
+                            background: ticket.status === 'open' ? '#EFF6FF' : ticket.status === 'in_progress' ? '#FFFBEB' : ticket.status === 'resolved' ? '#E6F7F0' : '#F1F5F9',
+                            color: ticket.status === 'open' ? '#2563EB' : ticket.status === 'in_progress' ? '#D97706' : ticket.status === 'resolved' ? '#27AC85' : '#64748B',
+                            borderRadius: '12px',
+                            fontSize: '0.75rem',
+                            fontWeight: '600',
+                            textTransform: 'capitalize'
+                          }}>
+                            {ticket.status.replace('_', ' ')}
+                          </span>
+                        </td>
+                        <td style={{ padding: '0.75rem', fontSize: '0.875rem', color: '#1E293B' }}>
+                          {ticket.assigned_admin ? ticket.assigned_admin.name : <span style={{ color: '#94A3B8' }}>Unassigned</span>}
+                        </td>
+                        <td style={{ padding: '0.75rem', fontSize: '0.875rem', color: '#64748B' }}>
+                          {new Date(ticket.created_at).toLocaleDateString()}
+                        </td>
+                        <td style={{ padding: '0.75rem' }}>
+                          <button
+                            onClick={() => handleViewTicket(ticket.id)}
+                            style={{
+                              padding: '0.375rem 0.75rem',
+                              background: '#F1F5F9',
+                              border: '1px solid #E2E8F0',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '0.875rem',
+                              color: '#475569'
+                            }}
+                          >
+                            View
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                
+                {tickets.length === 0 && (
+                  <div style={{ padding: '2rem', textAlign: 'center', color: '#94A3B8' }}>
+                    No tickets found
+                  </div>
+                )}
+              </div>
+
+              {/* Pagination */}
+              {ticketsTotal > 50 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem' }}>
+                  <span style={{ fontSize: '0.875rem', color: '#64748B' }}>
+                    Showing {ticketsPage * 50 + 1} - {Math.min((ticketsPage + 1) * 50, ticketsTotal)} of {ticketsTotal}
+                  </span>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      onClick={() => setTicketsPage(p => Math.max(0, p - 1))}
+                      disabled={ticketsPage === 0}
+                      className="btn btn-secondary"
+                    >
+                      Previous
+                    </button>
+                    <button
+                      onClick={() => setTicketsPage(p => p + 1)}
+                      disabled={(ticketsPage + 1) * 50 >= ticketsTotal}
+                      className="btn btn-secondary"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Ticket Detail Modal */}
+      {selectedTicket && (
+        <Modal
+          title={`Ticket #${selectedTicket.id.substring(0, 8)} - ${selectedTicket.subject}`}
+          onClose={() => {
+            setSelectedTicket(null);
+            setTicketResponse('');
+            setTicketResponseInternal(false);
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {/* Ticket Info */}
+            <div>
+              <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: '#64748B', textTransform: 'uppercase' }}>Status</label>
+                  <select
+                    value={selectedTicket.status}
+                    onChange={(e) => handleUpdateTicket(selectedTicket.id, { status: e.target.value })}
+                    disabled={updatingTicket}
+                    style={{
+                      padding: '0.5rem',
+                      border: '1px solid #E2E8F0',
+                      borderRadius: '6px',
+                      fontSize: '0.875rem',
+                      background: 'white',
+                      cursor: 'pointer',
+                      marginTop: '0.25rem'
+                    }}
+                  >
+                    <option value="open">Open</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="resolved">Resolved</option>
+                    <option value="closed">Closed</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: '#64748B', textTransform: 'uppercase' }}>Priority</label>
+                  <select
+                    value={selectedTicket.priority}
+                    onChange={(e) => handleUpdateTicket(selectedTicket.id, { priority: e.target.value })}
+                    disabled={updatingTicket}
+                    style={{
+                      padding: '0.5rem',
+                      border: '1px solid #E2E8F0',
+                      borderRadius: '6px',
+                      fontSize: '0.875rem',
+                      background: 'white',
+                      cursor: 'pointer',
+                      marginTop: '0.25rem'
+                    }}
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: '#64748B', textTransform: 'uppercase' }}>Assign To</label>
+                  <select
+                    value={selectedTicket.assigned_to || ''}
+                    onChange={(e) => handleUpdateTicket(selectedTicket.id, { assigned_to: e.target.value || null })}
+                    disabled={updatingTicket}
+                    style={{
+                      padding: '0.5rem',
+                      border: '1px solid #E2E8F0',
+                      borderRadius: '6px',
+                      fontSize: '0.875rem',
+                      background: 'white',
+                      cursor: 'pointer',
+                      marginTop: '0.25rem'
+                    }}
+                  >
+                    <option value="">Unassigned</option>
+                    {admins.map(admin => (
+                      <option key={admin.id} value={admin.id}>{admin.name || admin.email}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              
+              <div style={{ padding: '1rem', background: '#F8FAFC', borderRadius: '8px', marginBottom: '1rem' }}>
+                <p style={{ fontSize: '0.875rem', color: '#475569', margin: 0, whiteSpace: 'pre-wrap' }}>
+                  {selectedTicket.description}
+                </p>
+              </div>
+              
+              <div style={{ fontSize: '0.75rem', color: '#64748B' }}>
+                <div>User: {selectedTicket.user?.email}</div>
+                <div>Created: {new Date(selectedTicket.created_at).toLocaleString()}</div>
+                {selectedTicket.assigned_admin && <div>Assigned to: {selectedTicket.assigned_admin.name}</div>}
+              </div>
+            </div>
+
+            {/* Responses */}
+            <div>
+              <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#001639', marginBottom: '1rem' }}>
+                Responses ({selectedTicket.responses?.length || 0})
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '300px', overflowY: 'auto' }}>
+                {selectedTicket.responses?.map((response, idx) => (
+                  <div key={idx} style={{
+                    padding: '1rem',
+                    background: response.is_admin ? '#EBF5FF' : '#F8FAFC',
+                    borderRadius: '8px',
+                    borderLeft: response.is_admin ? '3px solid #3B82F6' : '3px solid #E2E8F0'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <div style={{ fontWeight: '600', color: '#001639' }}>
+                        {response.user_name} {response.is_admin && <span style={{ fontSize: '0.75rem', color: '#3B82F6' }}>(Admin)</span>}
+                        {response.is_internal && <span style={{ fontSize: '0.75rem', color: '#F59E0B', marginLeft: '0.5rem' }}>(Internal Note)</span>}
+                      </div>
+                      <span style={{ fontSize: '0.75rem', color: '#64748B' }}>
+                        {new Date(response.created_at).toLocaleString()}
+                      </span>
+                    </div>
+                    <p style={{ fontSize: '0.875rem', color: '#475569', margin: 0, whiteSpace: 'pre-wrap' }}>
+                      {response.message}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Response Form */}
+            {selectedTicket.status !== 'closed' && (
+              <form onSubmit={handleRespondToTicket}>
+                <div className="form-group" style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500', color: '#475569' }}>
+                    Add Response
+                  </label>
+                  <textarea
+                    value={ticketResponse}
+                    onChange={(e) => setTicketResponse(e.target.value)}
+                    required
+                    rows={4}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid #E2E8F0',
+                      borderRadius: '6px',
+                      fontSize: '0.9375rem',
+                      fontFamily: 'inherit',
+                      resize: 'vertical'
+                    }}
+                    placeholder="Type your response here..."
+                  />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                  <input
+                    type="checkbox"
+                    id="internalNote"
+                    checked={ticketResponseInternal}
+                    onChange={(e) => setTicketResponseInternal(e.target.checked)}
+                    style={{ cursor: 'pointer' }}
+                  />
+                  <label htmlFor="internalNote" style={{ fontSize: '0.875rem', color: '#475569', cursor: 'pointer' }}>
+                    Internal note (visible only to admins)
+                  </label>
+                </div>
+                <button type="submit" className="btn btn-primary" disabled={respondingToTicket} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Send size={16} />
+                  {respondingToTicket ? 'Sending...' : 'Send Response'}
+                </button>
+              </form>
+            )}
+          </div>
+        </Modal>
+      )}
 
       {/* Create Admin Modal */}
       {showCreateAdminModal && (
