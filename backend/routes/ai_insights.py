@@ -1,7 +1,7 @@
 """AI-Powered Insights routes - Market analysis, risk assessment, growth strategies"""
 
 from fastapi import APIRouter, HTTPException, Depends
-from typing import Dict, List
+from typing import Dict, List, Optional
 from datetime import datetime
 import logging
 import os
