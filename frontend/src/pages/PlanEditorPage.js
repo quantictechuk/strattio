@@ -6,6 +6,9 @@ import CompetitorAnalysis from '../components/CompetitorAnalysis';
 import EnhancedCompliance from '../components/EnhancedCompliance';
 import BusinessModelCanvas from '../components/BusinessModelCanvas';
 import PlanAnalytics from '../components/PlanAnalytics';
+import PlanChat from '../components/PlanChat';
+import PlanSharing from '../components/PlanSharing';
+import { Share2 } from 'lucide-react';
 
 function PlanEditorPage({ navigate, user, planId }) {
   const [plan, setPlan] = useState(null);
