@@ -413,6 +413,12 @@ export const api = {
       })
     })
   },
+  achievements: {
+    get: () => apiRequest('/api/users/achievements'),
+    check: () => apiRequest('/api/users/achievements/check', {
+      method: 'POST'
+    })
+  },
   sharing: {
     createShare: (planId, shareData) => apiRequest(`/api/plans/${planId}/share`, {
       method: 'POST',

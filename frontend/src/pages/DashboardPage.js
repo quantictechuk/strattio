@@ -20,6 +20,7 @@ import { api } from '../lib/api';
 import Footer from '../components/Footer';
 import MobileMenu from '../components/MobileMenu';
 import SupportTickets from '../components/SupportTickets';
+import Achievements from '../components/Achievements';
 
 function DashboardPage({ navigate, user, onLogout }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
