@@ -155,9 +155,23 @@ async def get_checkout_status(session_id: str, user_id: str = Depends(get_curren
     """
     Get checkout session status and update subscription if paid.
     Implements polling mechanism as per playbook.
+    Handles coupon discounts properly.
     """
     
     try:
+        logger.info(f"Checking checkout status for session {session_id}, user {user_id}")
+        
+        # Find transaction record first (before calling Stripe)
+        transaction = await db.payment_transactions.find_one({"session_id": session_id})
+        if not transaction:
+            logger.warning(f"Transaction not found for session {session_id}")
+            raise HTTPException(status_code=404, detail="Transaction not found")
+        
+        # Verify user owns this transaction
+        if transaction.get("user_id") != user_id:
+            logger.warning(f"User {user_id} attempted to access session {session_id} owned by {transaction.get('user_id')}")
+            raise HTTPException(status_code=403, detail="Unauthorized")
+        
         # Initialize Stripe
         stripe_checkout = StripeCheckout(
             api_key=STRIPE_API_KEY,
@@ -165,41 +179,45 @@ async def get_checkout_status(session_id: str, user_id: str = Depends(get_curren
         )
         
         # Get status from Stripe
-        status: CheckoutStatusResponse = await stripe_checkout.get_checkout_status(session_id)
-        
-        # Find transaction record
-        transaction = await db.payment_transactions.find_one({"session_id": session_id})
-        if not transaction:
-            raise HTTPException(status_code=404, detail="Transaction not found")
-        
-        # Verify user owns this transaction
-        if transaction.get("user_id") != user_id:
-            raise HTTPException(status_code=403, detail="Unauthorized")
+        try:
+            status: CheckoutStatusResponse = await stripe_checkout.get_checkout_status(session_id)
+            logger.info(f"Stripe status for {session_id}: payment_status={status.payment_status}, status={status.status}, amount_total={status.amount_total}")
+        except Exception as stripe_error:
+            logger.error(f"Error retrieving Stripe session {session_id}: {stripe_error}")
+            # Return current transaction status if Stripe call fails
+            return serialize_doc(transaction)
         
         # Check if already processed (prevent double-processing)
         if transaction.get("payment_status") == "paid" and transaction.get("processed") == True:
             logger.info(f"Payment already processed for session {session_id}")
             return serialize_doc(transaction)
         
-        # Update transaction record
+        # Update transaction record with latest status from Stripe
+        # Note: amount_total is in cents and may be less than original amount if coupon was applied
+        update_data = {
+            "payment_status": status.payment_status,
+            "status": status.status,
+            "amount_total": status.amount_total,  # This is in cents, may be discounted
+            "currency": status.currency,
+            "updated_at": datetime.utcnow()
+        }
+        
         await db.payment_transactions.update_one(
             {"session_id": session_id},
-            {"$set": {
-                "payment_status": status.payment_status,
-                "status": status.status,
-                "amount_total": status.amount_total,
-                "currency": status.currency,
-                "updated_at": datetime.utcnow()
-            }}
+            {"$set": update_data}
         )
         
         # If payment successful and not yet processed, upgrade subscription
         if status.payment_status == "paid" and not transaction.get("processed"):
-            logger.info(f"Processing successful payment for session {session_id}")
+            logger.info(f"Processing successful payment for session {session_id} (amount: {status.amount_total} {status.currency})")
             
             # Get package details from metadata
             tier = status.metadata.get("tier") or transaction.get("tier")
             plan_limit = int(status.metadata.get("plan_limit", "999999"))
+            
+            if not tier:
+                logger.error(f"No tier found in metadata for session {session_id}")
+                raise HTTPException(status_code=500, detail="Missing tier information in transaction")
             
             # Update subscription
             await db.subscriptions.update_one(
@@ -225,13 +243,27 @@ async def get_checkout_status(session_id: str, user_id: str = Depends(get_curren
             
             logger.info(f"Subscription upgraded to {tier} for user {user_id}")
         
-        # Return updated transaction
+        # Return updated transaction with consistent format
         updated_transaction = await db.payment_transactions.find_one({"session_id": session_id})
-        return serialize_doc(updated_transaction)
+        result = serialize_doc(updated_transaction)
         
+        # Ensure response has the fields frontend expects
+        if "payment_status" not in result:
+            result["payment_status"] = status.payment_status
+        if "status" not in result:
+            result["status"] = status.status
+        
+        logger.info(f"Returning status for session {session_id}: payment_status={result.get('payment_status')}, status={result.get('status')}")
+        return result
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
     except Exception as e:
-        logger.error(f"Error checking checkout status: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error checking checkout status for session {session_id}: {e}", exc_info=True)
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Failed to check checkout status: {str(e)}")
 
 @router.post("/webhook/stripe")
 async def stripe_webhook(request: Request, db = Depends(get_db)):

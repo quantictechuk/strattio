@@ -109,7 +109,8 @@ export const apiRequest = async (endpoint, options = {}) => {
   } catch (error) {
     console.error('API request error:', error);
     // Re-throw with better error message if it's a network error
-    if (error.message.includes('Failed to fetch') || error.message.includes('Load failed')) {
+    const errorMsg = error.message || String(error);
+    if (errorMsg.includes('Failed to fetch') || errorMsg.includes('Load failed') || errorMsg.includes('network') || error.name === 'TypeError') {
       throw new Error('Unable to connect to server. Please check if the backend is running at ' + API_URL);
     }
     throw error;

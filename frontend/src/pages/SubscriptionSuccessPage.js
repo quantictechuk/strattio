@@ -16,12 +16,14 @@ function SubscriptionSuccessPage({ navigate, user }) {
     const sessionId = urlParams.get('session_id');
 
     if (!sessionId) {
-      setError('No session ID found in URL');
+      setError('No session ID found in URL. Please check the URL contains ?session_id=...');
       setStatus('error');
       return;
     }
 
     console.log('Checking payment status for session:', sessionId);
+    console.log('Current URL:', window.location.href);
+    console.log('Backend URL:', process.env.REACT_APP_BACKEND_URL || 'https://strattio-backend.vercel.app');
 
     // Start polling
     pollStatus(sessionId, 0);
@@ -40,26 +42,10 @@ function SubscriptionSuccessPage({ navigate, user }) {
     setAttempts(attemptNumber + 1);
 
     try {
-      console.log(`Polling attempt ${attemptNumber + 1}/${maxAttempts}`);
+      console.log(`Polling attempt ${attemptNumber + 1}/${maxAttempts} for session: ${sessionId}`);
       
-      // Make direct fetch call to avoid any body issues
-      const token = authService.getToken();
-      const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL || 'https://strattio-backend.vercel.app'}/api/stripe/checkout/status/${sessionId}`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`Status check failed: ${response.status}`);
-      }
-
-      const data = await response.json();
+      // Use the API helper for consistent error handling and URL construction
+      const data = await api.stripe.getCheckoutStatus(sessionId);
       console.log('Payment status response:', data);
 
       // Check if payment is complete
@@ -87,13 +73,26 @@ function SubscriptionSuccessPage({ navigate, user }) {
 
     } catch (err) {
       console.error('Error checking payment status:', err);
-      setError(err.message || 'Failed to verify payment');
+      const errorMessage = err.message || 'Failed to verify payment';
+      setError(errorMessage);
       
-      // Retry on error
-      if (attemptNumber < maxAttempts - 1) {
-        setTimeout(() => pollStatus(sessionId, attemptNumber + 1), pollInterval);
+      // Check if it's a network error (Load failed)
+      if (errorMessage.includes('Load failed') || errorMessage.includes('Failed to fetch') || errorMessage.includes('network')) {
+        console.error('Network error detected - this might be a CORS or connection issue');
+        // For network errors, still retry but with longer delay
+        if (attemptNumber < maxAttempts - 1) {
+          console.log(`Retrying after network error (attempt ${attemptNumber + 1}/${maxAttempts})`);
+          setTimeout(() => pollStatus(sessionId, attemptNumber + 1), pollInterval * 2); // Longer delay for network errors
+        } else {
+          setStatus('error');
+        }
       } else {
-        setStatus('error');
+        // For other errors, retry normally
+        if (attemptNumber < maxAttempts - 1) {
+          setTimeout(() => pollStatus(sessionId, attemptNumber + 1), pollInterval);
+        } else {
+          setStatus('error');
+        }
       }
     }
   };
@@ -160,6 +159,11 @@ function SubscriptionSuccessPage({ navigate, user }) {
               <p style={{ fontSize: '0.875rem', color: '#991B1B', margin: 0 }}>
                 If you completed the payment, your subscription will be activated shortly. Please check your email or contact support.
               </p>
+            </div>
+            <div style={{ background: '#F3F4F6', padding: '0.75rem', borderRadius: '6px', marginBottom: '1rem', fontSize: '0.75rem', color: '#6B7280' }}>
+              <p style={{ margin: '0 0 0.25rem 0', fontWeight: '600' }}>Debug Info:</p>
+              <p style={{ margin: '0.25rem 0', wordBreak: 'break-all' }}>Session ID: {new URLSearchParams(window.location.search).get('session_id') || 'Not found'}</p>
+              <p style={{ margin: '0.25rem 0' }}>Backend: {process.env.REACT_APP_BACKEND_URL || 'https://strattio-backend.vercel.app'}</p>
             </div>
             <button className="btn btn-primary" onClick={() => window.location.href = '/'}>
               Back to Dashboard

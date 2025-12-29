@@ -69,6 +69,7 @@ class StripeCheckout:
             success_url=request.success_url,
             cancel_url=request.cancel_url,
             metadata=request.metadata,
+            allow_promotion_codes=True,  # Enable promo code field in checkout
         )
         
         return CheckoutSessionResponse(
