@@ -250,4 +250,4 @@ async def shutdown_event():
     logger.info("Strattio API shutting down...")
     if client is not None:
         client.close()
-# Backend deployment trigger Tue Dec 30 00:29:24 GMT 2025
+# Backend deployment test - Root Directory fix
