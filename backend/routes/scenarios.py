@@ -56,27 +56,37 @@ async def create_scenarios(
     best_case_intake["monthly_revenue_estimate"] = intake_data.get("monthly_revenue_estimate", 0) * 1.2
     best_case_engine = FinancialEngine(best_case_intake, benchmarks)
     best_case_model = best_case_engine.generate_financial_model()
-    best_case_model["data"]["revenue_multiplier"] = 1.2
-    best_case_model["data"]["cost_multiplier"] = 0.9
-    scenarios["best_case"] = best_case_model["data"]
+    # generate_financial_model() returns the model directly, not wrapped in "data"
+    if "data" in best_case_model:
+        best_case_data = best_case_model["data"]
+    else:
+        best_case_data = best_case_model
+    best_case_data["revenue_multiplier"] = 1.2
+    best_case_data["cost_multiplier"] = 0.9
+    scenarios["best_case"] = best_case_data
     
     # 2. Worst Case Scenario (-30% revenue, +15% costs)
     worst_case_intake = intake_data.copy()
     worst_case_intake["monthly_revenue_estimate"] = intake_data.get("monthly_revenue_estimate", 0) * 0.7
     worst_case_engine = FinancialEngine(worst_case_intake, benchmarks)
     worst_case_model = worst_case_engine.generate_financial_model()
-    # Adjust costs upward
-    if worst_case_model["data"].get("pnl_monthly"):
-        for month in worst_case_model["data"]["pnl_monthly"]:
-            if "operating_expenses" in month:
-                month["operating_expenses"] = month["operating_expenses"] * 1.15
-            if "total_expenses" in month:
-                month["total_expenses"] = month["total_expenses"] * 1.15
-            if "net_profit" in month:
-                month["net_profit"] = month.get("revenue", 0) - month.get("total_expenses", 0)
-    worst_case_model["data"]["revenue_multiplier"] = 0.7
-    worst_case_model["data"]["cost_multiplier"] = 1.15
-    scenarios["worst_case"] = worst_case_model["data"]
+    # generate_financial_model() returns the model directly, not wrapped in "data"
+    if "data" in worst_case_model:
+        worst_case_data = worst_case_model["data"]
+    else:
+        worst_case_data = worst_case_model
+    # Adjust costs upward - check for pnl_annual (not pnl_monthly)
+    if worst_case_data.get("pnl_annual"):
+        for year in worst_case_data["pnl_annual"]:
+            if "operating_expenses" in year:
+                year["operating_expenses"] = year["operating_expenses"] * 1.15
+            if "total_expenses" in year:
+                year["total_expenses"] = year["total_expenses"] * 1.15
+            if "net_profit" in year:
+                year["net_profit"] = year.get("revenue", 0) - year.get("total_expenses", 0)
+    worst_case_data["revenue_multiplier"] = 0.7
+    worst_case_data["cost_multiplier"] = 1.15
+    scenarios["worst_case"] = worst_case_data
     
     # 3. Realistic Scenario (base projections)
     realistic_model = financial_data.copy()
@@ -165,21 +175,27 @@ async def analyze_scenario(
     custom_engine = FinancialEngine(custom_intake, benchmarks)
     custom_model = custom_engine.generate_financial_model()
     
-    # Adjust costs
-    if custom_model["data"].get("pnl_monthly"):
-        for month in custom_model["data"]["pnl_monthly"]:
-            if "operating_expenses" in month:
-                month["operating_expenses"] = month["operating_expenses"] * scenario_input.cost_multiplier
-            if "total_expenses" in month:
-                month["total_expenses"] = month["total_expenses"] * scenario_input.cost_multiplier
-            if "net_profit" in month:
-                month["net_profit"] = month.get("revenue", 0) - month.get("total_expenses", 0)
+    # generate_financial_model() returns the model directly, not wrapped in "data"
+    if "data" in custom_model:
+        custom_data = custom_model["data"]
+    else:
+        custom_data = custom_model
     
-    custom_model["data"]["revenue_multiplier"] = scenario_input.revenue_multiplier
-    custom_model["data"]["cost_multiplier"] = scenario_input.cost_multiplier
+    # Adjust costs - check for pnl_annual (not pnl_monthly)
+    if custom_data.get("pnl_annual"):
+        for year in custom_data["pnl_annual"]:
+            if "operating_expenses" in year:
+                year["operating_expenses"] = year["operating_expenses"] * scenario_input.cost_multiplier
+            if "total_expenses" in year:
+                year["total_expenses"] = year["total_expenses"] * scenario_input.cost_multiplier
+            if "net_profit" in year:
+                year["net_profit"] = year.get("revenue", 0) - year.get("total_expenses", 0)
+    
+    custom_data["revenue_multiplier"] = scenario_input.revenue_multiplier
+    custom_data["cost_multiplier"] = scenario_input.cost_multiplier
     
     return {
-        "scenario": custom_model["data"],
+        "scenario": custom_data,
         "revenue_multiplier": scenario_input.revenue_multiplier,
         "cost_multiplier": scenario_input.cost_multiplier
     }
