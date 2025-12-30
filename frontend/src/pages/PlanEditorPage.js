@@ -1042,11 +1042,9 @@ function PlanEditorPage({ navigate, user, planId }) {
             )}
             
             {/* Scenario Planning */}
-            {financials && financials.data && (
-              <div style={{ marginTop: '2rem' }}>
-                <ScenarioPlanning planId={planId} />
-              </div>
-            )}
+            <div style={{ marginTop: '2rem' }}>
+              <ScenarioPlanning planId={planId} />
+            </div>
           </div>
         )}
 
