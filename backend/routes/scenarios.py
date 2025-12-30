@@ -217,19 +217,24 @@ def _calculate_sensitivity(intake_data: Dict, financial_data: Dict, benchmarks: 
     # Revenue sensitivity
     base_revenue = intake_data.get("monthly_revenue_estimate", 0)
     if base_revenue > 0:
-        # Test ±20% revenue change
-        revenue_impact = (financial_data.get("pnl_monthly", [{}])[0].get("revenue", 0) * 0.2) / base_revenue * 100
-        variables.append({
-            "name": "Monthly Revenue",
-            "impact_score": min(100, abs(revenue_impact)),
-            "effect": "positive" if revenue_impact > 0 else "negative",
-            "description": "20% change in revenue affects profitability significantly"
-        })
+        # Test ±20% revenue change - check for pnl_annual (not pnl_monthly)
+        pnl_data = financial_data.get("pnl_annual") or financial_data.get("pnl_monthly", [{}])
+        if pnl_data and len(pnl_data) > 0:
+            first_period = pnl_data[0]
+            period_revenue = first_period.get("revenue", 0)
+            revenue_impact = (period_revenue * 0.2) / base_revenue * 100 if base_revenue > 0 else 0
+            variables.append({
+                "name": "Monthly Revenue",
+                "impact_score": min(100, abs(revenue_impact)),
+                "effect": "positive" if revenue_impact > 0 else "negative",
+                "description": "20% change in revenue affects profitability significantly"
+            })
     
     # Cost sensitivity
-    if financial_data.get("pnl_monthly"):
-        first_month = financial_data["pnl_monthly"][0]
-        base_costs = first_month.get("total_expenses", 0)
+    pnl_data = financial_data.get("pnl_annual") or financial_data.get("pnl_monthly", [])
+    if pnl_data and len(pnl_data) > 0:
+        first_period = pnl_data[0]
+        base_costs = first_period.get("total_expenses", 0)
         if base_costs > 0:
             cost_impact = (base_costs * 0.15) / base_costs * 100
             variables.append({
