@@ -119,24 +119,33 @@ async def get_scenarios(
     db = Depends(get_db)
 ):
     """Get scenarios for a plan"""
-    
-    # Get plan
-    plan = await db.plans.find_one({
-        "_id": to_object_id(plan_id),
-        "user_id": user_id
-    })
-    
-    if not plan:
-        raise HTTPException(status_code=404, detail="Plan not found")
-    
-    # Get scenarios
-    scenario = await db.plan_scenarios.find_one({"plan_id": plan_id}, sort=[("created_at", -1)])
-    
-    if not scenario:
-        # Create scenarios if they don't exist
-        return await create_scenarios(plan_id, user_id, db)
-    
-    return serialize_doc(scenario)
+    try:
+        # Get plan
+        plan = await db.plans.find_one({
+            "_id": to_object_id(plan_id),
+            "user_id": user_id
+        })
+        
+        if not plan:
+            raise HTTPException(status_code=404, detail="Plan not found")
+        
+        # Get scenarios
+        scenario = await db.plan_scenarios.find_one({"plan_id": plan_id}, sort=[("created_at", -1)])
+        
+        if not scenario:
+            # Create scenarios if they don't exist
+            try:
+                return await create_scenarios(plan_id, user_id, db)
+            except Exception as e:
+                logger.error(f"Error creating scenarios: {str(e)}", exc_info=True)
+                raise HTTPException(status_code=500, detail=f"Failed to create scenarios: {str(e)}")
+        
+        return serialize_doc(scenario)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting scenarios: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get scenarios: {str(e)}")
 
 @router.post("/plans/{plan_id}/scenarios/analyze")
 async def analyze_scenario(
