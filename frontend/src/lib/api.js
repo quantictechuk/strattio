@@ -437,9 +437,9 @@ export const api = {
     revokeShare: (planId, shareToken) => apiRequest(`/api/plans/${planId}/shares/${shareToken}`, {
       method: 'DELETE'
     }),
-    getSharedPlan: (shareToken, password = null) => {
+    getSharedPlan: async (shareToken, password = null) => {
       const params = password ? `?password=${encodeURIComponent(password)}` : '';
-      return apiRequest(`/api/plans/shared/${shareToken}${params}`);
+      return await apiRequest(`/api/plans/shared/${shareToken}${params}`);
     },
     inviteCollaborator: (planId, email, role) => apiRequest(`/api/plans/${planId}/collaborators`, {
       method: 'POST',

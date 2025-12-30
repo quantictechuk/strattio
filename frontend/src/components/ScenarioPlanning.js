@@ -69,10 +69,23 @@ function ScenarioPlanning({ planId }) {
   }
 
   // Handle both direct scenarios object and nested structure
-  const scenarioData = scenarios.scenarios || scenarios.data?.scenarios || scenarios;
-  const bestCase = scenarioData?.best_case || scenarioData?.best_case?.data;
-  const worstCase = scenarioData?.worst_case || scenarioData?.worst_case?.data;
-  const realistic = scenarioData?.realistic || scenarioData?.realistic?.data || scenarioData;
+  let scenarioData = scenarios.scenarios || scenarios.data?.scenarios || scenarios;
+  
+  // If scenarioData is still the full response, extract scenarios
+  if (scenarioData && !scenarioData.best_case && !scenarioData.worst_case && !scenarioData.realistic) {
+    // Try to find scenarios nested deeper
+    if (scenarios.scenarios) {
+      scenarioData = scenarios.scenarios;
+    } else if (scenarios.data && scenarios.data.scenarios) {
+      scenarioData = scenarios.data.scenarios;
+    } else {
+      scenarioData = scenarios;
+    }
+  }
+  
+  const bestCase = scenarioData?.best_case || (scenarioData?.best_case?.data ? scenarioData.best_case.data : null);
+  const worstCase = scenarioData?.worst_case || (scenarioData?.worst_case?.data ? scenarioData.worst_case.data : null);
+  const realistic = scenarioData?.realistic || (scenarioData?.realistic?.data ? scenarioData.realistic.data : null) || scenarioData;
   const sensitivity = scenarios.sensitivity_analysis || scenarios.data?.sensitivity_analysis || [];
 
   const getScenarioData = () => {

@@ -22,6 +22,7 @@ import AboutUsPage from './pages/AboutUsPage';
 import SettingsPage from './pages/SettingsPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
+import SharedPlanPage from './pages/SharedPlanPage';
 import BackToTop from './components/BackToTop';
 
 function App() {
@@ -35,6 +36,15 @@ function App() {
 
   const handleRouteChange = async () => {
     const path = window.location.pathname;
+    // Check for shared plan route first
+    const sharedMatch = path.match(/^\/shared\/([^/]+)$/);
+    if (sharedMatch) {
+      const shareToken = sharedMatch[1];
+      setCurrentPage('shared-plan');
+      setPlanId(shareToken);
+      return;
+    }
+    
     const pathToPage = {
       '/faq': 'faq',
       '/privacy': 'privacy',
@@ -343,6 +353,8 @@ function App() {
         return <AdminLoginPage navigate={navigate} onLogin={handleLogin} />;
       case 'admin-dashboard':
         return <AdminDashboardPage navigate={navigate} user={user} onLogout={handleLogout} />;
+      case 'shared-plan':
+        return <SharedPlanPage navigate={navigate} shareToken={planId} />;
       default:
         return <HomePage navigate={navigate} user={user} />;
     }

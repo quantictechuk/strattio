@@ -569,13 +569,6 @@ function PlanEditorPage({ navigate, user, planId }) {
             >
               📊 View Financials
             </button>
-            <button 
-              className="btn btn-secondary"
-              onClick={() => setShowSharing(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-            >
-              <Share2 size={18} /> Share & Collaborate
-            </button>
             <div style={{ position: 'relative' }} ref={exportMenuRef}>
               <button 
                 className="btn btn-secondary" 

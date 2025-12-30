@@ -129,8 +129,14 @@ async def generate_pitch_deck(
             content_frame.margin_top = Inches(0)
             content_frame.margin_bottom = Inches(0)
             
-            # Parse content into paragraphs
-            content_lines = slide_data["content"].split('\n')
+            # Parse content into paragraphs - handle both string and list
+            content_text = slide_data["content"]
+            if isinstance(content_text, list):
+                content_text = '\n'.join(str(item) for item in content_text)
+            elif not isinstance(content_text, str):
+                content_text = str(content_text)
+            
+            content_lines = content_text.split('\n')
             for line_idx, line in enumerate(content_lines):
                 if line.strip():
                     if line_idx > 0:
@@ -182,6 +188,13 @@ async def generate_pitch_deck(
     await db.pitch_decks.insert_one(deck_doc)
     
     logger.info(f"Pitch deck generated for plan {plan_id}")
+    
+    # Store the PPTX file bytes in the document for future retrieval
+    deck_doc["pptx_bytes"] = deck_bytes.getvalue()
+    await db.pitch_decks.update_one(
+        {"_id": deck_doc["_id"]},
+        {"$set": {"pptx_bytes": deck_bytes.getvalue()}}
+    )
     
     return {
         "message": "Pitch deck generated successfully",
@@ -285,8 +298,14 @@ async def download_pitch_deck(
             content_frame.margin_top = Inches(0)
             content_frame.margin_bottom = Inches(0)
             
-            # Parse content into paragraphs
-            content_lines = slide_data["content"].split('\n')
+            # Parse content into paragraphs - handle both string and list
+            content_text = slide_data["content"]
+            if isinstance(content_text, list):
+                content_text = '\n'.join(str(item) for item in content_text)
+            elif not isinstance(content_text, str):
+                content_text = str(content_text)
+            
+            content_lines = content_text.split('\n')
             for line_idx, line in enumerate(content_lines):
                 if line.strip():
                     if line_idx > 0:
