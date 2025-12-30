@@ -100,6 +100,19 @@ async def health_check():
         "timestamp": datetime.utcnow().isoformat()
     }
 
+@api_router.get("/")
+async def root():
+    """Root endpoint"""
+    return {
+        "message": "Strattio API",
+        "status": "running",
+        "version": "1.0.0",
+        "endpoints": {
+            "health": "/api/health",
+            "docs": "/docs"
+        }
+    }
+
 # Import and include route modules (will be created next)
 # Import auth router first (critical for login)
 try:
