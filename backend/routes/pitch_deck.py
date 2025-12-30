@@ -185,14 +185,14 @@ async def generate_pitch_deck(
         "updated_at": datetime.utcnow()
     }
     
-    await db.pitch_decks.insert_one(deck_doc)
+    result = await db.pitch_decks.insert_one(deck_doc)
+    deck_id = result.inserted_id
     
     logger.info(f"Pitch deck generated for plan {plan_id}")
     
     # Store the PPTX file bytes in the document for future retrieval
-    deck_doc["pptx_bytes"] = deck_bytes.getvalue()
     await db.pitch_decks.update_one(
-        {"_id": deck_doc["_id"]},
+        {"_id": deck_id},
         {"$set": {"pptx_bytes": deck_bytes.getvalue()}}
     )
     
