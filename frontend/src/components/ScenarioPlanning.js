@@ -22,9 +22,17 @@ function ScenarioPlanning({ planId }) {
     try {
       setLoading(true);
       setError('');
-      const data = await api.scenarios.get(planId);
-      setScenarios(data);
+      const response = await api.scenarios.get(planId);
+      console.log('Scenarios API response:', response);
+      
+      // Handle different response structures
+      if (response && typeof response === 'object') {
+        setScenarios(response);
+      } else {
+        setError('Invalid response format from server');
+      }
     } catch (err) {
+      console.error('Error loading scenarios:', err);
       setError(err.message || 'Failed to load scenarios');
     } finally {
       setLoading(false);
@@ -69,36 +77,76 @@ function ScenarioPlanning({ planId }) {
   }
 
   // The API returns: { plan_id, scenarios: { best_case, worst_case, realistic }, sensitivity_analysis }
-  // Extract scenarios object
+  // Extract scenarios object - handle various response structures
   let scenarioData = null;
+  let bestCase = null;
+  let worstCase = null;
+  let realistic = null;
+  let sensitivity = [];
   
-  if (scenarios.scenarios) {
-    // Direct scenarios object
-    scenarioData = scenarios.scenarios;
-  } else if (scenarios.data && scenarios.data.scenarios) {
-    // Nested in data
-    scenarioData = scenarios.data.scenarios;
-  } else if (scenarios.best_case || scenarios.worst_case || scenarios.realistic) {
-    // Scenarios at root level
-    scenarioData = scenarios;
-  }
-  
-  if (!scenarioData) {
+  try {
+    // Log the structure for debugging
+    console.log('Scenarios response structure:', {
+      hasScenarios: !!scenarios.scenarios,
+      hasData: !!scenarios.data,
+      hasBestCase: !!scenarios.best_case,
+      keys: Object.keys(scenarios || {})
+    });
+    
+    if (scenarios.scenarios && typeof scenarios.scenarios === 'object') {
+      // Standard structure: { scenarios: { best_case, worst_case, realistic } }
+      scenarioData = scenarios.scenarios;
+    } else if (scenarios.data && scenarios.data.scenarios) {
+      // Nested in data: { data: { scenarios: { ... } } }
+      scenarioData = scenarios.data.scenarios;
+    } else if (scenarios.best_case || scenarios.worst_case || scenarios.realistic) {
+      // Scenarios at root level: { best_case, worst_case, realistic }
+      scenarioData = scenarios;
+    }
+    
+    if (!scenarioData || typeof scenarioData !== 'object') {
+      throw new Error(`Invalid scenario data structure. Expected scenarios object, got: ${typeof scenarioData}`);
+    }
+    
+    // Extract individual scenarios - they should be the data objects directly
+    bestCase = scenarioData.best_case || null;
+    worstCase = scenarioData.worst_case || null;
+    realistic = scenarioData.realistic || null;
+    sensitivity = scenarios.sensitivity_analysis || [];
+    
+    // Validate that we have at least one scenario
+    if (!bestCase && !worstCase && !realistic) {
+      throw new Error('No scenario data found (best_case, worst_case, or realistic)');
+    }
+  } catch (parseError) {
+    console.error('Error parsing scenario data:', parseError);
+    console.error('Full scenarios object:', scenarios);
     return (
       <div className="card" style={{ padding: '2rem', textAlign: 'center' }}>
-        <p style={{ color: '#64748B' }}>Invalid scenario data structure. Please regenerate scenarios.</p>
-        <pre style={{ fontSize: '0.75rem', marginTop: '1rem', textAlign: 'left', background: '#F8FAFC', padding: '1rem', borderRadius: '8px', overflow: 'auto' }}>
-          {JSON.stringify(scenarios, null, 2).substring(0, 500)}
-        </pre>
+        <p style={{ color: '#DC2626', marginBottom: '1rem', fontWeight: '600' }}>
+          Error loading scenario data
+        </p>
+        <p style={{ color: '#64748B', marginBottom: '1rem', fontSize: '0.875rem' }}>
+          {parseError.message || 'Unknown error'}
+        </p>
+        <button 
+          onClick={loadScenarios}
+          className="btn btn-primary"
+          style={{ marginTop: '1rem' }}
+        >
+          Retry
+        </button>
+        <details style={{ marginTop: '1.5rem', textAlign: 'left' }}>
+          <summary style={{ cursor: 'pointer', color: '#64748B', fontSize: '0.875rem' }}>
+            Show Debug Info
+          </summary>
+          <pre style={{ fontSize: '0.75rem', marginTop: '0.5rem', background: '#F8FAFC', padding: '1rem', borderRadius: '8px', overflow: 'auto', maxHeight: '300px', textAlign: 'left' }}>
+            {JSON.stringify(scenarios, null, 2)}
+          </pre>
+        </details>
       </div>
     );
   }
-  
-  // Extract individual scenarios - they should be the data objects directly
-  const bestCase = scenarioData.best_case;
-  const worstCase = scenarioData.worst_case;
-  const realistic = scenarioData.realistic;
-  const sensitivity = scenarios.sensitivity_analysis || [];
 
   const getScenarioData = () => {
     if (customResult) return customResult.scenario;
