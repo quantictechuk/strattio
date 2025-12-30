@@ -68,25 +68,37 @@ function ScenarioPlanning({ planId }) {
     );
   }
 
-  // Handle both direct scenarios object and nested structure
-  let scenarioData = scenarios.scenarios || scenarios.data?.scenarios || scenarios;
+  // The API returns: { plan_id, scenarios: { best_case, worst_case, realistic }, sensitivity_analysis }
+  // Extract scenarios object
+  let scenarioData = null;
   
-  // If scenarioData is still the full response, extract scenarios
-  if (scenarioData && !scenarioData.best_case && !scenarioData.worst_case && !scenarioData.realistic) {
-    // Try to find scenarios nested deeper
-    if (scenarios.scenarios) {
-      scenarioData = scenarios.scenarios;
-    } else if (scenarios.data && scenarios.data.scenarios) {
-      scenarioData = scenarios.data.scenarios;
-    } else {
-      scenarioData = scenarios;
-    }
+  if (scenarios.scenarios) {
+    // Direct scenarios object
+    scenarioData = scenarios.scenarios;
+  } else if (scenarios.data && scenarios.data.scenarios) {
+    // Nested in data
+    scenarioData = scenarios.data.scenarios;
+  } else if (scenarios.best_case || scenarios.worst_case || scenarios.realistic) {
+    // Scenarios at root level
+    scenarioData = scenarios;
   }
   
-  const bestCase = scenarioData?.best_case || (scenarioData?.best_case?.data ? scenarioData.best_case.data : null);
-  const worstCase = scenarioData?.worst_case || (scenarioData?.worst_case?.data ? scenarioData.worst_case.data : null);
-  const realistic = scenarioData?.realistic || (scenarioData?.realistic?.data ? scenarioData.realistic.data : null) || scenarioData;
-  const sensitivity = scenarios.sensitivity_analysis || scenarios.data?.sensitivity_analysis || [];
+  if (!scenarioData) {
+    return (
+      <div className="card" style={{ padding: '2rem', textAlign: 'center' }}>
+        <p style={{ color: '#64748B' }}>Invalid scenario data structure. Please regenerate scenarios.</p>
+        <pre style={{ fontSize: '0.75rem', marginTop: '1rem', textAlign: 'left', background: '#F8FAFC', padding: '1rem', borderRadius: '8px', overflow: 'auto' }}>
+          {JSON.stringify(scenarios, null, 2).substring(0, 500)}
+        </pre>
+      </div>
+    );
+  }
+  
+  // Extract individual scenarios - they should be the data objects directly
+  const bestCase = scenarioData.best_case;
+  const worstCase = scenarioData.worst_case;
+  const realistic = scenarioData.realistic;
+  const sensitivity = scenarios.sensitivity_analysis || [];
 
   const getScenarioData = () => {
     if (customResult) return customResult.scenario;
@@ -103,12 +115,20 @@ function ScenarioPlanning({ planId }) {
     return (
       <div className="card" style={{ padding: '2rem', textAlign: 'center' }}>
         <p style={{ color: '#64748B' }}>Unable to load scenario data. Please try refreshing.</p>
+        <button 
+          onClick={loadScenarios}
+          className="btn btn-primary"
+          style={{ marginTop: '1rem' }}
+        >
+          Reload Scenarios
+        </button>
       </div>
     );
   }
   
-  const pnl = currentData?.pnl_monthly || currentData?.data?.pnl_monthly || [];
-  const cashflow = currentData?.cashflow_monthly || currentData?.data?.cashflow_monthly || [];
+  // Extract P&L and cashflow data - they should be directly in currentData
+  const pnl = currentData.pnl_monthly || [];
+  const cashflow = currentData.cashflow_monthly || [];
 
   // Calculate totals
   const totalRevenue = pnl.reduce((sum, m) => sum + (m.revenue || 0), 0);
