@@ -1021,6 +1021,16 @@ function DashboardPage({ navigate, user, onLogout }) {
             </div>
           </aside>
         </div>
+
+        {/* Full Achievements Section (below main content) */}
+        <div data-support-section>
+          <Achievements userId={user?.id} />
+        </div>
+
+        {/* Full Support Tickets Section */}
+        <div>
+          <SupportTickets user={user} />
+        </div>
       </main>
 
       {/* Upgrade Modal */}
@@ -1210,17 +1220,6 @@ function DashboardPage({ navigate, user, onLogout }) {
           </div>
         </div>
       )}
-
-        {/* Full Achievements Section (below main content) */}
-        <div data-support-section>
-          <Achievements userId={user?.id} />
-        </div>
-
-        {/* Full Support Tickets Section */}
-        <div>
-          <SupportTickets user={user} />
-        </div>
-      </main>
 
       {/* Footer */}
       <footer className="bg-white border-t border-slate-200 py-8 mt-8" style={{ borderColor: '#E2E8F0' }}>
