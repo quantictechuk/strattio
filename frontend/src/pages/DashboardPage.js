@@ -24,13 +24,18 @@ import {
   Edit,
   HelpCircle,
   ArrowRight,
-  Zap
+  Zap,
+  Award,
+  Trophy,
+  Star,
+  Users,
+  Target,
+  Briefcase,
+  Sparkles
 } from 'lucide-react';
 import { api } from '../lib/api';
 import Footer from '../components/Footer';
 import MobileMenu from '../components/MobileMenu';
-import SupportTickets from '../components/SupportTickets';
-import Achievements from '../components/Achievements';
 import PlanComparison from '../components/PlanComparison';
 
 function DashboardPage({ navigate, user, onLogout }) {
@@ -50,6 +55,11 @@ function DashboardPage({ navigate, user, onLogout }) {
   const [achievements, setAchievements] = useState([]);
   const [achievementProgress, setAchievementProgress] = useState(0);
   const [supportTickets, setSupportTickets] = useState([]);
+  const [checkingAchievements, setCheckingAchievements] = useState(false);
+  const [newAchievements, setNewAchievements] = useState([]);
+  const [filterTimeRange, setFilterTimeRange] = useState('Last 6 Months');
+  const [filterPlanType, setFilterPlanType] = useState('All Types');
+  const [filterMetric, setFilterMetric] = useState('Total Generated');
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -74,14 +84,14 @@ function DashboardPage({ navigate, user, onLogout }) {
         const achievementsData = await api.achievements.get();
         if (achievementsData && achievementsData.achievements) {
           setAchievements(achievementsData.achievements);
-          // Calculate progress (75% as per design, or based on actual achievements)
+          // Calculate progress based on all possible badges (8 total)
           const totalAchievements = 8;
           const earnedCount = achievementsData.achievements.length;
           setAchievementProgress(Math.round((earnedCount / totalAchievements) * 100));
         }
       } catch (err) {
         console.log('Failed to load achievements:', err);
-        setAchievementProgress(75); // Default to 75% as per design
+        setAchievementProgress(0);
       }
       
       // Load support tickets
@@ -100,25 +110,6 @@ function DashboardPage({ navigate, user, onLogout }) {
     }
   };
 
-  // Filter plans based on search query
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setPlans(allPlans);
-      return;
-    }
-
-    const query = searchQuery.toLowerCase().trim();
-    const filtered = allPlans.filter(plan => {
-      const nameMatch = plan.name?.toLowerCase().includes(query);
-      const purposeMatch = plan.plan_purpose?.toLowerCase().includes(query);
-      const statusMatch = plan.status?.toLowerCase().includes(query);
-      const businessNameMatch = plan.intake_data?.business_name?.toLowerCase().includes(query);
-      
-      return nameMatch || purposeMatch || statusMatch || businessNameMatch;
-    });
-    
-    setPlans(filtered);
-  }, [searchQuery, allPlans]);
 
   const handleCreatePlan = () => {
     // Check limits
@@ -247,23 +238,73 @@ function DashboardPage({ navigate, user, onLogout }) {
 
   // Calculate plan generation stats for last 6 months
   const getPlanGenerationData = () => {
-    const months = ['Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan'];
     const now = new Date();
-    const data = months.map((monthName, index) => {
-      const monthIndex = (now.getMonth() - (5 - index) + 12) % 12;
-      const year = now.getFullYear() - (now.getMonth() < (5 - index) ? 1 : 0);
-      
-      const count = allPlans.filter(plan => {
+    const months = [];
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    // Determine time range based on filter
+    let monthsToShow = 6;
+    let startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+    
+    if (filterTimeRange === 'Last Year') {
+      monthsToShow = 12;
+      startDate = new Date(now.getFullYear() - 1, now.getMonth(), 1);
+    } else if (filterTimeRange === 'This Quarter') {
+      monthsToShow = 3;
+      const quarter = Math.floor(now.getMonth() / 3);
+      startDate = new Date(now.getFullYear(), quarter * 3, 1);
+    }
+    
+    // Get months based on filter
+    for (let i = monthsToShow - 1; i >= 0; i--) {
+      const date = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1);
+      months.push({
+        monthIndex: date.getMonth(),
+        year: date.getFullYear(),
+        name: monthNames[date.getMonth()]
+      });
+    }
+    
+    // Filter plans based on current filters
+    let filteredPlans = [...allPlans];
+    if (filterPlanType !== 'All Types') {
+      if (filterPlanType === 'Loan Plans') {
+        filteredPlans = filteredPlans.filter(p => p.plan_purpose === 'loan');
+      } else if (filterPlanType === 'Visa Plans') {
+        filteredPlans = filteredPlans.filter(p => p.plan_purpose?.includes('visa'));
+      } else if (filterPlanType === 'Generic') {
+        filteredPlans = filteredPlans.filter(p => p.plan_purpose === 'generic' || !p.plan_purpose);
+      }
+    }
+    
+    const data = months.map((monthInfo) => {
+      const count = filteredPlans.filter(plan => {
+        if (!plan.created_at) return false;
         const planDate = new Date(plan.created_at);
-        return planDate.getMonth() === monthIndex && planDate.getFullYear() === year;
+        return planDate.getMonth() === monthInfo.monthIndex && planDate.getFullYear() === monthInfo.year;
       }).length;
       
-      return { month: monthName, count, percentage: Math.max(35, Math.min(85, count * 10 + 35)) };
+      // Calculate percentage based on max count (for visualization)
+      const counts = months.map(m => 
+        filteredPlans.filter(p => {
+          if (!p.created_at) return false;
+          const pd = new Date(p.created_at);
+          return pd.getMonth() === m.monthIndex && pd.getFullYear() === m.year;
+        }).length
+      );
+      const maxCount = Math.max(...counts, 1);
+      
+      const percentage = maxCount > 0 ? Math.max(20, Math.min(95, (count / maxCount) * 100)) : 20;
+      
+      return { month: monthInfo.name, count, percentage };
     });
     
-    // Calculate growth percentage (mock: +24% as per design)
-    const totalPlans = allPlans.length;
-    const growthPercentage = totalPlans > 0 ? 24 : 0; // Simplified calculation
+    // Calculate growth percentage (compare last month to first month)
+    const firstMonthCount = data[0]?.count || 0;
+    const lastMonthCount = data[data.length - 1]?.count || 0;
+    const growthPercentage = firstMonthCount > 0 
+      ? Math.round(((lastMonthCount - firstMonthCount) / firstMonthCount) * 100)
+      : lastMonthCount > 0 ? 100 : 0;
     
     return { data, growthPercentage };
   };
@@ -347,8 +388,137 @@ function DashboardPage({ navigate, user, onLogout }) {
     return null;
   };
 
+  // Handle achievement check
+  const handleCheckAchievements = async () => {
+    try {
+      setCheckingAchievements(true);
+      setError('');
+      const result = await api.achievements.check();
+      if (result.total_new > 0) {
+        setNewAchievements(result.new_achievements || []);
+        await loadDashboard(); // Reload to get updated achievements
+        setTimeout(() => setNewAchievements([]), 5000);
+      }
+    } catch (err) {
+      console.log('Failed to check achievements:', err);
+    } finally {
+      setCheckingAchievements(false);
+    }
+  };
+
+  // All available badges
+  const allBadges = [
+    { 
+      id: 'first_plan', 
+      name: 'First Steps', 
+      icon: Target, 
+      color: '#3B82F6',
+      gradient: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+      description: 'Created your first business plan',
+      category: 'Getting Started'
+    },
+    { 
+      id: 'financial_master', 
+      name: 'Financials', 
+      icon: Briefcase, 
+      color: '#10B981',
+      gradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+      description: 'Completed financial projections',
+      category: 'Financials'
+    },
+    { 
+      id: 'speed_runner', 
+      name: 'Speed Runner', 
+      icon: Zap, 
+      color: '#8B5CF6',
+      gradient: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+      description: 'Completed a plan in <24 hours',
+      category: 'Efficiency'
+    },
+    { 
+      id: 'plan_perfectionist', 
+      name: 'Plan Master', 
+      icon: Star, 
+      color: '#F59E0B',
+      gradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+      description: 'Achieved 100% completion',
+      category: 'Quality'
+    }
+  ];
+
+  // Get earned badge IDs
+  const earnedBadgeIds = new Set(achievements.map(a => a.badge_id));
+  
+  // Get recent badges (earned ones first, then unearned)
+  const getRecentBadges = () => {
+    const earned = achievements
+      .map(a => {
+        const badge = allBadges.find(b => b.id === a.badge_id);
+        return badge ? { ...badge, earned: true, earned_at: a.earned_at } : null;
+      })
+      .filter(Boolean)
+      .sort((a, b) => new Date(b.earned_at) - new Date(a.earned_at))
+      .slice(0, 3);
+    
+    const unearned = allBadges
+      .filter(b => !earnedBadgeIds.has(b.id))
+      .slice(0, 1);
+    
+    return [...earned, ...unearned].slice(0, 4);
+  };
+
+  // Apply filters
+  useEffect(() => {
+    let filtered = [...allPlans];
+    
+    // Filter by plan type
+    if (filterPlanType !== 'All Types') {
+      if (filterPlanType === 'Loan Plans') {
+        filtered = filtered.filter(p => p.plan_purpose === 'loan');
+      } else if (filterPlanType === 'Visa Plans') {
+        filtered = filtered.filter(p => p.plan_purpose?.includes('visa'));
+      }
+    }
+    
+    // Filter by time range
+    if (filterTimeRange !== 'All Time') {
+      const now = new Date();
+      const cutoffDate = new Date();
+      
+      if (filterTimeRange === 'Last 6 Months') {
+        cutoffDate.setMonth(now.getMonth() - 6);
+      } else if (filterTimeRange === 'Last Year') {
+        cutoffDate.setFullYear(now.getFullYear() - 1);
+      } else if (filterTimeRange === 'This Quarter') {
+        const quarter = Math.floor(now.getMonth() / 3);
+        cutoffDate.setMonth(quarter * 3);
+        cutoffDate.setDate(1);
+      }
+      
+      filtered = filtered.filter(p => {
+        if (!p.created_at) return false;
+        return new Date(p.created_at) >= cutoffDate;
+      });
+    }
+    
+    // Apply search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(plan => {
+        const nameMatch = plan.name?.toLowerCase().includes(query);
+        const purposeMatch = plan.plan_purpose?.toLowerCase().includes(query);
+        const statusMatch = plan.status?.toLowerCase().includes(query);
+        const businessNameMatch = plan.intake_data?.business_name?.toLowerCase().includes(query);
+        return nameMatch || purposeMatch || statusMatch || businessNameMatch;
+      });
+    }
+    
+    setPlans(filtered);
+  }, [filterTimeRange, filterPlanType, filterMetric, searchQuery, allPlans]);
+
   const planGenerationData = getPlanGenerationData();
   const portfolioMix = getPortfolioMix();
+  const recentBadges = getRecentBadges();
 
   return (
     <div className="bg-slate-50 min-h-screen flex flex-col" style={{ fontFamily: 'Inter, sans-serif' }}>
@@ -420,7 +590,7 @@ function DashboardPage({ navigate, user, onLogout }) {
               >
                 <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-xs font-bold text-primary" style={{ color: '#0F172A' }}>
                   {getUserInitials()}
-                </div>
+            </div>
               </div>
             </div>
             
@@ -466,19 +636,6 @@ function DashboardPage({ navigate, user, onLogout }) {
                 <Filter size={18} />
                 <span className="hidden sm:inline">Customize View</span>
               </button>
-              <button 
-                className="flex items-center gap-2 px-3 py-2 bg-primary hover:bg-primary-hover text-white rounded-lg text-sm font-medium shadow-sm transition-all"
-                onClick={() => {
-                  // Export functionality - could export dashboard data
-                  alert('Export feature coming soon');
-                }}
-                style={{ backgroundColor: '#0F172A' }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = '#1E293B'}
-                onMouseLeave={(e) => e.target.style.backgroundColor = '#0F172A'}
-              >
-                <Download size={18} />
-                <span className="hidden sm:inline">Export</span>
-              </button>
             </div>
           </div>
           
@@ -487,26 +644,43 @@ function DashboardPage({ navigate, user, onLogout }) {
             <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fade-in-down" style={{ borderColor: '#E2E8F0' }}>
               <div>
                 <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide" style={{ color: '#64748B' }}>Time Range</label>
-                <select className="block w-full pl-3 pr-10 py-2 text-sm border-slate-200 rounded-lg bg-slate-50 focus:ring-primary focus:border-primary" style={{ borderColor: '#E2E8F0', backgroundColor: '#F8FAFC' }}>
-                  <option>Last 6 Months</option>
-                  <option>Last Year</option>
-                  <option>This Quarter</option>
+                <select 
+                  className="block w-full pl-3 pr-10 py-2 text-sm border-slate-200 rounded-lg bg-slate-50 focus:ring-primary focus:border-primary" 
+                  style={{ borderColor: '#E2E8F0', backgroundColor: '#F8FAFC' }}
+                  value={filterTimeRange}
+                  onChange={(e) => setFilterTimeRange(e.target.value)}
+                >
+                  <option value="All Time">All Time</option>
+                  <option value="Last 6 Months">Last 6 Months</option>
+                  <option value="Last Year">Last Year</option>
+                  <option value="This Quarter">This Quarter</option>
                 </select>
-              </div>
-              <div>
+                </div>
+                <div>
                 <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide" style={{ color: '#64748B' }}>Plan Type</label>
-                <select className="block w-full pl-3 pr-10 py-2 text-sm border-slate-200 rounded-lg bg-slate-50 focus:ring-primary focus:border-primary" style={{ borderColor: '#E2E8F0', backgroundColor: '#F8FAFC' }}>
-                  <option>All Types</option>
-                  <option>Loan Plans</option>
-                  <option>Visa Plans</option>
+                <select 
+                  className="block w-full pl-3 pr-10 py-2 text-sm border-slate-200 rounded-lg bg-slate-50 focus:ring-primary focus:border-primary" 
+                  style={{ borderColor: '#E2E8F0', backgroundColor: '#F8FAFC' }}
+                  value={filterPlanType}
+                  onChange={(e) => setFilterPlanType(e.target.value)}
+                >
+                  <option value="All Types">All Types</option>
+                  <option value="Loan Plans">Loan Plans</option>
+                  <option value="Visa Plans">Visa Plans</option>
+                  <option value="Generic">Generic</option>
                 </select>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide" style={{ color: '#64748B' }}>Metric Focus</label>
-                <select className="block w-full pl-3 pr-10 py-2 text-sm border-slate-200 rounded-lg bg-slate-50 focus:ring-primary focus:border-primary" style={{ borderColor: '#E2E8F0', backgroundColor: '#F8FAFC' }}>
-                  <option>Total Generated</option>
-                  <option>Completion Rate</option>
-                  <option>Revenue</option>
+                <select 
+                  className="block w-full pl-3 pr-10 py-2 text-sm border-slate-200 rounded-lg bg-slate-50 focus:ring-primary focus:border-primary" 
+                  style={{ borderColor: '#E2E8F0', backgroundColor: '#F8FAFC' }}
+                  value={filterMetric}
+                  onChange={(e) => setFilterMetric(e.target.value)}
+                >
+                  <option value="Total Generated">Total Generated</option>
+                  <option value="Completion Rate">Completion Rate</option>
+                  <option value="Revenue">Revenue</option>
                 </select>
               </div>
             </div>
@@ -543,8 +717,8 @@ function DashboardPage({ navigate, user, onLogout }) {
                   </div>
                   <span className={`text-[10px] font-medium text-slate-400 mt-2 ${index === 5 ? 'font-bold text-accent-blue' : ''}`} style={{ color: index === 5 ? '#3B82F6' : '#94A3B8' }}>
                     {item.month}
-                  </span>
-                </div>
+                    </span>
+                  </div>
               ))}
             </div>
           </div>
@@ -554,7 +728,7 @@ function DashboardPage({ navigate, user, onLogout }) {
             <div className="mb-4">
               <h3 className="font-semibold text-lg text-primary" style={{ color: '#0F172A' }}>Portfolio Mix</h3>
               <p className="text-xs text-slate-500 mt-1" style={{ color: '#64748B' }}>Active plan distribution</p>
-            </div>
+                  </div>
             <div className="flex-grow flex items-center justify-center relative my-4">
               <svg className="w-40 h-40 transform -rotate-90" viewBox="0 0 36 36">
                 <circle cx="18" cy="18" fill="none" r="15.9155" stroke="#e2e8f0" strokeWidth="3.8"></circle>
@@ -592,8 +766,8 @@ function DashboardPage({ navigate, user, onLogout }) {
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="text-3xl font-bold text-primary" style={{ color: '#0F172A' }}>{portfolioMix.total}</span>
                 <span className="text-[10px] uppercase text-slate-400 font-bold tracking-wider" style={{ color: '#94A3B8' }}>Plans</span>
+                </div>
               </div>
-            </div>
             <div className="space-y-2 mt-auto">
               <div className="flex justify-between items-center text-sm">
                 <div className="flex items-center gap-2">
@@ -622,6 +796,49 @@ function DashboardPage({ navigate, user, onLogout }) {
 
         {/* Achievement Status Section */}
         <section className="bg-white rounded-xl border border-slate-200 p-6 shadow-soft" style={{ borderColor: '#E2E8F0', boxShadow: '0 2px 10px rgba(0, 0, 0, 0.03)' }}>
+          {/* New Achievements Notification */}
+          {newAchievements.length > 0 && (
+            <div style={{
+              padding: '1rem',
+              background: 'linear-gradient(135deg, #F0FDF4 0%, #D1FAE5 100%)',
+              border: '2px solid #27AC85',
+              borderRadius: '12px',
+              marginBottom: '1.5rem',
+              animation: 'slideIn 0.3s ease-out',
+              boxShadow: '0 4px 12px rgba(39, 172, 133, 0.2)'
+            }}>
+              <div style={{ 
+                fontSize: '0.875rem', 
+                fontWeight: '600', 
+                color: '#1F8A6A', 
+                marginBottom: '0.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                <Sparkles size={18} />
+                New Achievement Unlocked!
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                {newAchievements.map((achievement, idx) => {
+                  const badge = allBadges.find(b => b.id === achievement.badge_id);
+                  return (
+                    <div key={idx} style={{ 
+                      fontSize: '0.8125rem', 
+                      color: '#065F46',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}>
+                      {badge && <badge.icon size={16} color={badge.color} />}
+                      {achievement.badge_name}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-col md:flex-row items-center gap-8">
             <div className="flex items-center gap-5 w-full md:w-auto md:pr-8 md:border-r border-slate-100" style={{ borderColor: '#F1F5F9' }}>
               <div className="relative w-16 h-16 flex-shrink-0">
@@ -651,9 +868,25 @@ function DashboardPage({ navigate, user, onLogout }) {
                   <span className="text-xs font-bold text-primary" style={{ color: '#0F172A' }}>{achievementProgress}%</span>
                 </div>
               </div>
-              <div>
-                <h3 className="font-bold text-primary" style={{ color: '#0F172A' }}>Achievement Status</h3>
-                <p className="text-xs text-slate-500 mt-1 max-w-[150px]" style={{ color: '#64748B' }}>You are crushing your goals this month!</p>
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="font-bold text-primary" style={{ color: '#0F172A' }}>Achievement Status</h3>
+                  <button
+                    onClick={handleCheckAchievements}
+                    disabled={checkingAchievements}
+                    className="text-xs text-accent-blue font-medium hover:underline flex items-center gap-1"
+                    style={{ color: '#3B82F6' }}
+                    title="Check for new achievements"
+                  >
+                    {checkingAchievements ? 'Checking...' : <><Sparkles size={12} /> Check</>}
+                  </button>
+                </div>
+                <p className="text-xs text-slate-500 mt-1" style={{ color: '#64748B' }}>
+                  {achievements.length} of {allBadges.length} badges earned
+                </p>
+                <p className="text-xs text-slate-500 mt-1 max-w-[150px]" style={{ color: '#64748B' }}>
+                  {achievementProgress >= 75 ? 'You are crushing your goals this month!' : achievementProgress >= 50 ? 'Great progress! Keep it up!' : 'Keep building to unlock more achievements!'}
+                </p>
               </div>
             </div>
             <div className="flex-grow w-full overflow-hidden">
@@ -661,37 +894,46 @@ function DashboardPage({ navigate, user, onLogout }) {
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-400" style={{ color: '#94A3B8' }}>Recent Badges</span>
               </div>
               <div className="flex gap-4 overflow-x-auto no-scrollbar pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                {achievements.slice(0, 4).map((achievement, index) => (
-                  <div 
-                    key={achievement.id || index}
-                    className="flex items-center gap-3 min-w-[180px] p-3 rounded-lg bg-slate-50 border border-slate-100"
-                    style={{ 
-                      backgroundColor: '#F8FAFC', 
-                      borderColor: '#F1F5F9',
-                      opacity: index === 3 ? 0.6 : 1,
-                      borderStyle: index === 3 ? 'dashed' : 'solid'
-                    }}
-                  >
+                {recentBadges.map((badge, index) => {
+                  const IconComponent = badge.icon;
+                  const isEarned = badge.earned || false;
+                  const achievement = achievements.find(a => a.badge_id === badge.id);
+                  
+                  return (
                     <div 
-                      className="w-10 h-10 rounded-full flex items-center justify-center"
-                      style={{
-                        backgroundColor: index === 0 ? '#DBEAFE' : index === 1 ? '#D1FAE5' : index === 2 ? '#F3E8FF' : '#F1F5F9',
-                        color: index === 0 ? '#2563EB' : index === 1 ? '#059669' : index === 2 ? '#7C3AED' : '#94A3B8'
+                      key={badge.id || index}
+                      className="flex items-center gap-3 min-w-[180px] p-3 rounded-lg border"
+                      style={{ 
+                        backgroundColor: isEarned ? '#F8FAFC' : '#F8FAFC', 
+                        borderColor: isEarned ? badge.color : '#E2E8F0',
+                        borderWidth: isEarned ? '2px' : '1px',
+                        borderStyle: isEarned ? 'solid' : 'dashed',
+                        opacity: isEarned ? 1 : 0.6
                       }}
                     >
-                      {index === 0 && <FileText size={20} />}
-                      {index === 1 && <CreditCard size={20} />}
-                      {index === 2 && <Zap size={20} />}
-                      {index === 3 && <CheckCircle2 size={20} />}
+                      <div 
+                        className="w-10 h-10 rounded-full flex items-center justify-center"
+                        style={{
+                          backgroundColor: isEarned ? `${badge.color}20` : '#F1F5F9',
+                          color: isEarned ? badge.color : '#94A3B8'
+                        }}
+                      >
+                        <IconComponent size={20} />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-primary" style={{ color: '#0F172A' }}>{badge.name}</p>
+                        <p className="text-[10px] text-slate-500" style={{ color: '#64748B' }}>
+                          {isEarned && achievement?.earned_at 
+                            ? new Date(achievement.earned_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                            : 'Next Goal'}
+                        </p>
+                      </div>
+                      {isEarned && (
+                        <CheckCircle2 size={16} style={{ color: badge.color }} />
+                      )}
                     </div>
-                    <div>
-                      <p className="text-sm font-bold text-primary" style={{ color: '#0F172A' }}>{achievement.badge_name || 'First Steps'}</p>
-                      <p className="text-[10px] text-slate-500" style={{ color: '#64748B' }}>
-                        {achievement.earned_at ? new Date(achievement.earned_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Next Goal'}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -717,17 +959,17 @@ function DashboardPage({ navigate, user, onLogout }) {
                   <span className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
                     <Search size={18} className="text-slate-400" style={{ color: '#94A3B8' }} />
                   </span>
-                  <input 
+            <input 
                     className="pl-9 pr-3 py-1.5 text-sm border-slate-200 rounded-md bg-white focus:ring-primary w-full sm:w-64" 
                     placeholder="Search..." 
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+              type="text" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
                     style={{ borderColor: '#E2E8F0' }}
-                  />
-                </div>
+            />
+          </div>
                 <div className="flex gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                  <button 
+            <button
                     className="flex whitespace-nowrap items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-md text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm"
                     onClick={() => navigate('companies')}
                     style={{ borderColor: '#E2E8F0', color: '#475569' }}
@@ -738,51 +980,51 @@ function DashboardPage({ navigate, user, onLogout }) {
                   </button>
                   <button 
                     className="flex whitespace-nowrap items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-md text-sm font-medium hover:bg-slate-50 transition-colors shadow-sm"
-                    onClick={() => {
-                      if (selectedPlans.length >= 2) {
-                        setShowComparison(true);
-                      } else {
+              onClick={() => {
+                if (selectedPlans.length >= 2) {
+                  setShowComparison(true);
+                } else {
                         alert('Please select at least 2 plans to compare.');
                       }
                     }}
                     style={{ borderColor: '#E2E8F0', color: '#475569' }}
-                  >
-                    <GitCompare size={18} />
+            >
+              <GitCompare size={18} />
                     <span className="hidden lg:inline">Compare Plans</span>
                     <span className="lg:hidden">Compare</span>
-                  </button>
-                  <button 
+            </button>
+            <button
                     className="flex whitespace-nowrap items-center gap-1 px-3 py-1.5 bg-primary hover:bg-primary-hover text-white rounded-md text-sm font-medium transition-colors"
-                    onClick={handleCreatePlan}
-                    data-testid="create-plan-btn"
+              onClick={handleCreatePlan}
+              data-testid="create-plan-btn"
                     style={{ backgroundColor: '#0F172A' }}
                     onMouseEnter={(e) => e.target.style.backgroundColor = '#1E293B'}
                     onMouseLeave={(e) => e.target.style.backgroundColor = '#0F172A'}
-                  >
-                    <Plus size={18} />
+            >
+              <Plus size={18} />
                     <span className="hidden sm:inline">New</span>
-                  </button>
-                </div>
-              </div>
-            </div>
+            </button>
+          </div>
+        </div>
+          </div>
 
             {/* Plans Table */}
-            {!loading && plans.length === 0 && (
+        {!loading && plans.length === 0 && (
               <div className="bg-white rounded-xl border border-slate-200 text-center p-12" style={{ borderColor: '#E2E8F0' }}>
-                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📄</div>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📄</div>
                 <h3 className="mb-2 text-xl font-bold text-primary" style={{ color: '#0F172A' }}>No Plans Yet</h3>
                 <p className="text-slate-500 mb-6" style={{ color: '#64748B' }}>Create your first AI-powered business plan</p>
-                <button 
-                  className="btn btn-primary" 
-                  onClick={handleCreatePlan}
-                  data-testid="create-first-plan-btn"
-                >
-                  Create Your First Plan
-                </button>
-              </div>
-            )}
+            <button 
+              className="btn btn-primary" 
+              onClick={handleCreatePlan}
+              data-testid="create-first-plan-btn"
+            >
+              Create Your First Plan
+            </button>
+          </div>
+        )}
 
-            {!loading && plans.length > 0 && (
+        {!loading && plans.length > 0 && (
               <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm" style={{ borderColor: '#E2E8F0' }}>
                 <table className="w-full text-left text-sm">
                   <thead className="bg-slate-50 border-b border-slate-200" style={{ backgroundColor: '#F8FAFC', borderColor: '#E2E8F0' }}>
@@ -797,29 +1039,29 @@ function DashboardPage({ navigate, user, onLogout }) {
                   <tbody className="divide-y divide-slate-100" style={{ borderColor: '#F1F5F9' }}>
                     {plans.slice(0, 10).map((plan) => (
                       <tr 
-                        key={plan.id} 
+                key={plan.id} 
                         className="hover:bg-slate-50 transition-colors group"
                         style={{ backgroundColor: 'transparent' }}
                         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F8FAFC'}
                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                       >
                         <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                          <input
-                            type="checkbox"
-                            checked={selectedPlans.includes(plan.id)}
-                            onChange={(e) => {
-                              e.stopPropagation();
-                              if (e.target.checked) {
-                                if (selectedPlans.length < 4) {
-                                  setSelectedPlans([...selectedPlans, plan.id]);
-                                }
-                              } else {
-                                setSelectedPlans(selectedPlans.filter(id => id !== plan.id));
-                              }
-                            }}
-                            style={{
-                              width: '18px',
-                              height: '18px',
+                  <input
+                    type="checkbox"
+                    checked={selectedPlans.includes(plan.id)}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      if (e.target.checked) {
+                        if (selectedPlans.length < 4) {
+                          setSelectedPlans([...selectedPlans, plan.id]);
+                        }
+                      } else {
+                        setSelectedPlans(selectedPlans.filter(id => id !== plan.id));
+                      }
+                    }}
+                    style={{
+                      width: '18px',
+                      height: '18px',
                               cursor: 'pointer'
                             }}
                           />
@@ -831,7 +1073,7 @@ function DashboardPage({ navigate, user, onLogout }) {
                           <div className="flex items-center gap-3">
                             <div 
                               className="p-2 rounded"
-                              style={{
+                                style={{
                                 backgroundColor: plan.plan_purpose === 'loan' ? '#DBEAFE' : plan.plan_purpose === 'generic' ? '#D1FAE5' : '#FEF3C7',
                                 color: plan.plan_purpose === 'loan' ? '#2563EB' : plan.plan_purpose === 'generic' ? '#059669' : '#D97706'
                               }}
@@ -873,21 +1115,21 @@ function DashboardPage({ navigate, user, onLogout }) {
                             className="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <button 
+                              <button
                               className="p-1.5 hover:bg-slate-100 rounded text-slate-400 hover:text-primary transition-colors"
-                              onClick={(e) => {
-                                e.stopPropagation();
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                 handleViewPlan(plan);
                               }}
                               title="Edit"
                               style={{ color: '#94A3B8' }}
                             >
                               <Edit size={18} />
-                            </button>
-                            <button 
+                              </button>
+                          <button
                               className="p-1.5 hover:bg-slate-100 rounded text-slate-400 hover:text-primary transition-colors"
-                              onClick={(e) => {
-                                e.stopPropagation();
+                            onClick={(e) => {
+                              e.stopPropagation();
                                 if (plan.status === 'complete') {
                                   handleExport(plan.id, 'pdf');
                                 } else {
@@ -899,25 +1141,25 @@ function DashboardPage({ navigate, user, onLogout }) {
                               style={{ color: plan.status === 'complete' ? '#94A3B8' : '#CBD5E1', cursor: plan.status === 'complete' ? 'pointer' : 'not-allowed' }}
                             >
                               <Download size={18} />
-                            </button>
-                            <button 
+                          </button>
+                          <button
                               className="p-1.5 hover:bg-slate-100 rounded text-slate-400 hover:text-red-500 transition-colors"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeletePlan(plan.id);
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeletePlan(plan.id);
                               }}
                               title="Delete"
                               style={{ color: '#94A3B8' }}
                             >
                               <Trash2 size={18} />
-                            </button>
-                          </div>
+                          </button>
+                        </div>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              </div>
+                    </div>
             )}
           </section>
 
@@ -928,8 +1170,8 @@ function DashboardPage({ navigate, user, onLogout }) {
                 <h3 className="font-bold text-sm text-primary flex items-center gap-2" style={{ color: '#0F172A' }}>
                   <HelpCircle size={16} style={{ color: '#94A3B8' }} />
                   Support
-                </h3>
-                <button 
+                  </h3>
+                  <button 
                   className="text-xs text-accent-blue font-medium hover:underline"
                   onClick={() => {
                     // Navigate to support or open create ticket modal
@@ -941,7 +1183,7 @@ function DashboardPage({ navigate, user, onLogout }) {
                   style={{ color: '#3B82F6' }}
                 >
                   New Ticket
-                </button>
+                  </button>
               </div>
               <div className="space-y-3">
                 {supportTickets.length > 0 ? (
@@ -949,7 +1191,7 @@ function DashboardPage({ navigate, user, onLogout }) {
                     <div 
                       key={ticket.id || index}
                       className="p-3 bg-slate-50 rounded-lg border border-slate-100 cursor-pointer hover:border-accent-blue/50 transition-colors"
-                      style={{ 
+                    style={{
                         backgroundColor: '#F8FAFC', 
                         borderColor: '#F1F5F9',
                         opacity: ticket.status === 'closed' ? 0.6 : 1
@@ -966,26 +1208,26 @@ function DashboardPage({ navigate, user, onLogout }) {
                         <span className="text-xs font-bold text-primary" style={{ color: '#0F172A' }}>{ticket.subject || 'Support Ticket'}</span>
                         <span 
                           className="w-1.5 h-1.5 rounded-full"
-                          style={{ 
+                    style={{
                             backgroundColor: ticket.status === 'closed' ? '#10B981' : '#F59E0B'
                           }}
                           title={ticket.status === 'closed' ? 'Resolved' : 'In Progress'}
                         ></span>
-                      </div>
+                </div>
                       <p className="text-xs text-slate-500 line-clamp-1 mb-2" style={{ color: '#64748B' }}>
                         {ticket.description || 'No description'}
                       </p>
                       <div className="flex items-center justify-between text-[10px] text-slate-400" style={{ color: '#94A3B8' }}>
                         <span>{ticket.created_at ? new Date(ticket.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Recent'}</span>
                         <span>{ticket.status === 'closed' ? 'Closed' : '1 Reply'}</span>
-                      </div>
+              </div>
                     </div>
                   ))
                 ) : (
                   <p className="text-xs text-slate-500 text-center py-4" style={{ color: '#64748B' }}>No recent tickets</p>
                 )}
               </div>
-              <button 
+            <button 
                 className="w-full mt-3 py-1.5 text-xs font-medium text-slate-500 hover:text-primary border border-dashed border-slate-200 rounded transition-colors"
                 onClick={() => {
                   const supportSection = document.querySelector('[data-support-section]');
@@ -1018,19 +1260,10 @@ function DashboardPage({ navigate, user, onLogout }) {
                 className="absolute -bottom-4 -right-4 text-white opacity-5 pointer-events-none"
                 style={{ opacity: 0.05 }}
               />
-            </div>
+          </div>
           </aside>
         </div>
 
-        {/* Full Achievements Section (below main content) */}
-        <div data-support-section>
-          <Achievements userId={user?.id} />
-        </div>
-
-        {/* Full Support Tickets Section */}
-        <div>
-          <SupportTickets user={user} />
-        </div>
       </main>
 
       {/* Upgrade Modal */}
@@ -1256,8 +1489,8 @@ function DashboardPage({ navigate, user, onLogout }) {
             >
               Contact
             </a>
-          </div>
-        </div>
+      </div>
+      </div>
       </footer>
 
       {/* Plan Comparison Modal */}
