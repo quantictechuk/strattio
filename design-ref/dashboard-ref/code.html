@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Enterprise Dashboard - Strattio</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    primary: "#0F172A",
+                    "primary-hover": "#1E293B",
+                    "accent-blue": "#3B82F6",
+                    "accent-green": "#10B981",
+                    "accent-orange": "#F59E0B",
+                    "accent-purple": "#8B5CF6",
+                    "background-light": "#F8FAFC",
+                    "background-dark": "#0B1120",
+                    "surface-light": "#FFFFFF",
+                    "surface-dark": "#1E293B",
+                    "border-light": "#E2E8F0",
+                    "border-dark": "#334155",
+                    "text-light": "#334155",
+                    "text-dark": "#F1F5F9",
+                    "muted-light": "#94A3B8",
+                    "muted-dark": "#94A3B8",
+                },
+                fontFamily: {
+                    display: ["Inter", "sans-serif"],
+                    body: ["Inter", "sans-serif"],
+                },
+                boxShadow: {
+                    'soft': '0 2px 10px rgba(0, 0, 0, 0.03)',
+                }
+            },
+        },
+    };
+</script>
+<style>
+    body { font-family: 'Inter', sans-serif; }.no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    details > summary { list-style: none; }
+    details > summary::-webkit-details-marker { display: none; }
+    .chart-bar-fill { transition: height 1s ease-out, background-color 0.3s; }
+</style>
+</head>
+<body class="bg-slate-50 dark:bg-background-dark text-text-light dark:text-text-dark font-body antialiased transition-colors duration-200">
+<nav class="sticky top-0 z-50 bg-white/80 dark:bg-surface-dark/90 border-b border-slate-200 dark:border-border-dark backdrop-blur-md">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex justify-between h-16 items-center">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center transform -rotate-12">
+<span class="material-icons-round text-white text-xl transform rotate-12">auto_graph</span>
+</div>
+<span class="font-bold text-xl tracking-tight text-primary dark:text-white">strattio</span>
+</div>
+<div class="hidden md:flex space-x-8">
+<a class="text-sm font-medium text-primary dark:text-white" href="#">Dashboard</a>
+<a class="text-sm font-medium text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors" href="#">Plans</a>
+<a class="text-sm font-medium text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors" href="#">Community</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-slate-400 hover:text-primary dark:hover:text-white transition-colors">
+<span class="material-icons-outlined">notifications</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 p-0.5 cursor-pointer">
+<div class="w-full h-full rounded-full bg-white dark:bg-surface-dark flex items-center justify-center text-xs font-bold text-primary dark:text-white">
+                        PD
+                    </div>
+</div>
+</div>
+</div>
+</div>
+</nav>
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+<header class="flex flex-col gap-4">
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+<div>
+<h1 class="text-2xl font-bold text-primary dark:text-white tracking-tight">Overview</h1>
+<p class="text-sm text-slate-500 dark:text-slate-400">Welcome back, here's what's happening today.</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-3 py-2 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark text-slate-600 dark:text-slate-300 rounded-lg text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" onclick="document.getElementById('filter-panel').toggleAttribute('open')">
+<span class="material-icons-outlined text-lg">tune</span>
+<span class="hidden sm:inline">Customize View</span>
+</button>
+<button class="flex items-center gap-2 px-3 py-2 bg-primary hover:bg-primary-hover text-white rounded-lg text-sm font-medium shadow-sm transition-all">
+<span class="material-icons-outlined text-lg">download</span>
+<span class="hidden sm:inline">Export</span>
+</button>
+</div>
+</div>
+<details class="group" id="filter-panel">
+<summary class="cursor-pointer list-none"></summary>
+<div class="p-4 bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-border-dark shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fade-in-down">
+<div>
+<label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Time Range</label>
+<select class="form-select block w-full pl-3 pr-10 py-2 text-sm border-slate-200 dark:border-border-dark rounded-lg bg-slate-50 dark:bg-slate-900 focus:ring-primary focus:border-primary dark:text-white">
+<option>Last 6 Months</option>
+<option>Last Year</option>
+<option>This Quarter</option>
+</select>
+</div>
+<div>
+<label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Plan Type</label>
+<select class="form-select block w-full pl-3 pr-10 py-2 text-sm border-slate-200 dark:border-border-dark rounded-lg bg-slate-50 dark:bg-slate-900 focus:ring-primary focus:border-primary dark:text-white">
+<option>All Types</option>
+<option>Loan Plans</option>
+<option>Visa Plans</option>
+</select>
+</div>
+<div>
+<label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">Metric Focus</label>
+<select class="form-select block w-full pl-3 pr-10 py-2 text-sm border-slate-200 dark:border-border-dark rounded-lg bg-slate-50 dark:bg-slate-900 focus:ring-primary focus:border-primary dark:text-white">
+<option>Total Generated</option>
+<option>Completion Rate</option>
+<option>Revenue</option>
+</select>
+</div>
+</div>
+</details>
+</header>
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="lg:col-span-2 bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-border-dark p-6 shadow-soft">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="font-semibold text-lg text-primary dark:text-white">Plan Generation</h3>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Growth over the last 6 months</p>
+</div>
+<div class="flex items-center gap-1 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded text-green-700 dark:text-green-400 text-xs font-bold">
+<span class="material-icons-round text-sm">trending_up</span>
+                    +24%
+                </div>
+</div>
+<div class="h-64 w-full flex items-end justify-between gap-2 sm:gap-4 px-2">
+<div class="w-full flex flex-col justify-end items-center group cursor-pointer">
+<div class="w-full max-w-[40px] bg-slate-100 dark:bg-slate-800 rounded-t-sm h-full relative overflow-hidden">
+<div class="absolute bottom-0 w-full bg-accent-blue opacity-80 h-[45%] rounded-t-sm group-hover:opacity-100 transition-all"></div>
+</div>
+<span class="text-[10px] font-medium text-slate-400 mt-2">Aug</span>
+</div>
+<div class="w-full flex flex-col justify-end items-center group cursor-pointer">
+<div class="w-full max-w-[40px] bg-slate-100 dark:bg-slate-800 rounded-t-sm h-full relative overflow-hidden">
+<div class="absolute bottom-0 w-full bg-accent-blue opacity-80 h-[55%] rounded-t-sm group-hover:opacity-100 transition-all"></div>
+</div>
+<span class="text-[10px] font-medium text-slate-400 mt-2">Sep</span>
+</div>
+<div class="w-full flex flex-col justify-end items-center group cursor-pointer">
+<div class="w-full max-w-[40px] bg-slate-100 dark:bg-slate-800 rounded-t-sm h-full relative overflow-hidden">
+<div class="absolute bottom-0 w-full bg-accent-blue opacity-80 h-[35%] rounded-t-sm group-hover:opacity-100 transition-all"></div>
+</div>
+<span class="text-[10px] font-medium text-slate-400 mt-2">Oct</span>
+</div>
+<div class="w-full flex flex-col justify-end items-center group cursor-pointer">
+<div class="w-full max-w-[40px] bg-slate-100 dark:bg-slate-800 rounded-t-sm h-full relative overflow-hidden">
+<div class="absolute bottom-0 w-full bg-accent-blue opacity-80 h-[70%] rounded-t-sm group-hover:opacity-100 transition-all"></div>
+</div>
+<span class="text-[10px] font-medium text-slate-400 mt-2">Nov</span>
+</div>
+<div class="w-full flex flex-col justify-end items-center group cursor-pointer">
+<div class="w-full max-w-[40px] bg-slate-100 dark:bg-slate-800 rounded-t-sm h-full relative overflow-hidden">
+<div class="absolute bottom-0 w-full bg-accent-blue opacity-80 h-[60%] rounded-t-sm group-hover:opacity-100 transition-all"></div>
+</div>
+<span class="text-[10px] font-medium text-slate-400 mt-2">Dec</span>
+</div>
+<div class="w-full flex flex-col justify-end items-center group cursor-pointer">
+<div class="w-full max-w-[40px] bg-slate-100 dark:bg-slate-800 rounded-t-sm h-full relative overflow-hidden">
+<div class="absolute bottom-0 w-full bg-gradient-to-t from-accent-blue to-blue-400 h-[85%] rounded-t-sm shadow-lg shadow-blue-500/20"></div>
+</div>
+<span class="text-[10px] font-bold text-accent-blue mt-2">Jan</span>
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-border-dark p-6 shadow-soft flex flex-col">
+<div class="mb-4">
+<h3 class="font-semibold text-lg text-primary dark:text-white">Portfolio Mix</h3>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Active plan distribution</p>
+</div>
+<div class="flex-grow flex items-center justify-center relative my-4">
+<svg class="w-40 h-40 transform -rotate-90" viewBox="0 0 36 36">
+<circle class="dark:stroke-slate-700" cx="18" cy="18" fill="none" r="15.9155" stroke="#e2e8f0" stroke-width="3.8"></circle>
+<circle class="drop-shadow-sm" cx="18" cy="18" fill="none" r="15.9155" stroke="#3B82F6" stroke-dasharray="60, 100" stroke-width="3.8"></circle>
+<circle cx="18" cy="18" fill="none" r="15.9155" stroke="#10B981" stroke-dasharray="25, 100" stroke-dashoffset="-60" stroke-width="3.8"></circle>
+<circle cx="18" cy="18" fill="none" r="15.9155" stroke="#F59E0B" stroke-dasharray="15, 100" stroke-dashoffset="-85" stroke-width="3.8"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-3xl font-bold text-primary dark:text-white">140</span>
+<span class="text-[10px] uppercase text-slate-400 font-bold tracking-wider">Plans</span>
+</div>
+</div>
+<div class="space-y-2 mt-auto">
+<div class="flex justify-between items-center text-sm">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+<span class="text-slate-600 dark:text-slate-300">Loan Plans</span>
+</div>
+<span class="font-medium text-primary dark:text-white">60%</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
+<span class="text-slate-600 dark:text-slate-300">Generic</span>
+</div>
+<span class="font-medium text-primary dark:text-white">25%</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+<span class="text-slate-600 dark:text-slate-300">Visa Plans</span>
+</div>
+<span class="font-medium text-primary dark:text-white">15%</span>
+</div>
+</div>
+</div>
+</section>
+<section class="bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-border-dark p-6 shadow-soft">
+<div class="flex flex-col md:flex-row items-center gap-8">
+<div class="flex items-center gap-5 w-full md:w-auto md:pr-8 md:border-r border-slate-100 dark:border-slate-800">
+<div class="relative w-16 h-16 flex-shrink-0">
+<svg class="w-full h-full transform -rotate-90">
+<circle class="text-slate-100 dark:text-slate-700" cx="32" cy="32" fill="transparent" r="28" stroke="currentColor" stroke-width="4"></circle>
+<circle class="text-indigo-600 dark:text-indigo-400" cx="32" cy="32" fill="transparent" r="28" stroke="currentColor" stroke-dasharray="175" stroke-dashoffset="44" stroke-linecap="round" stroke-width="4"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center">
+<span class="text-xs font-bold text-primary dark:text-white">75%</span>
+</div>
+</div>
+<div>
+<h3 class="font-bold text-primary dark:text-white">Achievement Status</h3>
+<p class="text-xs text-slate-500 mt-1 max-w-[150px]">You are crushing your goals this month!</p>
+</div>
+</div>
+<div class="flex-grow w-full overflow-hidden">
+<div class="flex items-center justify-between mb-3">
+<span class="text-xs font-bold uppercase tracking-wider text-slate-400">Recent Badges</span>
+</div>
+<div class="flex gap-4 overflow-x-auto no-scrollbar pb-1">
+<div class="flex items-center gap-3 min-w-[180px] p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
+<div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+<span class="material-icons-outlined text-lg">flag</span>
+</div>
+<div>
+<p class="text-sm font-bold text-primary dark:text-white">First Steps</p>
+<p class="text-[10px] text-slate-500">Dec 29</p>
+</div>
+</div>
+<div class="flex items-center gap-3 min-w-[180px] p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
+<div class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400">
+<span class="material-icons-outlined text-lg">paid</span>
+</div>
+<div>
+<p class="text-sm font-bold text-primary dark:text-white">Financials</p>
+<p class="text-[10px] text-slate-500">Dec 29</p>
+</div>
+</div>
+<div class="flex items-center gap-3 min-w-[180px] p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
+<div class="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400">
+<span class="material-icons-outlined text-lg">bolt</span>
+</div>
+<div>
+<p class="text-sm font-bold text-primary dark:text-white">Speed Runner</p>
+<p class="text-[10px] text-slate-500">Dec 29</p>
+</div>
+</div>
+<div class="flex items-center gap-3 min-w-[180px] p-3 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 opacity-60">
+<div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+<span class="material-icons-outlined text-lg">next_plan</span>
+</div>
+<div>
+<p class="text-sm font-bold text-primary dark:text-white">Plan Master</p>
+<p class="text-[10px] text-slate-500">Next Goal</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+<section class="lg:col-span-3 space-y-4">
+<div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+<h2 class="text-lg font-bold text-primary dark:text-white">Recent Plans</h2>
+<div class="flex flex-col sm:flex-row w-full xl:w-auto gap-2">
+<div class="relative flex-grow">
+<span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+<span class="material-icons-outlined text-slate-400 text-lg">search</span>
+</span>
+<input class="pl-9 pr-3 py-1.5 text-sm border-slate-200 dark:border-border-dark rounded-md bg-white dark:bg-surface-dark focus:ring-primary dark:text-white w-full sm:w-64" placeholder="Search..." type="text"/>
+</div>
+<div class="flex gap-2 w-full sm:w-auto overflow-x-auto no-scrollbar">
+<button class="flex whitespace-nowrap items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark text-slate-600 dark:text-slate-300 rounded-md text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm">
+<span class="material-icons-outlined text-lg">domain</span>
+<span class="hidden lg:inline">Manage Companies</span>
+<span class="lg:hidden">Companies</span>
+</button>
+<button class="flex whitespace-nowrap items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark text-slate-600 dark:text-slate-300 rounded-md text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm">
+<span class="material-icons-outlined text-lg">compare_arrows</span>
+<span class="hidden lg:inline">Compare Plans</span>
+<span class="lg:hidden">Compare</span>
+</button>
+<button class="flex whitespace-nowrap items-center gap-1 px-3 py-1.5 bg-primary hover:bg-primary-hover text-white rounded-md text-sm font-medium transition-colors">
+<span class="material-icons-outlined text-lg">add</span>
+<span class="hidden sm:inline">New</span>
+</button>
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-border-dark overflow-hidden shadow-sm">
+<table class="w-full text-left text-sm">
+<thead class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-border-dark">
+<tr>
+<th class="px-6 py-3 font-semibold text-slate-500 dark:text-slate-400">Plan Name</th>
+<th class="px-6 py-3 font-semibold text-slate-500 dark:text-slate-400 hidden sm:table-cell">Type</th>
+<th class="px-6 py-3 font-semibold text-slate-500 dark:text-slate-400 hidden md:table-cell">Status</th>
+<th class="px-6 py-3 font-semibold text-slate-500 dark:text-slate-400 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-blue-600 dark:text-blue-400">
+<span class="material-icons-outlined text-lg">description</span>
+</div>
+<div>
+<p class="font-medium text-primary dark:text-white group-hover:text-accent-blue transition-colors">GY Business Services</p>
+<p class="text-xs text-slate-500">Updated Dec 29</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 hidden sm:table-cell">
+<span class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded text-xs font-medium uppercase tracking-wide">Loan</span>
+</td>
+<td class="px-6 py-4 hidden md:table-cell">
+<span class="flex items-center gap-1.5 text-xs font-medium text-green-600 dark:text-green-400">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                    Complete
+                                </span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-primary dark:hover:text-white transition-colors" title="Edit">
+<span class="material-icons-outlined text-lg">edit</span>
+</button>
+<button class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-primary dark:hover:text-white transition-colors" title="Download">
+<span class="material-icons-outlined text-lg">download</span>
+</button>
+<button class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors" title="Delete">
+<span class="material-icons-outlined text-lg">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="p-2 bg-green-50 dark:bg-green-900/20 rounded text-green-600 dark:text-green-400">
+<span class="material-icons-outlined text-lg">description</span>
+</div>
+<div>
+<p class="font-medium text-primary dark:text-white group-hover:text-accent-green transition-colors">Qu Tech Business Plan</p>
+<p class="text-xs text-slate-500">Updated Dec 29</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 hidden sm:table-cell">
+<span class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded text-xs font-medium uppercase tracking-wide">Generic</span>
+</td>
+<td class="px-6 py-4 hidden md:table-cell">
+<span class="flex items-center gap-1.5 text-xs font-medium text-green-600 dark:text-green-400">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                    Complete
+                                </span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-primary dark:hover:text-white transition-colors">
+<span class="material-icons-outlined text-lg">edit</span>
+</button>
+<button class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-primary dark:hover:text-white transition-colors">
+<span class="material-icons-outlined text-lg">download</span>
+</button>
+<button class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
+<span class="material-icons-outlined text-lg">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-blue-600 dark:text-blue-400">
+<span class="material-icons-outlined text-lg">description</span>
+</div>
+<div>
+<p class="font-medium text-primary dark:text-white group-hover:text-accent-blue transition-colors">QT Education Ltd</p>
+<p class="text-xs text-slate-500">Updated Dec 28</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 hidden sm:table-cell">
+<span class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded text-xs font-medium uppercase tracking-wide">Loan</span>
+</td>
+<td class="px-6 py-4 hidden md:table-cell">
+<span class="flex items-center gap-1.5 text-xs font-medium text-green-600 dark:text-green-400">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                    Complete
+                                </span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-primary dark:hover:text-white transition-colors">
+<span class="material-icons-outlined text-lg">edit</span>
+</button>
+<button class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-primary dark:hover:text-white transition-colors">
+<span class="material-icons-outlined text-lg">download</span>
+</button>
+<button class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
+<span class="material-icons-outlined text-lg">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-blue-600 dark:text-blue-400">
+<span class="material-icons-outlined text-lg">description</span>
+</div>
+<div>
+<p class="font-medium text-primary dark:text-white group-hover:text-accent-blue transition-colors">Astute Technologies</p>
+<p class="text-xs text-slate-500">Updated Dec 28</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 hidden sm:table-cell">
+<span class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded text-xs font-medium uppercase tracking-wide">Loan</span>
+</td>
+<td class="px-6 py-4 hidden md:table-cell">
+<span class="flex items-center gap-1.5 text-xs font-medium text-green-600 dark:text-green-400">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                    Complete
+                                </span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-primary dark:hover:text-white transition-colors">
+<span class="material-icons-outlined text-lg">edit</span>
+</button>
+<button class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-primary dark:hover:text-white transition-colors">
+<span class="material-icons-outlined text-lg">download</span>
+</button>
+<button class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
+<span class="material-icons-outlined text-lg">delete</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<aside class="lg:col-span-1 space-y-6">
+<div class="bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-border-dark p-4 shadow-soft">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-bold text-sm text-primary dark:text-white flex items-center gap-2">
+<span class="material-icons-outlined text-slate-400 text-base">support_agent</span>
+                        Support
+                    </h3>
+<button class="text-xs text-accent-blue font-medium hover:underline">New Ticket</button>
+</div>
+<div class="space-y-3">
+<div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-100 dark:border-slate-800 cursor-pointer hover:border-accent-blue/50 transition-colors">
+<div class="flex justify-between items-start mb-1">
+<span class="text-xs font-bold text-primary dark:text-white">fjjtest</span>
+<span class="w-1.5 h-1.5 rounded-full bg-orange-500" title="In Progress"></span>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mb-2">Issue with generation on slide 4</p>
+<div class="flex items-center justify-between text-[10px] text-slate-400">
+<span>Dec 29</span>
+<span>1 Reply</span>
+</div>
+</div>
+<div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-100 dark:border-slate-800 cursor-pointer hover:border-accent-blue/50 transition-colors opacity-60">
+<div class="flex justify-between items-start mb-1">
+<span class="text-xs font-bold text-primary dark:text-white">billing_q</span>
+<span class="w-1.5 h-1.5 rounded-full bg-green-500" title="Resolved"></span>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mb-2">Question about subscription</p>
+<div class="flex items-center justify-between text-[10px] text-slate-400">
+<span>Dec 20</span>
+<span>Closed</span>
+</div>
+</div>
+</div>
+<button class="w-full mt-3 py-1.5 text-xs font-medium text-slate-500 hover:text-primary dark:hover:text-white border border-dashed border-slate-200 dark:border-slate-700 rounded transition-colors">
+                    View All Tickets
+                </button>
+</div>
+<div class="bg-gradient-to-br from-primary to-slate-800 rounded-xl p-4 text-white shadow-soft relative overflow-hidden">
+<div class="relative z-10">
+<h3 class="font-bold text-sm mb-1">Need Help?</h3>
+<p class="text-xs text-slate-300 mb-3">Check our knowledge base for quick answers.</p>
+<a class="inline-flex items-center gap-1 text-xs font-bold text-white hover:text-accent-blue transition-colors" href="#">
+                        Visit Help Center <span class="material-icons-outlined text-xs">arrow_forward</span>
+</a>
+</div>
+<span class="material-icons-outlined absolute -bottom-4 -right-4 text-6xl text-white opacity-5 pointer-events-none">help_outline</span>
+</div>
+</aside>
+</div>
+</main>
+<footer class="bg-white dark:bg-surface-dark border-t border-slate-200 dark:border-border-dark py-8 mt-8">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+<p class="text-xs text-slate-500 dark:text-slate-400">© 2025 Strattio. All rights reserved.</p>
+<div class="flex gap-6 text-xs text-slate-500 dark:text-slate-400">
+<a class="hover:text-primary dark:hover:text-white transition-colors" href="#">Privacy</a>
+<a class="hover:text-primary dark:hover:text-white transition-colors" href="#">Terms</a>
+<a class="hover:text-primary dark:hover:text-white transition-colors" href="#">Contact</a>
+</div>
+</div>
+</footer>
+
+</body></html>
