@@ -457,14 +457,13 @@ function DashboardPage({ navigate, user, onLogout }) {
         return badge ? { ...badge, earned: true, earned_at: a.earned_at } : null;
       })
       .filter(Boolean)
-      .sort((a, b) => new Date(b.earned_at) - new Date(a.earned_at))
-      .slice(0, 3);
+      .sort((a, b) => new Date(b.earned_at) - new Date(a.earned_at));
     
     const unearned = allBadges
-      .filter(b => !earnedBadgeIds.has(b.id))
-      .slice(0, 1);
+      .filter(b => !earnedBadgeIds.has(b.id));
     
-    return [...earned, ...unearned].slice(0, 4);
+    // Return all badges: earned first (sorted by date), then unearned
+    return [...earned, ...unearned];
   };
 
   // Apply filters
@@ -533,7 +532,6 @@ function DashboardPage({ navigate, user, onLogout }) {
                 alt="Strattio" 
                 className="h-8 w-auto" 
               />
-              <span className="font-bold text-xl tracking-tight text-primary hidden sm:inline" style={{ color: '#0F172A' }}>strattio</span>
             </div>
 
             {/* Navigation */}
@@ -702,24 +700,30 @@ function DashboardPage({ navigate, user, onLogout }) {
               </div>
             </div>
             <div className="h-64 w-full flex items-end justify-between gap-2 sm:gap-4 px-2">
-              {planGenerationData.data.map((item, index) => (
-                <div key={index} className="w-full flex flex-col justify-end items-center group cursor-pointer">
-                  <div className="w-full max-w-[40px] bg-slate-100 rounded-t-sm h-full relative overflow-hidden" style={{ backgroundColor: '#F1F5F9' }}>
-                    <div 
-                      className="absolute bottom-0 w-full bg-accent-blue opacity-80 rounded-t-sm group-hover:opacity-100 transition-all"
-                      style={{ 
-                        height: `${item.percentage}%`,
-                        backgroundColor: index === 5 ? '#3B82F6' : '#3B82F6',
-                        background: index === 5 ? 'linear-gradient(to top, #3B82F6, #60A5FA)' : undefined,
-                        boxShadow: index === 5 ? '0 4px 12px rgba(59, 130, 246, 0.2)' : undefined
-                      }}
-                    ></div>
-                  </div>
-                  <span className={`text-[10px] font-medium text-slate-400 mt-2 ${index === 5 ? 'font-bold text-accent-blue' : ''}`} style={{ color: index === 5 ? '#3B82F6' : '#94A3B8' }}>
-                    {item.month}
+              {planGenerationData.data.map((item, index) => {
+                const isLastMonth = index === planGenerationData.data.length - 1;
+                const barHeight = Math.max(15, item.percentage); // Minimum 15% height so bars are visible
+                return (
+                  <div key={index} className="w-full flex flex-col justify-end items-center group cursor-pointer">
+                    <div className="w-full max-w-[40px] bg-slate-100 rounded-t-sm h-full relative overflow-hidden" style={{ backgroundColor: '#F1F5F9' }}>
+                      <div 
+                        className="absolute bottom-0 w-full rounded-t-sm group-hover:opacity-100 transition-all"
+                        style={{ 
+                          height: `${barHeight}%`,
+                          backgroundColor: isLastMonth ? '#3B82F6' : '#3B82F6',
+                          background: isLastMonth ? 'linear-gradient(to top, #3B82F6, #60A5FA)' : undefined,
+                          boxShadow: isLastMonth ? '0 4px 12px rgba(59, 130, 246, 0.2)' : undefined,
+                          opacity: isLastMonth ? 1 : 0.8
+                        }}
+                        title={`${item.count} plans in ${item.month}`}
+                      ></div>
+                    </div>
+                    <span className={`text-[10px] font-medium mt-2 ${isLastMonth ? 'font-bold text-accent-blue' : 'text-slate-400'}`} style={{ color: isLastMonth ? '#3B82F6' : '#94A3B8' }}>
+                      {item.month}
                     </span>
                   </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -1173,14 +1177,45 @@ function DashboardPage({ navigate, user, onLogout }) {
                   </h3>
                   <button 
                   className="text-xs text-accent-blue font-medium hover:underline"
-                  onClick={() => {
-                    // Navigate to support or open create ticket modal
-                    const supportSection = document.querySelector('[data-support-section]');
-                    if (supportSection) {
-                      supportSection.scrollIntoView({ behavior: 'smooth' });
+                  onClick={async () => {
+                    try {
+                      const subject = prompt('Enter ticket subject:');
+                      if (subject && subject.trim()) {
+                        const description = prompt('Enter ticket description:');
+                        if (description && description.trim()) {
+                          try {
+                            const response = await api.tickets.create({
+                              subject: subject.trim(),
+                              description: description.trim(),
+                              priority: 'medium',
+                              category: 'general'
+                            });
+                            const result = await response.json();
+                            if (response.ok) {
+                              alert('Ticket created successfully!');
+                              // Reload tickets
+                              try {
+                                const ticketsResponse = await api.tickets.list();
+                                const ticketsData = await ticketsResponse.json();
+                                if (ticketsData && ticketsData.tickets) {
+                                  setSupportTickets(ticketsData.tickets.slice(0, 2));
+                                }
+                              } catch (err) {
+                                console.log('Failed to reload tickets:', err);
+                              }
+                            } else {
+                              alert('Failed to create ticket: ' + (result.message || 'Unknown error'));
+                            }
+                          } catch (err) {
+                            alert('Failed to create ticket: ' + (err.message || 'Unknown error'));
+                          }
+                        }
+                      }
+                    } catch (err) {
+                      console.error('Error creating ticket:', err);
                     }
                   }}
-                  style={{ color: '#3B82F6' }}
+                  style={{ color: '#3B82F6', cursor: 'pointer' }}
                 >
                   New Ticket
                   </button>
@@ -1196,11 +1231,26 @@ function DashboardPage({ navigate, user, onLogout }) {
                         borderColor: '#F1F5F9',
                         opacity: ticket.status === 'closed' ? 0.6 : 1
                       }}
-                      onClick={() => {
-                        // Navigate to ticket details or open modal
-                        const supportSection = document.querySelector('[data-support-section]');
-                        if (supportSection) {
-                          supportSection.scrollIntoView({ behavior: 'smooth' });
+                      onClick={async () => {
+                        try {
+                          if (ticket.id) {
+                            try {
+                              const response = await api.tickets.get(ticket.id);
+                              const ticketDetails = await response.json();
+                              if (response.ok && ticketDetails) {
+                                alert(`Ticket: ${ticketDetails.subject || ticket.subject}\n\n${ticketDetails.description || ticket.description || 'No description'}\n\nStatus: ${ticketDetails.status || ticket.status || 'Unknown'}`);
+                              } else {
+                                alert(`Ticket: ${ticket.subject}\n\n${ticket.description || 'No description'}\n\nStatus: ${ticket.status || 'Unknown'}`);
+                              }
+                            } catch (err) {
+                              alert(`Ticket: ${ticket.subject}\n\n${ticket.description || 'No description'}\n\nStatus: ${ticket.status || 'Unknown'}`);
+                            }
+                          } else {
+                            alert(`Ticket: ${ticket.subject}\n\n${ticket.description || 'No description'}\n\nStatus: ${ticket.status || 'Unknown'}`);
+                          }
+                        } catch (err) {
+                          console.error('Error viewing ticket:', err);
+                          alert(`Ticket: ${ticket.subject}\n\n${ticket.description || 'No description'}`);
                         }
                       }}
                     >
@@ -1229,13 +1279,24 @@ function DashboardPage({ navigate, user, onLogout }) {
               </div>
             <button 
                 className="w-full mt-3 py-1.5 text-xs font-medium text-slate-500 hover:text-primary border border-dashed border-slate-200 rounded transition-colors"
-                onClick={() => {
-                  const supportSection = document.querySelector('[data-support-section]');
-                  if (supportSection) {
-                    supportSection.scrollIntoView({ behavior: 'smooth' });
+                onClick={async () => {
+                  try {
+                    const response = await api.tickets.list();
+                    const ticketsData = await response.json();
+                    if (response.ok && ticketsData && ticketsData.tickets && ticketsData.tickets.length > 0) {
+                      const ticketsList = ticketsData.tickets.map(t => 
+                        `• ${t.subject || 'Untitled'} (${t.status || 'Unknown'})`
+                      ).join('\n');
+                      alert(`All Tickets (${ticketsData.tickets.length}):\n\n${ticketsList}`);
+                    } else {
+                      alert('No tickets found.');
+                    }
+                  } catch (err) {
+                    console.error('Error loading tickets:', err);
+                    alert('Failed to load tickets. Please try again later.');
                   }
                 }}
-                style={{ borderColor: '#E2E8F0', color: '#64748B' }}
+                style={{ borderColor: '#E2E8F0', color: '#64748B', cursor: 'pointer' }}
               >
                 View All Tickets
               </button>

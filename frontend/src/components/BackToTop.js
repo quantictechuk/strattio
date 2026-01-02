@@ -44,7 +44,7 @@ function BackToTop() {
         width: '48px',
         height: '48px',
         borderRadius: '50%',
-        background: 'linear-gradient(135deg, #001639 0%, #27AC85 100%)',
+        background: '#0F172A',
         border: 'none',
         color: 'white',
         cursor: 'pointer',
