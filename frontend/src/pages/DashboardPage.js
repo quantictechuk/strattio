@@ -31,7 +31,8 @@ import {
   Users,
   Target,
   Briefcase,
-  Sparkles
+  Sparkles,
+  Shield
 } from 'lucide-react';
 import { api } from '../lib/api';
 import Footer from '../components/Footer';
@@ -535,7 +536,7 @@ function DashboardPage({ navigate, user, onLogout }) {
             </div>
 
             {/* Navigation */}
-            <div className="hidden md:flex space-x-8">
+            <div className="hidden md:flex space-x-8 items-center">
               <a 
                 href="#" 
                 onClick={(e) => { e.preventDefault(); }}
@@ -564,6 +565,24 @@ function DashboardPage({ navigate, user, onLogout }) {
               >
                 Community
               </a>
+              {user && user.role === 'admin' && (
+                <button
+                  onClick={() => navigate('admin-dashboard')}
+                  className="text-sm font-medium text-slate-500 hover:text-primary transition-colors flex items-center gap-1.5"
+                  style={{ 
+                    color: '#64748B',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 0
+                  }}
+                  onMouseEnter={(e) => e.target.style.color = '#0F172A'}
+                  onMouseLeave={(e) => e.target.style.color = '#64748B'}
+                >
+                  <Shield size={16} />
+                  Admin Dashboard
+                </button>
+              )}
             </div>
 
             {/* Right Actions */}

@@ -3,7 +3,7 @@ import {
   Users, FileText, DollarSign, TrendingUp, Shield, LogOut, 
   Search, Eye, Key, Save, AlertCircle, CheckCircle2, X,
   BarChart3, PieChart, Calendar, CreditCard, UserPlus, Mail,
-  MessageSquare, Filter, Send, Clock
+  MessageSquare, Filter, Send, Clock, LayoutDashboard
 } from 'lucide-react';
 import { api, authService } from '../lib/api';
 
@@ -408,34 +408,58 @@ function AdminDashboardPage({ navigate, user, onLogout }) {
       {/* Tabs */}
       <div style={{ background: 'white', borderBottom: '1px solid #E2E8F0' }}>
         <div className="container" style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 1rem' }}>
-          <div style={{ display: 'flex', gap: '2rem' }}>
-            {[
-              { id: 'overview', label: 'Overview', icon: BarChart3 },
-              { id: 'users', label: 'Users', icon: Users },
-              { id: 'admins', label: 'Admins', icon: Shield },
-              { id: 'tickets', label: 'Tickets', icon: MessageSquare }
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                style={{
-                  padding: '1rem 0',
-                  background: 'none',
-                  border: 'none',
-                  borderBottom: activeTab === tab.id ? '2px solid #001639' : '2px solid transparent',
-                  cursor: 'pointer',
-                  fontSize: '0.9375rem',
-                  fontWeight: activeTab === tab.id ? '600' : '500',
-                  color: activeTab === tab.id ? '#001639' : '#64748B',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem'
-                }}
-              >
-                <tab.icon size={18} />
-                {tab.label}
-              </button>
-            ))}
+          <div style={{ display: 'flex', gap: '2rem', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '2rem' }}>
+              {[
+                { id: 'overview', label: 'Overview', icon: BarChart3 },
+                { id: 'users', label: 'Users', icon: Users },
+                { id: 'admins', label: 'Admins', icon: Shield },
+                { id: 'tickets', label: 'Tickets', icon: MessageSquare }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  style={{
+                    padding: '1rem 0',
+                    background: 'none',
+                    border: 'none',
+                    borderBottom: activeTab === tab.id ? '2px solid #001639' : '2px solid transparent',
+                    cursor: 'pointer',
+                    fontSize: '0.9375rem',
+                    fontWeight: activeTab === tab.id ? '600' : '500',
+                    color: activeTab === tab.id ? '#001639' : '#64748B',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  <tab.icon size={18} />
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => navigate('dashboard')}
+              style={{
+                padding: '0.5rem 1rem',
+                background: '#001639',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '0.9375rem',
+                fontWeight: '500',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                transition: 'background 0.2s'
+              }}
+              onMouseEnter={(e) => e.target.style.background = '#002855'}
+              onMouseLeave={(e) => e.target.style.background = '#001639'}
+            >
+              <LayoutDashboard size={18} />
+              View User Dashboard
+            </button>
           </div>
         </div>
       </div>

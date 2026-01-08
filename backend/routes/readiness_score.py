@@ -120,7 +120,14 @@ async def get_readiness_score(
     breakdown["team_management"] = max(0, min(100, team_score))
     
     # 5. Competitive Analysis (10%)
-    competitive_section = next((s for s in sections if s.get("section_type") == "competitive_analysis"), None)
+    # Handle multiple section type variations: competitive_analysis, competitor_analysis, competitors_analysis
+    competitive_variations = ["competitive_analysis", "competitor_analysis", "competitors_analysis", "competition_analysis"]
+    competitive_section = next(
+        (s for s in sections 
+         if s.get("section_type", "").lower().strip().replace(" ", "_") in competitive_variations
+         or ("competitor" in s.get("section_type", "").lower() and "analysis" in s.get("section_type", "").lower())),
+        None
+    )
     competitive_score = 0
     if competitive_section:
         content = competitive_section.get("content", "")

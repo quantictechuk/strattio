@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, LogOut, Settings } from 'lucide-react';
+import { X, LogOut, Settings, Shield } from 'lucide-react';
 
 function MobileMenu({ isOpen, onClose, navigate, user, onLogout }) {
   if (!isOpen) return null;
@@ -152,6 +152,26 @@ function MobileMenu({ isOpen, onClose, navigate, user, onLogout }) {
               <Settings size={18} />
               Settings
             </button>
+            {user && user.role === 'admin' && (
+              <button
+                className="btn btn-secondary"
+                onClick={() => { navigate('admin-dashboard'); onClose(); }}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 1.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  background: '#001639',
+                  color: 'white',
+                  border: 'none'
+                }}
+              >
+                <Shield size={18} />
+                Admin Dashboard
+              </button>
+            )}
             {onLogout && (
               <button
                 className="btn btn-ghost"
